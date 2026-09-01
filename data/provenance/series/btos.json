@@ -1,0 +1,17 @@
+{
+  "table": "series/btos",
+  "source": "Census BTOS AI question, inventory §3 table",
+  "source_url": "https://www.census.gov/programs-surveys/btos.html",
+  "license": "Public domain",
+  "pulled_at": "2026-09-01",
+  "commit": "",
+  "sha256": "05eadd78cdfdeae5d3c6e97edeb3d8036a06c9ff7253ff251fd21d1323fc816d",
+  "transformations": [
+    "transcribed from docs/data-inventory.md §3; shares as fractions; month-only periods dated to month end"
+  ],
+  "status": "real (transcribed; secondary confirmation)",
+  "notes": "Sector cuts for the period ending 3 May 2026 (Information 39.7%, Finance and Insurance 33.9%) are in the row note, not separate rows. Wording change 17 Nov 2025 -> two series (wording column). Full biweekly series to be pulled by ingest/btos.py.",
+  "built_at": "2026-09-01T23:24:37+00:00",
+  "output": "data/processed/series/btos.csv",
+  "extra": {}
+}

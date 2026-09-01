@@ -1,0 +1,23 @@
+{
+  "table": "geo/us_states",
+  "source": "Natural Earth admin-0 and admin-1 (1:110m) (ne_admin1_110m.geojson)",
+  "source_url": "https://www.naturalearthdata.com/",
+  "license": "Public domain",
+  "pulled_at": "2026-09-01",
+  "commit": "",
+  "sha256": "0d0ea87bd3b7719b91d8b9559c7ce669b808ce50d279c4c6b191e918dc0324a8",
+  "transformations": [
+    "filter iso_a2 == 'US' (51 features)",
+    "properties reduced to {fips (from 'fips' = 'USxx'), name, abbrev (= postal)}",
+    "features sorted by fips"
+  ],
+  "status": "real",
+  "notes": "Geometry unchanged (1:110m).",
+  "built_at": "2026-09-01T23:24:37+00:00",
+  "output": "data/processed/geo/us_states.geojson",
+  "extra": {
+    "extra_urls": [
+      "https://github.com/nvkelso/natural-earth-vector"
+    ]
+  }
+}

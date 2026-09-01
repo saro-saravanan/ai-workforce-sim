@@ -1,0 +1,18 @@
+[project]
+name = "aiwsim-api"
+version = "0.1.0"
+description = "FastAPI service over the AI workforce simulation"
+requires-python = ">=3.12"
+dependencies = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "aiwsim"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aiwsim_api"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+]

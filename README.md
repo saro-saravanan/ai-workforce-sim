@@ -15,9 +15,19 @@ An interactive, multi-region simulation of how AI models reshape the workforce a
 | [scenarios/schema.json](scenarios/schema.json) | JSON schema for versioned, diffable scenarios |
 | [scenarios/baseline.json](scenarios/baseline.json) | The "consensus central" scenario |
 
-## Planned architecture
+## Phase 1 (in progress)
 
-- `sim/` Python 3.12, numpy/polars, pure functions, deterministic given a seed, CLI-runnable, unit-tested
+U.S. national and state instance of spec v0.2, central run, three views. From a clean clone:
+
+```
+make setup && make data && make run   # then: make demo
+```
+
+`uv run aiwsim run --scenario scenarios/baseline.json` prints headline numbers and writes the results document (`docs/contracts.md` §2). Only GitHub was reachable from the build sandbox, so occupation × state and occupation × sector are labelled fixtures until `sim/aiwsim/data/ingest/` runs on a networked machine; the results document says so in `meta.data_flags`.
+
+## Architecture
+
+- `sim/` Python 3.12, numpy/polars, pure functions, deterministic given a seed, CLI-runnable, unit-tested (`sim/aiwsim/`)
 - `api/` FastAPI: `run`, `compare`, `explain`, `sensitivity`
 - `web/` Vue 3 + TypeScript (Composition API, Vite, Pinia), D3 charts, MapLibre map
 - `data/` ingestion scripts with provenance for every dataset

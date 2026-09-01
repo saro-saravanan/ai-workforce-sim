@@ -1,0 +1,4 @@
+model,date,horizon_minutes_p50,ci_low_minutes,ci_high_minutes,source_tag,date_precision,note
+Claude Mythos Preview,2026-03-01,960.0,510.0,3300.0,real (transcribed; secondary confirmation),month,>= 16 h (lower bound; 95% CI 8.5-55 h); inventory row 11 lists METR's release for it as 8 May 2026
+GPT-5.6 Sol,2026-06-26,678.0,300.0,2400.0,real (transcribed; secondary confirmation),day,~11.3 h (CI 5-40 h)
+GPT-5,2025-08-01,137.0,,,real (transcribed; secondary confirmation),month,~2 h 17 min; CI not recorded in inventory

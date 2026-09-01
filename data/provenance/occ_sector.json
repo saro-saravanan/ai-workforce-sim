@@ -1,0 +1,17 @@
+{
+  "table": "occ_sector",
+  "source": "contracts §1 Phase 1 sector fixture",
+  "source_url": "docs/contracts.md",
+  "license": "n/a (fixture)",
+  "pulled_at": "2026-09-01",
+  "commit": "",
+  "sha256": "c605483b9dec13fe5ec3b568676809a4dbf4013f0458d6bd42165a5c5ff5f8be",
+  "transformations": [
+    "every occupation -> sector ALL with emp_share 1.0"
+  ],
+  "status": "FIXTURE",
+  "notes": "Replaced by ingest/oews.py (OEWS national occupation x industry).",
+  "built_at": "2026-09-01T23:24:37+00:00",
+  "output": "data/processed/occ_sector.csv",
+  "extra": {}
+}

@@ -1,0 +1,1030 @@
+spec_version: '0.2'
+source: docs/model-spec.md §10 (v0.2)
+count: 81
+count_by_tag_primary:
+  S: 17
+  E: 46
+  D: 18
+count_note: 'Spec §10 says ''Counts: 77 parameters; 18 S, 21 D, 38 E''. The tables as written contain 81 rows (including
+  P.32a and P.32b); all rows are transcribed verbatim.'
+tag_legend:
+  S: sourced
+  D: derived
+  E: estimated by us
+parameters:
+- id: P.01
+  name: Clock doubling time τ₀
+  central: 5
+  min: 3
+  max: 12
+  unit: months
+  tag: S
+  tag_primary: S
+  source: 'METR 2025: ~7 mo 2019-25, ~4 mo 2024-25; Time Horizon 1.1: 6.3 mo all-time, 4.3 since 2023, ~3 since
+    2024'
+  group: capability_clock_and_cost
+- id: P.02
+  name: Drift in doubling time γ
+  central: 0
+  min: -0.2
+  max: 0.3
+  unit: per year
+  tag: E
+  tag_primary: E
+  source: ''
+  group: capability_clock_and_cost
+- id: P.03
+  name: Clock noise sd
+  central: 0.15
+  min: 0.05
+  max: 0.3
+  unit: doublings/q
+  tag: E
+  tag_primary: E
+  source: ''
+  group: capability_clock_and_cost
+- id: P.04
+  name: Price decline at fixed capability ρ
+  central: 10
+  min: 3
+  max: 50
+  unit: ×/year
+  tag: S
+  tag_primary: S
+  source: 'Epoch AI Mar 2025: 9×-900×/yr across milestones, 40×/yr for GPT-4-level science QA'
+  group: capability_clock_and_cost
+- id: P.05
+  name: Open-frontier lag threshold
+  central: 2
+  min: 1
+  max: 4
+  unit: quarters
+  tag: D
+  tag_primary: D
+  source: DeepSeek-R1 / Llama-3 episodes
+  group: capability_clock_and_cost
+- id: P.06
+  name: Open-weights price multiplier
+  central: 0.25
+  min: 0.1
+  max: 0.5
+  unit: ratio
+  tag: D
+  tag_primary: D
+  source: same
+  group: capability_clock_and_cost
+- id: P.07
+  name: Tokens per capex dollar improvement e
+  central: 2
+  min: 1.3
+  max: 3
+  unit: ×/year
+  tag: E
+  tag_primary: E
+  source: hardware price-performance (Epoch)
+  group: capability_clock_and_cost
+- id: P.08
+  name: Base tokens per task-unit n₀ by modality
+  central: null
+  min: null
+  max: null
+  unit: tokens
+  tag: E
+  tag_primary: E
+  source: AEI conversation lengths
+  group: capability_clock_and_cost
+  range_note: ±50%
+  by:
+    software:
+      central: null
+      min: null
+      max: null
+    other_cognitive:
+      central: null
+      min: null
+      max: null
+    interpersonal:
+      central: null
+      min: null
+      max: null
+    physical:
+      central: null
+      min: null
+      max: null
+  note: Spec gives no numeric centrals by modality; to be set from AEI conversation lengths, range ±50%.
+- id: P.09
+  name: Integration cost I_s
+  central: 15
+  min: 5
+  max: 40
+  unit: '% annual wage'
+  tag: E
+  tag_primary: E
+  source: sector-scaled; zero for entrants
+  group: capability_clock_and_cost
+- id: P.10
+  name: Amortization H
+  central: 12
+  min: 8
+  max: 20
+  unit: quarters
+  tag: E
+  tag_primary: E
+  source: ''
+  group: capability_clock_and_cost
+- id: P.15
+  name: Threshold softness s
+  central: 1.0
+  min: 0.5
+  max: 2
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: ''
+  group: capability_clock_and_cost
+- id: P.16
+  name: Substitution share σ (initial)
+  central: 0.45
+  min: 0.25
+  max: 0.7
+  unit: share
+  tag: S
+  tag_primary: S
+  source: AEI automation share 43% (Feb 2025), 49% (Sep 2025), 45% (Jan 2026); by task family
+  group: capability_clock_and_cost
+- id: P.17
+  name: σ drift per doubling
+  central: 0.01
+  min: -0.02
+  max: 0.06
+  unit: share
+  tag: D
+  tag_primary: D
+  source: not monotone in AEI; range includes zero
+  group: capability_clock_and_cost
+- id: P.19
+  name: Robotics doubling time
+  central: 24
+  min: 12
+  max: 48
+  unit: months
+  tag: E
+  tag_primary: E
+  source: ''
+  group: capability_clock_and_cost
+- id: P.36
+  name: Clock saturation C_max
+  central: 20
+  min: 14
+  max: 24
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: beyond this only a_k binds
+  group: capability_clock_and_cost
+- id: P.20
+  name: Ever-automatable a_base(E1)
+  central: 0.9
+  min: 0.7
+  max: 1.0
+  unit: probability
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.21
+  name: a_base(E2)
+  central: 0.7
+  min: 0.4
+  max: 0.9
+  unit: probability
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.22
+  name: a_base(E0)
+  central: 0.25
+  min: 0.05
+  max: 0.5
+  unit: probability
+  tag: E
+  tag_primary: E
+  source: non-zero because labels are GPT-4-era
+  group: task_feasibility
+- id: P.23
+  name: Presence exponent λ_π
+  central: 1.5
+  min: 0.5
+  max: 3
+  unit: —
+  tag: E
+  tag_primary: E
+  source: O*NET Work Context presence items
+  group: task_feasibility
+- id: P.24
+  name: AEI usage threshold for anchoring θ
+  central: 0.5
+  min: 0.25
+  max: 1.0
+  unit: × employment share
+  tag: E
+  tag_primary: E
+  source: usage is a lower bound on feasibility
+  group: task_feasibility
+- id: P.25
+  name: Δ(E1) beyond 2026Q2 clock
+  central: 1
+  min: 0
+  max: 3
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.26
+  name: Δ(E2)
+  central: 3
+  min: 1
+  max: 5
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.27
+  name: Δ(E0)
+  central: 6
+  min: 3
+  max: 10
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.28
+  name: Reliability shift, high-consequence tasks
+  central: 1
+  min: 0.5
+  max: 2
+  unit: doublings
+  tag: D
+  tag_primary: D
+  source: METR 80% vs 50% horizon ratio
+  group: task_feasibility
+- id: P.29
+  name: Token growth per doubling γ_n
+  central: 0.7
+  min: 0.4
+  max: 1.0
+  unit: log₂ tokens / doubling
+  tag: E
+  tag_primary: E
+  source: agentic token use grows with task length
+  group: task_feasibility
+- id: P.34
+  name: Domain transfer g_m
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: E
+  tag_primary: E
+  source: METR measures software tasks only
+  group: task_feasibility
+  by:
+    software:
+      central: 1.0
+      min: 1.0
+      max: 1.0
+    other_cognitive:
+      central: 0.7
+      min: 0.4
+      max: 1.0
+    interpersonal:
+      central: 0.5
+      min: 0.2
+      max: 0.8
+  note: Spec ranges '0.4-1.0; 0.2-0.8' read as other cognitive and interpersonal; software is the reference (1.0).
+- id: P.35
+  name: Profitability softness b_κ
+  central: 0.5
+  min: 0.25
+  max: 1
+  unit: log units
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.59
+  name: a_phys (robotics track)
+  central: 0.3
+  min: 0.1
+  max: 0.6
+  unit: probability
+  tag: E
+  tag_primary: E
+  source: ''
+  group: task_feasibility
+- id: P.30
+  name: Availability delay δ^reg
+  central: null
+  min: null
+  max: null
+  unit: quarters
+  tag: S/E
+  tag_primary: S
+  source: EU launch delays; CN frontier gap (Epoch)
+  group: regulation_and_access
+  by:
+    EU:
+      central: 1
+      min: 0
+      max: 4
+    CN:
+      central: 4
+      min: 2
+      max: 8
+- id: P.31
+  name: Compliance premium χ by use-case class
+  central: null
+  min: null
+  max: null
+  unit: '% of κ'
+  tag: E
+  tag_primary: E
+  source: no measured value; Annex III scope
+  group: regulation_and_access
+  by:
+    high_risk:
+      central: 10
+      min: 2
+      max: 30
+    transparency:
+      central: 1
+      min: 0
+      max: 3
+    unregulated:
+      central: 0
+      min: 0
+      max: 0
+  note: high-risk central refers to the EU
+- id: P.32a
+  name: High-risk use-case friction φ^HR
+  central: 0.6
+  min: 0.3
+  max: 0.9
+  unit: multiplier
+  tag: E
+  tag_primary: E
+  source: applies to Annex III task share only
+  group: regulation_and_access
+- id: P.32b
+  name: Transparency-class friction φ^T
+  central: 0.9
+  min: 0.7
+  max: 1.0
+  unit: multiplier
+  tag: E
+  tag_primary: E
+  source: ''
+  group: regulation_and_access
+- id: P.33
+  name: EU employment-protection multiplier on layoffs
+  central: 0.5
+  min: 0.3
+  max: 0.8
+  unit: multiplier
+  tag: D
+  tag_primary: D
+  source: OECD EPL ratio
+  group: regulation_and_access
+- id: P.37
+  name: Availability gate v_min
+  central: 0.5
+  min: 0.25
+  max: 0.75
+  unit: —
+  tag: E
+  tag_primary: E
+  source: ''
+  group: regulation_and_access
+- id: P.38
+  name: Compute depreciation
+  central: 20
+  min: 12
+  max: 28
+  unit: quarters
+  tag: S
+  tag_primary: S
+  source: hyperscaler useful-life disclosures (5-6 years)
+  group: compute_and_supply
+- id: P.39
+  name: Capacity price exponent ξ
+  central: 1.0
+  min: 0.5
+  max: 2
+  unit: —
+  tag: E
+  tag_primary: E
+  source: ''
+  group: compute_and_supply
+- id: P.57
+  name: Market-share capability sensitivity β_m
+  central: 1.0
+  min: 0.5
+  max: 2
+  unit: per doubling
+  tag: E
+  tag_primary: E
+  source: ''
+  group: compute_and_supply
+- id: P.58
+  name: Market-share price sensitivity ψ_p
+  central: 0.5
+  min: 0.2
+  max: 1
+  unit: —
+  tag: E
+  tag_primary: E
+  source: Ramp vendor shares as loose check
+  group: compute_and_supply
+- id: P.40
+  name: Augmentation gain ψ
+  central: 0.25
+  min: 0.1
+  max: 0.5
+  unit: share
+  tag: S
+  tag_primary: S
+  source: Brynjolfsson-Li-Raymond 14/15%, 34% novices; Noy-Zhang -40% time; Peng 55.8%; Dell'Acqua 12.2% tasks,
+    25.1% faster
+  group: adoption
+- id: P.41
+  name: Bass p (fixed, not fitted)
+  central: 0.03
+  min: 0.01
+  max: 0.06
+  unit: per year
+  tag: S
+  tag_primary: S
+  source: Sultan et al. 1990
+  group: adoption
+- id: P.42
+  name: Bass q (fitted)
+  central: 0.38
+  min: 0.2
+  max: 0.6
+  unit: per year
+  tag: S→fit
+  tag_primary: S
+  source: ''
+  group: adoption
+  fitted: true
+  note: 0.38 is the prior
+- id: P.43
+  name: Spillover q^× (fixed prior)
+  central: 0.1
+  min: 0
+  max: 0.3
+  unit: per year
+  tag: E
+  tag_primary: E
+  source: not identifiable from shared clock
+  group: adoption
+- id: P.44
+  name: Spillover lag L
+  central: 4
+  min: 2
+  max: 8
+  unit: quarters
+  tag: E
+  tag_primary: E
+  source: ''
+  group: adoption
+- id: P.45
+  name: Spillover weights
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: D
+  tag_primary: D
+  source: ''
+  group: adoption
+  note: TiVA-based
+- id: P.46
+  name: Hurdle B*_f by size (fitted)
+  central: null
+  min: null
+  max: null
+  unit: $/worker-q
+  tag: E→fit
+  tag_primary: E
+  source: ''
+  group: adoption
+  fitted: true
+  note: no central given; fitted
+- id: P.47
+  name: Hurdle dispersion b (fixed)
+  central: null
+  min: null
+  max: null
+  unit: $/worker-q
+  tag: E
+  tag_primary: E
+  source: ''
+  group: adoption
+  note: no central given
+- id: P.48
+  name: Sector friction φ_s
+  central: null
+  min: 0.5
+  max: 2
+  unit: multiplier
+  tag: D
+  tag_primary: D
+  source: ''
+  group: adoption
+  note: central 'from BTOS' (derived); range ×0.5-2 around the derived value
+- id: P.49
+  name: Size friction φ_f
+  central: null
+  min: null
+  max: null
+  unit: multiplier
+  tag: D
+  tag_primary: D
+  source: BTOS 32% employment- vs 18% firm-weighted
+  group: adoption
+  by:
+    small:
+      central: 0.6
+      min: 0.4
+      max: 0.8
+    mid:
+      central: 0.8
+      min: 0.6
+      max: 1.0
+    large:
+      central: 1.0
+      min: 0.8
+      max: 1.2
+  range_note: ±0.2
+- id: P.50
+  name: Intensity ceiling ι^max
+  central: 0.7
+  min: 0.4
+  max: 0.9
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ''
+  group: adoption
+- id: P.51
+  name: Intensity ramp
+  central: 0.08
+  min: 0.04
+  max: 0.15
+  unit: per quarter
+  tag: E
+  tag_primary: E
+  source: ''
+  group: adoption
+- id: P.52
+  name: Entrant adoption A^ent and entry rate ε
+  central: null
+  min: null
+  max: null
+  unit: share; per year
+  tag: D
+  tag_primary: D
+  source: ''
+  group: adoption
+  range_note: ±50%
+  by:
+    entrant_adoption:
+      central: null
+      min: null
+      max: null
+      note: BTOS young firms
+    entry_rate:
+      central: 0.08
+      min: 0.04
+      max: 0.12
+      note: BDS ~8%/yr, ±50%
+- id: P.53
+  name: Pass-through to prices π_p
+  central: 0.7
+  min: 0.3
+  max: 1.0
+  unit: share
+  tag: E
+  tag_primary: E
+  source: the disputed step from productivity to living standards
+  group: labor
+- id: P.54
+  name: Data-center jobs per $bn capex
+  central: null
+  min: null
+  max: null
+  unit: jobs/$bn
+  tag: D
+  tag_primary: D
+  source: construction temporary, operations persistent
+  group: labor
+  range_note: ±50%
+  note: central 'from BLS/QCEW'
+- id: P.55
+  name: AI-development jobs per $bn AI spend
+  central: null
+  min: null
+  max: null
+  unit: jobs/$bn
+  tag: D
+  tag_primary: D
+  source: ''
+  group: labor
+  range_note: ±50%
+  note: central 'from BLS OEWS 5415/5182'
+- id: P.60
+  name: Output demand elasticity η_s
+  central: null
+  min: null
+  max: null
+  unit: elasticity
+  tag: S
+  tag_primary: S
+  source: Bessen 2019
+  group: labor
+  by:
+    tradables:
+      central: 1.0
+      min: 0.5
+      max: 1.5
+    local_services:
+      central: 0.6
+      min: 0.3
+      max: 1.0
+- id: P.61
+  name: Reinstatement ρ_new
+  central: 0.4
+  min: 0.1
+  max: 0.8
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ensemble axis
+  group: labor
+- id: P.62
+  name: New-task lag
+  central: 8
+  min: 4
+  max: 16
+  unit: quarters
+  tag: E
+  tag_primary: E
+  source: ''
+  group: labor
+- id: P.63
+  name: Net occupational attrition ς^occ
+  central: 2.5
+  min: 1.5
+  max: 3.5
+  unit: '%/quarter'
+  tag: D
+  tag_primary: D
+  source: 'CPS matched files: retirement + occupation change + LF exit; within-occupation quits excluded (JOLTS
+    total separations 3.3%/mo is the wrong quantity)'
+  group: labor
+- id: P.64
+  name: Layoff friction
+  central: 0.25
+  min: 0.1
+  max: 0.5
+  unit: share of gap/q
+  tag: E
+  tag_primary: E
+  source: ''
+  group: labor
+- id: P.65
+  name: Seniority protection
+  central: 0.5
+  min: 0
+  max: 1
+  unit: index
+  tag: E
+  tag_primary: E
+  source: ''
+  group: labor
+- id: P.66
+  name: Skill-distance decay
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: D
+  tag_primary: D
+  source: ''
+  group: labor
+  note: fitted
+- id: P.67
+  name: Occupation transition matrix
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: D
+  tag_primary: D
+  source: CPS matched monthly
+  group: labor
+- id: P.68
+  name: Retraining entry base rate
+  central: null
+  min: null
+  max: null
+  unit: per quarter
+  tag: D
+  tag_primary: D
+  source: ''
+  group: labor
+  range_note: ±50%
+  note: by cohort
+- id: P.69
+  name: Scarring ℓ
+  central: 0.12
+  min: 0.05
+  max: 0.25
+  unit: share
+  tag: S
+  tag_primary: S
+  source: Jacobson et al. 1993; Davis-von Wachter 2011
+  group: labor
+- id: P.70
+  name: Retraining success
+  central: 0.55
+  min: 0.35
+  max: 0.75
+  unit: probability
+  tag: E
+  tag_primary: E
+  source: WIOA
+  group: labor
+- id: P.71
+  name: Retraining duration
+  central: 4
+  min: 2
+  max: 8
+  unit: quarters
+  tag: D
+  tag_primary: D
+  source: ''
+  group: labor
+- id: P.72
+  name: Hours conversion, shorter week
+  central: 0.8
+  min: 0.5
+  max: 1
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ''
+  group: labor
+- id: P.73
+  name: Wage adjustment ε_w
+  central: 0.3
+  min: 0.15
+  max: 0.6
+  unit: per quarter
+  tag: S
+  tag_primary: S
+  source: partial adjustment toward Lichter et al. 2015 (mean -0.51, median -0.39)
+  group: labor
+- id: P.74
+  name: Productivity pass-through to wages β
+  central: 0.3
+  min: 0.1
+  max: 0.6
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ensemble axis
+  group: labor
+- id: P.56
+  name: Crowding-out of incremental AI investment
+  central: 0.3
+  min: 0
+  max: 0.7
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ''
+  group: macro
+- id: P.80
+  name: U.S. AI capex 2025
+  central: 400
+  min: 380
+  max: 415
+  unit: $bn
+  tag: S
+  tag_primary: S
+  source: Alphabet 91.4, Amazon 131.8, Meta 72.2, Microsoft ≈88-118
+  group: macro
+- id: P.81
+  name: Capex growth 2026
+  central: 80
+  min: 60
+  max: 100
+  unit: '%'
+  tag: S
+  tag_primary: S
+  source: Jul 2026 guidance ≈ $720-760bn
+  group: macro
+- id: P.82
+  name: Capex path after 2026
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: E
+  tag_primary: E
+  source: ''
+  group: macro
+  by:
+    growth_per_year_2027_2029:
+      central: 10
+      min: -10
+      max: 30
+      unit: '%/yr'
+    plateau_start_year:
+      central: 2030
+      min: 2027
+      max: 2033
+      unit: year
+  note: '''+10%/yr to 2029, then flat''; range ''-10-+30%/yr; plateau 2027-2033'''
+- id: P.83
+  name: Domestic value-added share of capex
+  central: 0.5
+  min: 0.3
+  max: 0.7
+  unit: share
+  tag: E
+  tag_primary: E
+  source: ''
+  group: macro
+- id: P.84
+  name: Productivity J-curve lag
+  central: 4
+  min: 0
+  max: 8
+  unit: quarters
+  tag: S
+  tag_primary: S
+  source: Brynjolfsson-Rock-Syverson
+  group: macro
+- id: P.85
+  name: Value-chain split of AI spend
+  central: null
+  min: null
+  max: null
+  unit: share
+  tag: D
+  tag_primary: D
+  source: public gross margins (model providers, cloud, NVIDIA, TSMC, ASML)
+  group: macro
+  by:
+    model:
+      central: 0.25
+      min: 0.15
+      max: 0.35
+    compute:
+      central: 0.35
+      min: 0.25
+      max: 0.45
+    chips:
+      central: 0.25
+      min: 0.15
+      max: 0.35
+    integration:
+      central: 0.15
+      min: 0.05
+      max: 0.25
+  range_note: ±0.1 each
+- id: P.86
+  name: MPC by decile
+  central: null
+  min: null
+  max: null
+  unit: share
+  tag: S
+  tag_primary: S
+  source: Fagereng et al.; CBO
+  group: macro
+  by:
+    d01:
+      central: 0.9
+      min: 0.8
+      max: 1.0
+    d02:
+      central: 0.8444
+      min: 0.7444
+      max: 0.9444
+    d03:
+      central: 0.7889
+      min: 0.6889
+      max: 0.8889
+    d04:
+      central: 0.7333
+      min: 0.6333
+      max: 0.8333
+    d05:
+      central: 0.6778
+      min: 0.5778
+      max: 0.7778
+    d06:
+      central: 0.6222
+      min: 0.5222
+      max: 0.7222
+    d07:
+      central: 0.5667
+      min: 0.4667
+      max: 0.6667
+    d08:
+      central: 0.5111
+      min: 0.4111
+      max: 0.6111
+    d09:
+      central: 0.4556
+      min: 0.3556
+      max: 0.5556
+    d10:
+      central: 0.4
+      min: 0.3
+      max: 0.5
+  range_note: ±0.1
+  note: '''0.9 → 0.4'' across deciles; linear interpolation between the endpoints is our reading (E).'
+- id: P.87
+  name: Demand multiplier m
+  central: 0.6
+  min: 0.3
+  max: 1.2
+  unit: —
+  tag: S/E
+  tag_primary: S
+  source: ''
+  group: macro
+- id: P.88
+  name: Import shares
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: S
+  tag_primary: S
+  source: ''
+  group: macro
+  note: TiVA
+- id: P.89
+  name: Within-decile spread
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: D
+  tag_primary: D
+  source: ''
+  group: macro
+  note: CPS
+- id: P.90
+  name: Copula block correlations
+  central: null
+  min: null
+  max: null
+  unit: —
+  tag: E
+  tag_primary: E
+  source: §7.1 table
+  group: macro
+  range_note: ±0.2
+  by:
+    feasibility_level:
+      central: 0.7
+      min: 0.5
+      max: 0.9
+    speed:
+      central: 0.5
+      min: 0.3
+      max: 0.7
+    friction:
+      central: 0.6
+      min: 0.4
+      max: 0.8
+    labor_institutions:
+      central: 0.4
+      min: 0.2
+      max: 0.6
+    regions:
+      central: 0.8
+      min: 0.6
+      max: 1.0
+  note: 'Speed block: τ₀, ρ (negative), γ_n — magnitude ±0.5 with ρ entering negatively.'

@@ -1,0 +1,2 @@
+sector_code,title,labor_cost_share,demand_elasticity,tradable,friction,consumption_share,source_tag
+ALL,All industries (Phase 1 single-sector fixture),0.58,0.8,0,1.0,1.0,FIXTURE

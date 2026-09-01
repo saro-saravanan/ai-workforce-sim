@@ -1,0 +1,24 @@
+[project]
+name = "ai-workforce-sim-workspace"
+version = "0.1.0"
+description = "Workspace root for the AI workforce impact simulation"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv.workspace]
+members = ["sim", "api"]
+
+[tool.uv.sources]
+aiwsim = { workspace = true }
+aiwsim-api = { workspace = true }
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10", "jsonschema>=4"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+testpaths = ["sim/tests", "api/tests"]
+addopts = "--import-mode=importlib"

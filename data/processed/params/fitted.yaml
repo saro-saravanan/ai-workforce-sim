@@ -1,0 +1,17 @@
+q: 0.55
+bstar:
+  small: 1200.0
+  mid: 600.0
+  large: 0.0
+loss: 0.46540162020335907
+fit_points:
+  firm_t6: 0.11110193708648057
+  firm_t7: 0.12177313511747231
+  firm_t9: 0.1442392813600295
+  emp_t7: 0.2984286122511952
+targets:
+  firm_t6: 0.1
+  firm_growth_t7_t9: 0.025
+  emp_t7: 0.32
+note: "p, b, q_x fixed at priors; q and B* fitted; BTOS wording break treated as a\
+  \ level shift (spec \xA77.4)."

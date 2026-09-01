@@ -1,0 +1,17 @@
+{
+  "table": "sectors",
+  "source": "contracts §1 Phase 1 sector fixture",
+  "source_url": "docs/contracts.md",
+  "license": "n/a (fixture)",
+  "pulled_at": "2026-09-01",
+  "commit": "",
+  "sha256": "250fad608d83457202eddf6ec781e626484f27ecca96c064ec19102e9f80c60a",
+  "transformations": [
+    "single sector ALL: labor_cost_share 0.58, demand_elasticity 0.8, tradable 0, friction 1.0, consumption_share 1.0"
+  ],
+  "status": "FIXTURE",
+  "notes": "Replaced by the OEWS occupation x industry matrix (ingest/oews.py) mapped to the 20 sectors of spec §1.2 listed in data/fixtures/sectors_20.csv; labor_cost_share from BEA I-O, consumption_share from CPI relative importance.",
+  "built_at": "2026-09-01T23:24:37+00:00",
+  "output": "data/processed/sectors.csv",
+  "extra": {}
+}

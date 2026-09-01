@@ -1,0 +1,16 @@
+[project]
+name = "aiwsim"
+version = "0.1.0"
+description = "Simulation core: AI workforce impact model (spec v0.2)"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.0", "polars>=1.0", "pyyaml>=6", "jsonschema>=4"]
+
+[project.scripts]
+aiwsim = "aiwsim.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["aiwsim"]

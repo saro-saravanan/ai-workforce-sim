@@ -1,0 +1,15 @@
+company,year,capex_bn_usd,basis,source_tag,capex_bn_usd_low,capex_bn_usd_high,note
+Microsoft,2024,56.0,fiscal,real (transcribed; secondary confirmation),,,FY ending Jun 2024; incl. finance leases; approximate
+Microsoft,2024,76.0,calendar,real (transcribed; secondary confirmation),,,calendar 2024; incl. finance leases; approximate
+Microsoft,2025,88.0,fiscal,real (transcribed; secondary confirmation),,,FY ending Jun 2025; incl. finance leases; approximate
+Microsoft,2025,118.0,calendar,real (transcribed; secondary confirmation),,,calendar 2025; incl. finance leases; approximate
+Microsoft,2026,175.0,guidance,real (transcribed; secondary confirmation),,,"Jul 2026 guidance, calendar basis; approximate"
+Alphabet,2024,52.5,fiscal,real (transcribed; secondary confirmation),,,""
+Alphabet,2025,91.4,fiscal,real (transcribed; secondary confirmation),,,""
+Alphabet,2026,200.0,guidance,real (transcribed; secondary confirmation),195.0,205.0,Jul 2026 guidance range 195-205; midpoint
+Amazon,2024,83.0,fiscal,real (transcribed; secondary confirmation),,,""
+Amazon,2025,131.8,fiscal,real (transcribed; secondary confirmation),,,""
+Amazon,2026,220.0,guidance,real (transcribed; secondary confirmation),,,Jul 2026 guidance; approximate
+Meta,2024,39.2,fiscal,real (transcribed; secondary confirmation),,,incl. finance-lease principal
+Meta,2025,72.2,fiscal,real (transcribed; secondary confirmation),,,incl. finance-lease principal
+Meta,2026,137.5,guidance,real (transcribed; secondary confirmation),130.0,145.0,Jul 2026 guidance range 130-145; midpoint

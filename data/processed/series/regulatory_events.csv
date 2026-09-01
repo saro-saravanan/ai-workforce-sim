@@ -1,0 +1,26 @@
+event_id,region,date,kind,description,source_tag,date_precision
+EU-AIA-01,EU,2024-08-01,in_force,"EU AI Act, Reg. (EU) 2024/1689, enters into force",real (transcribed; secondary confirmation),day
+EU-AIA-02,EU,2025-02-02,obligation_start,EU AI Act prohibitions apply,real (transcribed; secondary confirmation),day
+EU-AIA-03,EU,2025-08-02,obligation_start,EU AI Act GPAI and governance obligations apply,real (transcribed; secondary confirmation),day
+EU-AIA-04,EU,2026-08-02,superseded,"EU AI Act Annex III high-risk obligations, original application date (superseded by EU-AIA-05)",real (transcribed; secondary confirmation),day
+EU-AIA-05,EU,2026-07-24,published,"Digital Omnibus on AI, Reg. (EU) 2026/1744, published in the Official Journal",real (transcribed; secondary confirmation),day
+EU-AIA-06,EU,2026-07-27,in_force,Digital Omnibus on AI enters into force,real (transcribed; secondary confirmation),day
+EU-AIA-07,EU,2027-12-02,obligation_start,EU AI Act Annex III high-risk obligations apply (moved by the Digital Omnibus),real (transcribed; secondary confirmation),day
+EU-AIA-08,EU,2028-08-02,obligation_start,EU AI Act Annex I high-risk obligations apply (moved by the Digital Omnibus),real (transcribed; secondary confirmation),day
+US-CO-01,US-CO,2026-06-30,delay,Colorado SB 24-205 effective date delayed to 30 Jun 2026,real (transcribed; secondary confirmation),day
+US-CO-02,US-CO,2026-05-14,signed,"Colorado SB 26-189 signed, repealing and replacing SB 24-205",real (transcribed; secondary confirmation),day
+US-CO-03,US-CO,2027-01-01,effective,Colorado SB 26-189 effective,real (transcribed; secondary confirmation),day
+US-CA-01,US-CA,2025-09-29,signed,California SB 53 signed (frontier models above 10^26 FLOP),real (transcribed; secondary confirmation),day
+US-CA-02,US-CA,2026-01-01,effective,California SB 53 operative,real (transcribed; secondary confirmation),day
+CN-GAI-01,CN,2023-07-10,issued,Interim Measures for Generative AI Services issued,real (transcribed; secondary confirmation),day
+CN-GAI-02,CN,2023-08-15,effective,Interim Measures for Generative AI Services effective; security assessment and algorithm filing,real (transcribed; secondary confirmation),day
+CN-GAI-03,CN,2026-06-30,milestone,988 generative AI services fully filed,real (transcribed; secondary confirmation),day
+US-EXP-01,US,2022-10-07,export_control,BIS advanced computing and semiconductor rule,real (transcribed; secondary confirmation),day
+US-EXP-02,US,2023-10-17,export_control,BIS updated advanced computing rule,real (transcribed; secondary confirmation),day
+US-EXP-03,US,2025-01-13,export_control,BIS AI Diffusion rule issued,real (transcribed; secondary confirmation),day
+US-EXP-04,US,2025-05-13,export_control,AI Diffusion rule rescission announced,real (transcribed; secondary confirmation),day
+US-EXP-05,US,2025-04-01,export_control,H20 license requirement imposed,real (transcribed; secondary confirmation),month
+US-EXP-06,US,2025-08-01,export_control,H20 export licenses granted with a 15% revenue expectation,real (transcribed; secondary confirmation),month
+US-EXP-07,US,2025-12-08,export_control,H200 exports to China approved with a 25% revenue share,real (transcribed; secondary confirmation),day
+US-EXP-08,US,2026-01-15,export_control,BIS case-by-case licensing rule effective,real (transcribed; secondary confirmation),day
+US-EXP-09,CN,2026-08-26,milestone,First H200 sales to China reported after Chinese customs had blocked imports,real (transcribed; secondary confirmation),day
