@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/saro-saravanan/ai-workforce-sim/scenarios/schema.json",
-  "title": "AI Workforce Sim scenario (v0.1 draft, for review)",
+  "title": "AI Workforce Sim scenario (v0.2 draft, for review)",
   "type": "object",
   "required": [
     "schema_version",
@@ -11,7 +11,7 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "0.1"
+      "const": "0.2"
     },
     "id": {
       "type": "string",
@@ -29,7 +29,7 @@
         "string",
         "null"
       ],
-      "description": "Scenario id to inherit from; null only for baseline."
+      "description": "Scenario id to inherit from; null only for baseline. Scalars and objects deep-merge over the parent; shocks are keyed by id (same id replaces the parent's shock); remove_shocks drops parent shocks by id; overrides merge by parameter id."
     },
     "created": {
       "type": "string",
@@ -119,6 +119,33 @@
                   }
                 }
               }
+            },
+            "ever_automatable_scale": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 1.5,
+              "description": "Multiplies P.20-P.22 (ever-automatable mass by exposure class)."
+            },
+            "domain_transfer": {
+              "type": "object",
+              "properties": {
+                "other_cognitive": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 1.0
+                },
+                "interpersonal": {
+                  "type": "number",
+                  "minimum": 0.2,
+                  "maximum": 0.8
+                }
+              },
+              "description": "P.34: fraction of software-task progress that transfers to other modalities."
+            },
+            "clock_saturation_doublings": {
+              "type": "number",
+              "minimum": 14,
+              "maximum": 24
             }
           }
         },
@@ -139,6 +166,20 @@
               "type": "number",
               "minimum": 1,
               "maximum": 5
+            },
+            "compute_capacity_constraint": {
+              "type": "boolean",
+              "default": true
+            },
+            "capacity_price_exponent": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 2
+            },
+            "token_growth_per_doubling": {
+              "type": "number",
+              "minimum": 0.4,
+              "maximum": 1.0
             }
           }
         },
@@ -154,6 +195,14 @@
                     "baseline",
                     "delayed_2y",
                     "strict_original_2026"
+                  ],
+                  "description": "baseline = Reg. (EU) 2026/1744 timetable (Annex III 2 Dec 2027, Annex I 2 Aug 2028); delayed_2y = a further two-year delay; strict_original_2026 = original 2 Aug 2026 timetable."
+                },
+                "data_localization": {
+                  "enum": [
+                    "none",
+                    "partial",
+                    "full"
                   ]
                 }
               }
@@ -222,6 +271,12 @@
                 "minimum": 0.1,
                 "maximum": 4
               }
+            },
+            "entrant_scale": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Scales AI-native entrant adoption (P.52)."
             }
           }
         },
@@ -242,6 +297,24 @@
               "type": "number",
               "minimum": 0.02,
               "maximum": 1
+            },
+            "price_pass_through": {
+              "type": "number",
+              "minimum": 0.3,
+              "maximum": 1.0,
+              "description": "P.53"
+            },
+            "occupational_attrition_pct_per_quarter": {
+              "type": "number",
+              "minimum": 1.5,
+              "maximum": 3.5,
+              "description": "P.63"
+            },
+            "wage_pass_through": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 0.6,
+              "description": "P.74"
             }
           }
         },
@@ -285,7 +358,53 @@
                 "type": "number",
                 "minimum": 0,
                 "maximum": 3
+              },
+              "financing": {
+                "type": "object",
+                "description": "Financing rule per policy; defaults: retraining=deficit, wage_insurance=ai_tax, ubi=ai_tax.",
+                "properties": {
+                  "retraining": {
+                    "enum": [
+                      "deficit",
+                      "ai_tax",
+                      "income_tax_surcharge"
+                    ]
+                  },
+                  "wage_insurance": {
+                    "enum": [
+                      "deficit",
+                      "ai_tax",
+                      "income_tax_surcharge"
+                    ]
+                  },
+                  "ubi": {
+                    "enum": [
+                      "deficit",
+                      "ai_tax",
+                      "income_tax_surcharge"
+                    ]
+                  },
+                  "work_week": {
+                    "enum": [
+                      "deficit",
+                      "ai_tax",
+                      "income_tax_surcharge"
+                    ]
+                  }
+                }
               }
+            }
+          }
+        },
+        "baseline": {
+          "type": "object",
+          "properties": {
+            "bls_ai_adjustment": {
+              "enum": [
+                "restore_trend",
+                "keep_projection"
+              ],
+              "default": "restore_trend"
             }
           }
         }
@@ -296,6 +415,7 @@
       "items": {
         "type": "object",
         "required": [
+          "id",
           "type",
           "at"
         ],
@@ -343,6 +463,10 @@
           },
           "region": {
             "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
           }
         }
       }
@@ -369,6 +493,31 @@
             "type": "object",
             "description": "Optional per-index override (sector, region, cohort)."
           }
+        }
+      }
+    },
+    "remove_shocks": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Ids of parent shocks to drop."
+    },
+    "ensemble": {
+      "type": "object",
+      "properties": {
+        "mechanisms": {
+          "enum": [
+            "all",
+            "central"
+          ],
+          "default": "all",
+          "description": "all = 2x2x2 structural ensemble (spec 7.2); central = single mechanism set."
+        },
+        "shapley": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run Shapley channel attribution as a background job."
         }
       }
     }

@@ -1,9 +1,26 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "id": "eu-delay-deepseek-2027",
   "name": "EU AI Act delayed 2y + DeepSeek open frontier 2027",
   "description": "Example what-if from the brief. Diff vs baseline: regulation.EU.ai_act, one shock.",
   "parent": "baseline",
-  "levers": { "regulation": { "EU": { "ai_act": "delayed_2y" } } },
-  "shocks": [ { "type": "open_weights_release", "actor": "deepseek", "at": "2027Q1", "frontier_lag_quarters": 0 } ]
+  "levers": {
+    "regulation": {
+      "EU": {
+        "ai_act": "delayed_2y"
+      }
+    }
+  },
+  "shocks": [
+    {
+      "id": "deepseek-open-2027",
+      "type": "open_weights_release",
+      "actor": "deepseek",
+      "at": "2027Q1",
+      "frontier_lag_quarters": 0
+    }
+  ],
+  "ensemble": {
+    "mechanisms": "all"
+  }
 }

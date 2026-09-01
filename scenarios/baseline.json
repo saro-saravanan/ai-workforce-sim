@@ -1,8 +1,8 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "id": "baseline",
   "name": "Consensus central",
-  "description": "v0.1 defaults from docs/model-spec.md section 10. All levers at central values, no shocks.",
+  "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
   "parent": null,
   "seed": 42,
   "draws": 200,
@@ -15,16 +15,26 @@
       "doubling_months": 6,
       "doubling_drift_per_year": 0.0,
       "feedback_from_revenue": false,
-      "robotics_doubling_months": 24
+      "robotics_doubling_months": 24,
+      "ever_automatable_scale": 1.0,
+      "domain_transfer": {
+        "other_cognitive": 0.7,
+        "interpersonal": 0.5
+      },
+      "clock_saturation_doublings": 20
     },
     "cost": {
       "price_decline_per_year": 10,
       "open_weights_multiplier": 0.25,
-      "cost_floor_decline_per_year": 2
+      "cost_floor_decline_per_year": 2,
+      "compute_capacity_constraint": true,
+      "capacity_price_exponent": 1.0,
+      "token_growth_per_doubling": 0.7
     },
     "regulation": {
       "EU": {
-        "ai_act": "baseline"
+        "ai_act": "baseline",
+        "data_localization": "none"
       },
       "US": {
         "regime": "state_patchwork"
@@ -38,12 +48,16 @@
       "sector_friction_scale": 1.0,
       "small_firm_friction_scale": 1.0,
       "intensity_ceiling": 0.7,
-      "spillover_lag_quarters": 4
+      "spillover_lag_quarters": 4,
+      "entrant_scale": 1.0
     },
     "labor": {
       "reinstatement_ratio": 0.4,
       "demand_elasticity_scale": 1.0,
-      "layoff_friction": 0.25
+      "layoff_friction": 0.25,
+      "price_pass_through": 0.7,
+      "occupational_attrition_pct_per_quarter": 2.5,
+      "wage_pass_through": 0.3
     },
     "policy": {
       "US": {
@@ -53,10 +67,23 @@
         "ubi_monthly_usd": 0,
         "ai_tax_pct_of_ai_spend": 0,
         "work_week_hours": 40,
-        "immigration_scale": 1.0
+        "immigration_scale": 1.0,
+        "financing": {
+          "retraining": "deficit",
+          "wage_insurance": "ai_tax",
+          "ubi": "ai_tax",
+          "work_week": "deficit"
+        }
       }
+    },
+    "baseline": {
+      "bls_ai_adjustment": "restore_trend"
     }
   },
   "shocks": [],
-  "overrides": {}
+  "overrides": {},
+  "ensemble": {
+    "mechanisms": "all",
+    "shapley": false
+  }
 }

@@ -1,4 +1,4 @@
-# Data inventory v0.1 — sources, licenses, gaps
+# Data inventory v0.2 — sources, licenses, gaps
 
 Compiled 2026-09-01. Every source was checked against its primary page or, where the sandbox could not reach the domain, against the search index and at least one secondary page. Verification status per row: **direct** = primary page fetched; **indirect** = confirmed through secondary pages only; **unverified** = could not be confirmed. Nothing in this inventory comes from memory.
 
@@ -40,6 +40,20 @@ Provenance rule for ingestion: every dataset pulled by `data/ingest/*` writes a 
 | 19 | Hyperscaler capex (Microsoft, Alphabet, Amazon, Meta) | SEC EDGAR 10-K/10-Q/8-K | Public filings | Company-level capex, incl. finance leases where reported | FY2025 10-Ks; Jul 2026 guidance | EDGAR | indirect | Microsoft June fiscal year; Meta includes finance-lease principal; see §4 |
 | 20 | Regulatory timeline (EU, U.S., China, export controls) | Official journals, BIS press releases, state legislatures; see §5 | Public record | — | Jul 2026 | — | indirect | Encoded as data (`data/regulatory_events.yaml`), not code |
 | 21 | Natural Earth | https://www.naturalearthdata.com/ ; https://github.com/nvkelso/natural-earth-vector | Public domain | World admin-0 (countries, covers EU members), admin-1 (U.S. states); 1:10m/50m/110m | 5.1.x (dev 5.2.0-pre) | Shapefile/GeoJSON | direct (repo) | Sufficient for every map in the spec; Eurostat GISCO NUTS is **non-commercial** and is not needed |
+
+### Added for v0.2
+
+| # | Source | URL | License / terms | Coverage | Access | Status | Feeds |
+|---|---|---|---|---|---|---|---|
+| 22 | Federal Reserve Survey of Consumer Finances 2022 | https://www.federalreserve.gov/econres/scfindex.htm | Public domain | U.S. households; wealth and capital income by decile | Bulk | unverified in sandbox (domain blocked) | Income Gini, rents to households (§6.4, §6.6) |
+| 23 | Census Business Dynamics Statistics | https://www.census.gov/programs-surveys/bds.html | Public domain | Firm entry rates by sector and size | Bulk | unverified in sandbox | AI-native entrant term (§4.2) |
+| 24 | BEA Input-Output accounts | https://www.bea.gov/industry/input-output-accounts-data | Public domain | Labor cost shares by industry | Bulk | unverified in sandbox | Unit-cost equation `s^L` (§5.2) |
+| 25 | BLS CPI relative importance weights | https://www.bls.gov/cpi/tables/relative-importance/ | Public domain | Consumption shares by category | Bulk | unverified in sandbox | Price index (§6.2) |
+| 26 | BLS Employment Projections methodology, AI adjustments | https://www.bls.gov/emp/ | Public domain | Occupations whose projections were adjusted for AI | PDF/HTML | **unverified**; if the list is incomplete the baseline lever falls back to trend | Baseline reconstruction (§7.6) |
+| 27 | O*NET Work Context (presence items) | part of O*NET 31.0 (row 1) | CC BY 4.0 | "Face-to-Face Discussions", "Physical Proximity", "Deal With External Customers", "Performing for the Public" | Bulk | indirect | Presence requirement `π_k` (§2.2) |
+| 28 | Public gross margins for the value-chain split | SEC filings: NVIDIA, TSMC (20-F), ASML (20-F), Microsoft, Alphabet, Amazon; model-provider margins from press estimates | Public filings; press estimates flagged `E` | Stage shares of AI spend | EDGAR | indirect (NVIDIA 10-K FY2026 confirmed) | Rents by stage (§6.3) |
+| 29 | CPS matched monthly files (occupation exits) | via IPUMS CPS (row 7) | IPUMS terms | Retirement, occupation change, labor-force exit by occupation and age | IPUMS extracts | indirect | Net occupational attrition `P.63`, transition matrix `P.67` |
+| 30 | BTOS young-firm cut | row 8 | Public domain | AI use by firm age | Bulk | indirect | Entrant adoption `P.52` |
 
 ## 3. Key series recorded during verification
 
@@ -118,7 +132,7 @@ Provenance rule for ingestion: every dataset pulled by `data/ingest/*` writes a 
 
 ## 8. Gaps that matter, in priority order
 
-1. **No dataset gives the capability threshold `θ_k`** at which AI performs an O*NET task unsupervised. This is the model's largest estimated quantity (spec §2.1, risks #1). Partial remedy: map METR task horizons to O*NET task complexity ratings; a proper benchmark keyed to O*NET tasks does not exist.
+1. **No dataset gives the ever-automatable mass `a_k` or the feasibility point `θ_k`** for an O*NET task. v0.2 anchors `θ_k` to Anthropic Economic Index task usage (a lower bound, single vendor) and makes `a_k` an explicit prior (spec §2.2, risks #1–2). A benchmark keyed to O*NET tasks does not exist.
 2. **China occupational employment** exists only at census years; the China labor layer will be interpolated and flagged.
 3. **IMF complementarity index** is not published at occupation level; reconstruct from AIOE and the paper's method.
 4. **ISCO-08 ↔ SOC 2018** has no official crosswalk; chain through SOC 2010 and score mapping quality per cluster.

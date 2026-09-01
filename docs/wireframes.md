@@ -1,4 +1,4 @@
-# Wireframes v0.1 (low fidelity)
+# Wireframes v0.2 (low fidelity)
 
 Single-page app. One scenario, one time scrubber, seven views. Every view reads the same cached run. Dark/light themes; projector-legible (min 14 px labels, 4.5:1 contrast, bands as translucent fills, never more than two hues per chart plus a neutral).
 
@@ -77,7 +77,7 @@ Left nodes = origin occupation clusters (top 6 + other). Right nodes = labor-mar
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │ Exposure vs realized displacement, 2029 Q3                   │
-│  Realized displacement (share of 2023 jobs)                  │
+│  Realized displacement (share of 2023 jobs)  vs ceiling      │
 │  30% ┤                                   ○ Customer service  │
 │      │                            ● Paralegals              │
 │  20% ┤                       ○ Bookkeepers                   │
@@ -85,10 +85,11 @@ Left nodes = origin occupation clusters (top 6 + other). Right nodes = labor-mar
 │  10% ┤            ○ Software devs  ◯ Accountants             │
 │      │      ○ Nurses         ○ Financial analysts  ◯ Lawyers │
 │   0% ┼──○───○─────◯──────────────────────────────────────── │
-│      0%   20%   40%   60%   80%   Exposure (S+G at C→∞)      │
+│      0%   20%   40%   60%   80%   Ever-automatable share Σw·a │
 │  Size = employment. Fill = confidence. Diagonal = "as exposed│
 │  as hit". Below-diagonal, large circles = exposed, not yet   │
-│  hit: the tool's headline visual.                            │
+│  hit: the tool's headline visual. Hover: feasible-but-not-   │
+│  profitable share, and the year the ceiling is approached.   │
 │  [Table view] [Sort by gap ▾]                                │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -127,11 +128,14 @@ Alternative rendering (toggle): a true heatmap, rows = occupation clusters sorte
 │ │ ╱╱╱▒▒▒▒▒▒    │ │ ╱╱▒▒▒▒▒▒     │ │ ╲╲▒▒▒▒▒▒     │           │
 │ └──────────────┘ └──────────────┘ └──────────────┘           │
 │ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐           │
-│ │ Gini +0.012  │ │ Tax base     │ │ AI rents to  │           │
-│ │              │ │ −0.6%        │ │ region 85%   │           │
+│ │ Real wages   │ │ Income Gini  │ │ AI rents by  │           │
+│ │ +1.1% [−0.4, 2.6]│ +0.014    │ │ stage, region│           │
 │ │ ╱▒▒▒▒▒▒▒     │ │ ╲▒▒▒▒▒▒      │ │ ▬▬▬▬▬▬▬      │           │
 │ └──────────────┘ └──────────────┘ └──────────────┘           │
-│ Each tile: headline at scrubber time, band, sparkline with   │
+│ Six tiles; a second row holds tax base, financing, fiscal    │
+│ balance. Each tile: headline at scrubber time, band (pooled  │
+│ mechanism ensemble; parametric vs structural on hover),       │
+│ sparkline with
 │ 10–90 fill and median line, dotted baseline. Click expands   │
 │ to full chart with channel decomposition stacked below:      │
 │   displacement ▓  augmentation ░  new tasks ▒  demand ▪ capex│
@@ -175,7 +179,8 @@ Alternative rendering (toggle): a true heatmap, rows = occupation clusters sorte
 │ └────────────────────────────┴────────────────────────────┘  │
 │ Δ (B − A)   ▁▁▂▂▃▃▄▄▅▅▅▅   EU emp −0.9 pp [−1.6, −0.3] ● high│
 │             EU GDP +0.7 pp [0.2, 1.3] ◐ medium               │
-│             US AI rents −4 pp [−7, −1] ● high                │
+│             US rent share −4 pp [−7, −1] ● high              │
+│ Spread: parametric ▒ vs structural ░ shown side by side      │
 │ Why: (mechanism trace) earlier EU availability → adoption    │
 │  +6 pp by 2029 → displacement in admin/finance ops; open     │
 │  weights cut price 4× in EU and CN → US actor revenue share ↓ │
