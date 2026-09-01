@@ -120,3 +120,46 @@ aiwsim validate              # accounting identities, quiet-aggregate, preset te
 ## 6. Web state
 
 URL query carries `scenario`, `q` (quarter index), `view`, `metric`, `state`. Pinia store `useScenario` holds the loaded results; `useScrubber` holds the quarter and playback. Theme follows `prefers-color-scheme` with a manual toggle stored in `localStorage`.
+
+---
+
+# Phase 2 additions (contracts v0.3)
+
+## 7. Cohort input tables (`data/processed/cohorts/`)
+
+| Table | Key | Columns |
+|---|---|---|
+| `occ_age.csv` | (`occ_code`, `age_band`) | `share` (sums to 1 per occ); bands `16-24`, `25-44`, `45-54`, `55+`; `source_tag` |
+| `occ_education.csv` | (`occ_code`, `education`) | `share`; levels `lt_hs`, `hs`, `some_college`, `ba_plus`; `source_tag` |
+| `occ_decile.csv` | (`occ_code`, `decile`) | `share`; national individual-earnings decile `1`..`10`; `source_tag` |
+| `national_deciles.csv` | `decile` | `lower_bound_annual` (cutpoint), `source_tag` |
+
+Phase 2 build: deciles derived from OEWS percentiles per occupation (lognormal fit through p10/p25/p50/p75/p90) against national cutpoints from the OEWS all-occupations row (D); education derived from O*NET Job Zone through a documented mapping (E); age is a FIXTURE (national CPS age distribution tilted by Job Zone) until the IPUMS CPS ASEC ingest (`ingest/cps_asec.py`) fits the joint distribution. Joint per-occupation cohort weights are the product of marginals (independence within occupation) until then; `meta.data_flags.cohorts` says which.
+
+## 8. Results document additions
+
+- `meta.draws` (int), `meta.ensemble` (`"all"` | `"central"`), `meta.cells` (list of 8 mechanism-cell ids such as `"bessen|acemoglu_low|passthrough_low"`), `meta.percentiles` (`[10,25,50,75,90]`).
+- Every stochastic series carries `p10`, `p25`, `p50`, `p75`, `p90` and `central` (the central-parameter run). Phase 1 consumers that read `p50` keep working.
+- `structural`: for each headline metric (`employment_pct_vs_baseline`, `gdp_pct_vs_baseline`, `real_wage_pct_vs_baseline`, `wage_share_pp_vs_baseline`): `{ "by_cell": { cell_id: { "p50": [...] } }, "spread": { "2030Q4": { "parametric_pp": x, "structural_pp": y }, "2040Q4": {...} } }` where parametric = mean within-cell p90−p10 and structural = range of cell medians.
+- `confidence`: for each headline metric at `2030Q4` and `2040Q4`: `{ "level": "high"|"medium"|"low", "sign_share": 0.0–1.0, "cells_agree": bool, "flip_params": ["P.61", ...] }` per spec §7.3.
+- `tornado`: for each headline metric at `2040Q4`: top 15 `{ "param", "name", "tag", "low", "high", "effect_at_low", "effect_at_high" }` from one-at-a-time min/max runs at central for everything else.
+- `cohorts`: `{ "age": [ { "band", "employment_pct_vs_baseline": {percentiles}, "share_of_jobs_lost": {percentiles} } ], "education": [...], "income_decile": [...] }` (cumulative to each quarter, arrays aligned to `meta.quarters`).
+- `flows`: `{ "origins": [ { "major_group", "title", "jobs_lost_cum": {percentiles} } ], "destinations": { "reemployed": {percentiles}, "retraining": {percentiles}, "unemployed": {percentiles}, "exited": {percentiles}, "retired": {percentiles}, "unfilled_entry": {percentiles} } }` cumulative, for the Sankey.
+- `explain.trace`: for each headline metric, central-run intermediate quantities at `2030Q4` and `2040Q4` (`automatable_share`, `realized_D`, `realized_U`, `adoption_emp`, `dln_unit_cost`, `q_ratio`, `mu`, `nu`, `price_index`) as numbers.
+- `explain.diff`: canonical diff vs parent (`[{path, from, to, mechanism}]`).
+
+## 9. API additions
+
+| Method | Path | Body / params | Returns |
+|---|---|---|---|
+| POST | `/api/run` | scenario JSON or `{id}`; optional `"draws"` (1–400) and `"ensemble"` override | `{scenario_hash, meta}`; 200 draws must complete in under 10 s |
+| GET | `/api/compare?a=HASH&b=HASH` | two result hashes | `{ "diff": [...], "delta": { "series": { metric: {p10,p50,p90} }, "states": [ {fips, employment_pct_vs_baseline: {p50}} ], "occupations": [ {occ_code, displacement: {p50}} ] }, "confidence": {metric: {...}} }`; deltas are **paired** across draws (same seed) so bands are meaningful |
+| GET | `/api/sensitivity/{hash}` | — | the `tornado` section |
+| GET | `/api/explain/{hash}?metric=M&quarter=Q` | — | `{ "value": {percentiles at Q}, "channels": {contributions at Q}, "trace": {...}, "confidence": {...}, "top_params": [...] , "notes": [...] }` |
+| GET | `/api/levers` | — | lever metadata for the what-if form: `[ { "path": "levers.capability.doubling_months", "label", "group", "type": "number"|"enum"|"boolean", "min", "max", "step", "default", "unit", "param": "P.01", "mechanism": "..." } ]` |
+| POST | `/api/scenarios` | scenario JSON with `parent` | saves to `scenarios/user/<id>.json` (gitignored), returns the canonical scenario |
+| GET | `/api/scenarios` | — | now includes `"preset": true` for the report-replication presets and `"user": true` for saved ones |
+
+## 10. Web state additions
+
+`compare=HASH_B` in the URL selects the comparison scenario; `cell=` selects a mechanism cell in the dashboard's structural view; `cohort=age|education|income` selects the cohort facet.

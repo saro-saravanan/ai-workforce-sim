@@ -520,6 +520,16 @@
           "description": "Run Shapley channel attribution as a background job."
         }
       }
+    },
+    "preset": {
+      "type": "boolean",
+      "default": false,
+      "description": "Report-replication preset (spec §8.4)."
+    },
+    "user": {
+      "type": "boolean",
+      "default": false,
+      "description": "Saved by a user through the API; lives in scenarios/user/."
     }
   }
 }

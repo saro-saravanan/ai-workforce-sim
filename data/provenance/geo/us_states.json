@@ -13,7 +13,7 @@
   ],
   "status": "real",
   "notes": "Geometry unchanged (1:110m).",
-  "built_at": "2026-09-01T23:24:37+00:00",
+  "built_at": "2026-09-01T23:52:10+00:00",
   "output": "data/processed/geo/us_states.geojson",
   "extra": {
     "extra_urls": [

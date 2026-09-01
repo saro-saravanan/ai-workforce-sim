@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE",
   "notes": "Replaced by ingest/oews.py (OEWS national occupation x industry).",
-  "built_at": "2026-09-01T23:24:37+00:00",
+  "built_at": "2026-09-01T23:52:10+00:00",
   "output": "data/processed/occ_sector.csv",
   "extra": {}
 }

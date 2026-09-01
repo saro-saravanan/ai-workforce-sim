@@ -590,7 +590,7 @@ Counts: 77 parameters; 18 `S`, 21 `D`, 38 `E`. The estimated share rose from v0.
 | Phase | Spec sections implemented | Regions | Draws |
 |---|---|---|---|
 | 1 | §1–3 (excl. 1.4), §3.2–3.4 (US), §4, §5.2–5.5, §5.7, §6.1–6.2, §7.5–7.6 | US national + states | central only |
-| 2 | §1.4, §5.6 (cohorts, aging), §7.1–7.4, §8, §9 | US | 200 |
+| 2 | §1.4, §5.6 (cohorts, aging), §7.1–7.4, §8, §9, presets with CI tests | US | 200 (8-cell ensemble) |
 | 3 | §3.1, §3.3, §3.6, §4 spillover and entrants, §5.7, §6.3–6.6 | all | 200 |
 | 4 | chat over §9 | all | 200 |
 | 5 | methodology write-up | all | 200 |
@@ -629,6 +629,24 @@ Counts: 77 parameters; 18 `S`, 21 `D`, 38 `E`. The estimated share rose from v0.
 | 26 | Canaries check undefined | Metric with tolerance and the aggregate-flat condition | §7.5 |
 
 ---
+
+## 16. Implementation notes and deviations (Phase 1–2 build)
+
+Where the code departs from or sharpens the text above, the code is documented here so the two do not drift.
+
+| Topic | Spec text | Implementation | Why |
+|---|---|---|---|
+| Wage rule (§5.5) | partial adjustment toward the long-run Lichter et al. elasticity | partial adjustment (speed `P.73`) toward a **wage-curve target** `−0.1·ln(1 + XS/0.04) + β·ψ·U` (Blanchflower–Oswald elasticity −0.1, S; 4% baseline unemployment, E) | the v0.2 text had no mean reversion; a persistent excess supply drove wages down without bound in the first run |
+| Demand feedback (§6.3) | consumption from disposable income by cohort with MPC by decile | Phase 1–2: `ΔC = 0.7·ΔW + 0.4·ΔΠ` with `ΔΠ = ΔY − ΔW`; consumption = 0.68·Y⁰; decile MPCs arrive with the cohort income layer in Phase 3 | counting lost wages without the offsetting profits produced a doom loop |
+| Task resolution (§1, §2) | ~120 occupation clusters | all 831 six-digit occupations; tasks merged into ~9,400 *task groups* (identical label, modality, use case, consequence, presence bucket within an occupation); 450 clusters carried as ids for aggregation | exact for every equation except the E1 fallback spread; 200 draws run in ~9 s on 4 cores |
+| Monte Carlo (§7.1) | draws around registry centrals | draws are **re-centred on the scenario's current value** of each parameter (levers and overrides applied), range widened to include it | otherwise a lever would move the central run but not the band |
+| Structural ensemble (§7.2) | 2×2×2 cells, 25 draws each | draw 0 is the pure central run (cell "central"); draws 1..199 rotate through the 8 cells | the central line must be the scenario as specified, not one cell's variant |
+| Feasibility anchoring (§2.2) | AEI task usage anchors `θ` for observed tasks | AEI unavailable offline; E1 tasks spread over 2024–2025 by a deterministic hash, E2/E0 by class offsets; `meta.data_flags.aei_anchoring = "unavailable"` | replaced when `ingest/aei.py` runs |
+| Cohorts (§1.4) | joint from CPS ASEC by IPF | product of marginals: age FIXTURE (national distribution tilted by Job Zone), education E (Job Zone), decile D (OEWS percentiles); cohort effects tracked as *jobs below baseline* by cohort with aging, re-employment and exit hazards by age (E) | CPS microdata needs IPUMS access; `ingest/cps_asec.py` fits the joint |
+| Compute capacity (§3.4) | capacity from capex, price multiplier when demand exceeds it | implemented; never binds in the central run (multiplier 1.0) | token demand from 8% of task-hours is small against a $700bn/yr capex path |
+| Tornado (§7.2) | top 15 of all parameters | one-at-a-time low/high for a curated 20 parameters (41 batched draws, ~4 s) | runtime |
+| Retraining (§5.4) | entry, duration, success | implemented as a duration queue; failures return to searching | — |
+| Layoff channel (§5.3) | attrition first, layoffs second | at the central pace attrition absorbs the whole gap, so layoffs are zero in the baseline; the layoff path activates in fast-clock scenarios | a finding, not a bug (`docs/findings-phase1.md`) |
 
 ## References (parameter sources)
 

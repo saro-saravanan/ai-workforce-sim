@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.2",
+  "id": "preset-acemoglu-2024",
+  "name": "Preset: Acemoglu 2024",
+  "description": "Report-replication preset (spec §8.4). Only directly exposed (E1) tasks within the decade, no reinstatement, no demand feedback, low intensity; targets TFP no more than +0.66% and GDP about +1% over ten years.",
+  "parent": "baseline",
+  "preset": true,
+  "levers": {
+    "capability": { "ever_automatable_scale": 1.0 },
+    "adoption": { "intensity_ceiling": 0.4 },
+    "labor": { "reinstatement_ratio": 0.0, "price_pass_through": 0.5 }
+  },
+  "overrides": {
+    "P.21": { "central": 0.0 },
+    "P.22": { "central": 0.0 },
+    "P.87": { "central": 0.0 },
+    "P.40": { "central": 0.10 }
+  },
+  "ensemble": { "mechanisms": "central" }
+}

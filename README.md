@@ -15,7 +15,11 @@ An interactive, multi-region simulation of how AI models reshape the workforce a
 | [scenarios/schema.json](scenarios/schema.json) | JSON schema for versioned, diffable scenarios |
 | [scenarios/baseline.json](scenarios/baseline.json) | The "consensus central" scenario |
 
-## Phase 1 (in progress)
+## Phase 2 (in progress)
+
+Monte Carlo through a correlated copula, 2×2×2 structural ensemble, tornado sensitivity, confidence classification, cohorts with aging, labor flows, report presets with replication tests, compare and explain endpoints, what-if levers, compare view, cohort view, Sankey. `uv run aiwsim run --scenario baseline` runs 200 draws in about 9 s on 4 cores. Findings: `docs/findings-phase2.md`.
+
+## Phase 1
 
 U.S. national and state instance of spec v0.2, central run, three views. From a clean clone:
 

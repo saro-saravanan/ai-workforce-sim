@@ -6,13 +6,18 @@ from typing import Any
 
 import yaml
 
-from .engine import run_central
 from .inputs import Inputs
+from .mc import run_batch
 from .params import Params
 
 # Targets (docs/data-inventory.md §3): firm-weighted, original wording, Sep 2025 ≈ 0.10 (t=6);
 # new wording growth Nov 2025 → May 2026 ≈ +2.5 pp (t=7 → t=9); employment-weighted Nov 2025–Jan 2026 ≈ 0.32 (t≈7).
 TARGETS = {"firm_t6": 0.10, "firm_growth_t7_t9": 0.025, "emp_t7": 0.32}
+
+
+class _View:
+    def __init__(self, b):
+        self.adoption_firm = b.adoption_firm[0]; self.adoption_emp = b.adoption_emp[0]
 
 
 def loss(r) -> float:
@@ -26,7 +31,8 @@ def fit(inp: Inputs, p: Params, scenario: dict[str, Any]) -> dict[str, Any]:
     for q in (0.25, 0.35, 0.45, 0.55, 0.7, 0.9):
         for bs in (200.0, 600.0, 1200.0, 2000.0, 3000.0, 4500.0):
             fitted = {"q": q, "bstar": {"small": bs, "mid": bs * 0.5, "large": 0.0}}
-            r = run_central(inp, p, scenario, fitted=fitted)
+            b = run_batch(inp, p, scenario, None, fitted=fitted)
+            r = _View(b)
             L = loss(r)
             if best is None or L < best[0]:
                 best = (L, fitted, r)

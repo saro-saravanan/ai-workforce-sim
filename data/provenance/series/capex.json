@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Key is (company, year, basis): Microsoft is given on both June-fiscal and calendar bases, so (company, year) alone is not unique — a documented deviation from contracts §1. Inventory sums: 2024 ~230 (MSFT FY basis) to ~250 (calendar); 2025 ~384 (FY) to ~413 (calendar); 2026 guidance ~720-760.",
-  "built_at": "2026-09-01T23:24:37+00:00",
+  "built_at": "2026-09-01T23:52:10+00:00",
   "output": "data/processed/series/capex.csv",
   "extra": {}
 }

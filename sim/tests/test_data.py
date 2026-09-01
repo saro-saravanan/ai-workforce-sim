@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from itertools import pairwise
 from pathlib import Path
 
 import polars as pl
@@ -174,3 +175,58 @@ def test_series_columns(built):
     assert {"company", "year", "capex_bn_usd", "basis", "source_tag"} <= set(_read("series/capex.csv").columns)
     assert {"event_id", "region", "date", "kind", "description", "source_tag"} <= set(
         _read("series/regulatory_events.csv").columns)
+
+
+# ---- Phase 2 cohort tables (contracts §7) ---------------------------------------------------------
+COHORT_TABLES = {
+    "cohorts/occ_decile": ("decile", [str(k) for k in range(1, 11)]),
+    "cohorts/occ_education": ("education", ["lt_hs", "hs", "some_college", "ba_plus"]),
+    "cohorts/occ_age": ("age_band", ["16-24", "25-44", "45-54", "55+"]),
+}
+
+
+def _cohort(table: str) -> pl.DataFrame:
+    return _read(f"{table}.csv").with_columns(pl.col("share").cast(pl.Float64))
+
+
+def test_cohort_tables_registered_and_have_provenance(built):
+    recs = list_provenance(ROOT)
+    for table in [*COHORT_TABLES, "cohorts/national_deciles"]:
+        assert table in TABLES and table in built
+        assert (PROCESSED / f"{table}.csv").exists()
+        assert table in recs and status_kind(recs[table].status) in STATUS_VALUES
+    assert status_kind(recs["cohorts/occ_age"].status) == "FIXTURE"
+    assert "cps_asec" in recs["cohorts/occ_age"].notes
+
+
+def test_cohort_shares_sum_to_one_and_cover_every_occupation(built):
+    occ_codes = set(_read("occupations.csv")["occ_code"])
+    for table, (col, levels) in COHORT_TABLES.items():
+        df = _cohort(table)
+        assert {"occ_code", col, "share", "source_tag"} <= set(df.columns), table
+        assert set(df[col]) == set(levels), table
+        assert df.select(["occ_code", col]).n_unique() == df.height, f"{table}: duplicate keys"
+        assert df["share"].min() >= 0 and df["share"].max() <= 1, table
+        g = df.group_by("occ_code").agg(pl.col("share").sum().alias("s"), pl.len().alias("n"))
+        assert ((g["s"] - 1.0).abs() < 1e-6).all(), table
+        assert (g["n"] == len(levels)).all(), table
+        assert set(g["occ_code"]) == occ_codes, table
+
+
+def test_national_decile_cutpoints_strictly_increasing(built):
+    nd = _read("cohorts/national_deciles.csv").with_columns(
+        pl.col("decile").cast(pl.Int64), pl.col("lower_bound_annual").cast(pl.Float64)).sort("decile")
+    assert nd["decile"].to_list() == list(range(1, 11))
+    lb = nd["lower_bound_annual"].to_list()
+    assert lb[0] == 0.0
+    assert all(b > a for a, b in pairwise(lb))
+    # the OEWS all-occupations median ($45,760) lies in decile 5 or 6
+    assert lb[4] < 45_760 < lb[6]
+
+
+def test_occ_decile_employment_weighted_shares_near_ten_percent(built):
+    d = _cohort("cohorts/occ_decile").join(
+        _read("occupations.csv").select("occ_code", pl.col("emp_national").cast(pl.Float64)), on="occ_code")
+    g = d.group_by("decile").agg((pl.col("share") * pl.col("emp_national")).sum() / pl.col("emp_national").sum())
+    assert ((g["share"] - 0.1).abs() < 0.05).all(), g.sort("decile")["share"].to_list()
+    assert abs(g["share"].sum() - 1.0) < 1e-6

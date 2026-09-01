@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Sources: EU Official Journal (Reg. 2024/1689, Reg. 2026/1744), Colorado and California legislatures, China CAC, BIS press releases.",
-  "built_at": "2026-09-01T23:24:37+00:00",
+  "built_at": "2026-09-01T23:52:10+00:00",
   "output": "data/processed/series/regulatory_events.csv",
   "extra": {}
 }

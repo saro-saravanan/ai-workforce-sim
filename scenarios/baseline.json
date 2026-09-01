@@ -12,7 +12,7 @@
   },
   "levers": {
     "capability": {
-      "doubling_months": 6,
+      "doubling_months": 5,
       "doubling_drift_per_year": 0.0,
       "feedback_from_revenue": false,
       "robotics_doubling_months": 24,

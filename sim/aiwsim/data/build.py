@@ -9,6 +9,10 @@ Phase 1 inputs (staged, gitignored) are the files mirrored in openai/GPTs-are-GP
 ``national_May2021_dl.csv`` (OEWS May 2021 national) and ``occupations_projections_processed.csv``
 (BLS EP 2020-30); plus Natural Earth 1:110m admin-1.  Tables that need network sources are
 fixtures here and are replaced by ``aiwsim.data.ingest``.
+
+Phase 2 cohort tables (contracts §7, ``data/processed/cohorts/``) additionally need the repo's
+``occupations_onet_basic_skills.csv`` (O*NET Job Zone by title) and
+``occupations_onet_bls_matched.csv`` (O*NET title <-> OEWS code); see ``aiwsim.data.cohorts``.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ import polars as pl
 
 from aiwsim.data import classify, series
 from aiwsim.data import clusters as cl
+from aiwsim.data import cohorts as co
 from aiwsim.data import fixtures as fx
 from aiwsim.data.geo import build_us_states
 from aiwsim.data.provenance import list_provenance, status_kind, write_provenance
@@ -30,6 +35,7 @@ TABLES = [
     "occupations", "tasks", "sectors", "occ_sector", "states", "occ_state",
     "series/btos", "series/metr_horizons", "series/capex", "series/regulatory_events",
     "params/registry", "geo/us_states",
+    "cohorts/occ_decile", "cohorts/national_deciles", "cohorts/occ_education", "cohorts/occ_age",
 ]
 
 RAW_GPTS = Path("data/raw/gpts_are_gpts")
@@ -73,7 +79,15 @@ def load_raw(root: Path) -> dict[str, pl.DataFrame]:
     oews = oews.rename({oews.columns[0]: "AREA"})  # BOM-prefixed first header
     proj = pl.read_csv(g / "occupations_projections_processed.csv", infer_schema_length=0)
     occ_level = pl.read_csv(g / "occ_level.csv", infer_schema_length=0)
-    return {"labels": labels, "oews": oews, "proj": proj, "occ_level": occ_level}
+    skills_path = g / "occupations_onet_basic_skills.csv"
+    if not skills_path.exists():
+        raise FileNotFoundError(
+            f"{skills_path} missing: stage data/occupations_onet_basic_skills.csv from openai/GPTs-are-GPTs "
+            "(the O*NET Job Zone source for the Phase 2 cohort tables)")
+    basic_skills = pl.read_csv(skills_path, infer_schema_length=0)
+    matched = pl.read_csv(g / "occupations_onet_bls_matched.csv", infer_schema_length=0)
+    return {"labels": labels, "oews": oews, "proj": proj, "occ_level": occ_level,
+            "basic_skills": basic_skills, "matched": matched}
 
 
 # ------------------------------------------------------------------------------------------------
@@ -409,6 +423,114 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
                                       "features sorted by fips"],
                      notes="Geometry unchanged (1:110m).", extra={"extra_urls": list(ne.extra_urls)})
     log("geo/us_states.geojson: 51 features")
+
+    # ---- cohorts/ (contracts §7) -------------------------------------------------------------
+    statuses.update(build_cohorts(root, raw, occ, commit, log))
+    return statuses
+
+
+def build_cohorts(root: Path, raw: dict[str, pl.DataFrame], occ: pl.DataFrame, commit: str, log) -> dict[str, str]:
+    """Write the four ``data/processed/cohorts/`` tables and their provenance; returns statuses."""
+    out = root / PROCESSED / "cohorts"
+    el, oews_src, onet_src, cps = SOURCES["eloundou"], SOURCES["bls_oews"], SOURCES["onet"], SOURCES["cps_ipums"]
+    decile_tag = "partial:OEWS_May2021_lognormal;D"
+    education_tag = "partial:ONET_JobZone_mapping;E"
+    tabs = co.build_cohort_tables(raw["oews"], raw["basic_skills"], raw["matched"], occ, decile_tag=decile_tag,
+                                  education_tag=education_tag, age_tag=fx.FIXTURE_TAG)
+    n = tabs["notes"]
+    statuses: dict[str, str] = {}
+    vintage = ("VINTAGE: OEWS May 2021 (GPTs-are-GPTs mirror), not May 2025; refreshed when ingest/oews.py "
+               "replaces the raw file.")
+    replaced = "Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real."
+
+    p = _write_csv(tabs["national_deciles"], out / "national_deciles.csv")
+    statuses["cohorts/national_deciles"] = "partial (derived D)"
+    write_provenance(
+        root, "cohorts/national_deciles", p,
+        source="OEWS May 2021 national 'All Occupations' row 00-0000 (national_May2021_dl.csv, GPTs-are-GPTs mirror)",
+        source_url=el.url, license=f"MIT (repo mirror); underlying BLS data public domain ({oews_src.url})",
+        commit=commit, status="partial (derived D)",
+        transformations=[
+            ("lognormal fitted by least squares of ln(annual wage) on the normal quantiles of 0.10/0.25/0.50/0.75/"
+             "0.90 through A_PCT10, A_PCT25, A_MEDIAN, A_PCT75, A_PCT90"),
+            "lower_bound_annual(decile k) = exp(mu + sigma * z_{(k-1)/10}) for k = 2..10; decile 1 lower bound 0",
+        ],
+        notes=f"{vintage} Fit: mu={n['national_fit']['mu']:.4f}, sigma={n['national_fit']['sigma']:.4f}. OEWS "
+              "covers wage and salary workers only (no self-employed); the cutpoints are a lognormal "
+              "approximation of the OEWS wage distribution, not CPS individual-earnings deciles.",
+        extra={"fit": n["national_fit"]},
+    )
+
+    p = _write_csv(tabs["occ_decile"], out / "occ_decile.csv")
+    statuses["cohorts/occ_decile"] = "partial (derived D)"
+    write_provenance(
+        root, "cohorts/occ_decile", p,
+        source="OEWS May 2021 national detailed occupation percentiles (national_May2021_dl.csv, GPTs-are-GPTs mirror)",
+        source_url=el.url, license=f"MIT (repo mirror); underlying BLS data public domain ({oews_src.url})",
+        commit=commit, status="partial (derived D)",
+        transformations=[
+            ("per occupation, lognormal (mu, sigma) by least squares of ln(annual wage) on normal quantiles through "
+             "the usable A_PCT10/A_PCT25/A_MEDIAN/A_PCT75/A_PCT90; '#' (>= $208,000 top code) and '*' treated as "
+             "missing as in occupations.csv"),
+            (f"fewer than {co.MIN_POINTS_OWN_FIT} usable percentiles: own mu with the major group's sigma "
+             "(fit_level major_sigma); none: major group's mu and sigma (fit_level major); the major-group "
+             "parameters are fitted the same way through the OEWS 'major' rows"),
+            "share(decile k) = lognormal mass between the national cutpoints of cohorts/national_deciles.csv",
+        ],
+        notes=f"{vintage} Fit levels: {n['decile_fit_levels']}. Treating '#' as missing understates dispersion "
+              "for top-coded occupations. Employment-weighted share per decile (should be ~0.1 each; OEWS excludes "
+              f"the self-employed and the lognormal is an approximation): {n['decile_employment_weighted_check']}.",
+        extra={"fit_levels": n["decile_fit_levels"],
+               "employment_weighted_decile_shares": n["decile_employment_weighted_check"]},
+    )
+    log(f"cohorts/occ_decile.csv: {tabs['occ_decile'].height} rows; emp-weighted decile shares "
+        f"{n['decile_employment_weighted_check']}")
+
+    jz_note = (f"O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched "
+               f"occupations ({n['job_zone_unmatched']['count']}) take the employment-weighted major-group Job Zone "
+               f"mix (jz_imputed). Job Zone mix over occupations (unweighted): {n['job_zone_distribution_unweighted']}.")
+    p = _write_csv(tabs["occ_education"], out / "occ_education.csv")
+    statuses["cohorts/occ_education"] = "partial (estimated E)"
+    write_provenance(
+        root, "cohorts/occ_education", p,
+        source="O*NET Job Zone per occupation (occupations_onet_basic_skills.csv, GPTs-are-GPTs mirror) through the "
+               "JOB_ZONE_EDUCATION mapping of aiwsim.data.cohorts",
+        source_url=el.url, license=f"MIT (repo mirror); underlying O*NET data CC BY 4.0 ({onet_src.url})",
+        commit=commit, status="partial (estimated E)",
+        transformations=[
+            "Job Zone -> education mix rows (lt_hs, hs, some_college, ba_plus): " + "; ".join(
+                f"JZ{z}: {'/'.join(f'{x:.2f}' for x in row)}" for z, row in co.JOB_ZONE_EDUCATION.items()),
+            "an OEWS code carrying several O*NET titles takes the equal-weight mixture of their Job Zone rows",
+        ],
+        notes=f"MAPPING MATRIX IS AN ESTIMATE (E), not fitted to microdata. {jz_note} Employment-weighted "
+              f"education shares: {n['education_employment_weighted']}. {replaced}",
+        extra={"job_zone_unmatched": n["job_zone_unmatched"],
+               "education_employment_weighted": n["education_employment_weighted"],
+               "job_zone_education": {str(k): list(v) for k, v in co.JOB_ZONE_EDUCATION.items()}},
+    )
+    log(f"cohorts/occ_education.csv: {tabs['occ_education'].height} rows; emp-weighted "
+        f"{n['education_employment_weighted']}")
+
+    p = _write_csv(tabs["occ_age"], out / "occ_age.csv")
+    statuses["cohorts/occ_age"] = "FIXTURE"
+    write_provenance(
+        root, "cohorts/occ_age", p,
+        source="national employed age distribution (approximate CPS 2024, E) tilted by O*NET Job Zone "
+               "(occupations_onet_basic_skills.csv, GPTs-are-GPTs mirror)",
+        source_url=cps.url, license=f"n/a (fixture); O*NET data CC BY 4.0 ({onet_src.url})",
+        commit=commit, status="FIXTURE",
+        transformations=[
+            "national bands " + ", ".join(f"{b} {s:.3f}" for b, s in co.AGE_NATIONAL.items()),
+            "16-24 share multiplied by the Job Zone tilt " + ", ".join(
+                f"JZ{z} {t}" for z, t in co.JZ_TILT_16_24.items()) + ", then renormalised",
+            "an OEWS code carrying several O*NET titles takes the equal-weight mixture of their Job Zone rows",
+        ],
+        notes=f"FIXTURE: the national vector is approximate (transcribed, not fetched) and the tilt is a guess. "
+              f"{replaced} {jz_note} Employment-weighted age shares: {n['age_employment_weighted']}.",
+        extra={"job_zone_unmatched": n["job_zone_unmatched"],
+               "age_employment_weighted": n["age_employment_weighted"]},
+    )
+    log(f"cohorts/occ_age.csv: {tabs['occ_age'].height} rows (FIXTURE)")
     return statuses
 
 

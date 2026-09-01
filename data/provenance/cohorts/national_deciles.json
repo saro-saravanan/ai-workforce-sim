@@ -1,0 +1,34 @@
+{
+  "table": "cohorts/national_deciles",
+  "source": "OEWS May 2021 national 'All Occupations' row 00-0000 (national_May2021_dl.csv, GPTs-are-GPTs mirror)",
+  "source_url": "https://github.com/openai/GPTs-are-GPTs",
+  "license": "MIT (repo mirror); underlying BLS data public domain (https://www.bls.gov/oes/)",
+  "pulled_at": "2026-09-01",
+  "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
+  "sha256": "082b19775ba7f3f31faa1a697985359e668a53a8f9c5c9191a6b4bd4907e685f",
+  "transformations": [
+    "lognormal fitted by least squares of ln(annual wage) on the normal quantiles of 0.10/0.25/0.50/0.75/0.90 through A_PCT10, A_PCT25, A_MEDIAN, A_PCT75, A_PCT90",
+    "lower_bound_annual(decile k) = exp(mu + sigma * z_{(k-1)/10}) for k = 2..10; decile 1 lower bound 0"
+  ],
+  "status": "partial (derived D)",
+  "notes": "VINTAGE: OEWS May 2021 (GPTs-are-GPTs mirror), not May 2025; refreshed when ingest/oews.py replaces the raw file. Fit: mu=10.7600, sigma=0.5780. OEWS covers wage and salary workers only (no self-employed); the cutpoints are a lognormal approximation of the OEWS wage distribution, not CPS individual-earnings deciles.",
+  "built_at": "2026-09-01T23:52:10+00:00",
+  "output": "data/processed/cohorts/national_deciles.csv",
+  "extra": {
+    "fit": {
+      "mu": 10.759993118441782,
+      "sigma": 0.5779783427323115,
+      "cutpoints": [
+        22455.347672119904,
+        28956.624218168276,
+        34783.58917757208,
+        40682.934332779194,
+        47098.343919510924,
+        54525.41799998022,
+        63773.00481086707,
+        76606.09825397849,
+        98785.1104489765
+      ]
+    }
+  }
+}

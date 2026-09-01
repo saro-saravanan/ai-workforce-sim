@@ -4,17 +4,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-import time
 from pathlib import Path
 
 import numpy as np
 
 from . import SPEC_VERSION
-from .engine import channel_decomposition, run_central
-from .inputs import load_inputs
-from .params import apply_levers, apply_overrides, central_params
-from .results import build_results
-from .scenario import load_scenario_file, resolve, scenario_hash, validate
 
 
 def find_root(start: Path | None = None) -> Path:
@@ -25,52 +19,43 @@ def find_root(start: Path | None = None) -> Path:
     raise SystemExit("repository root not found (no scenarios/schema.json above cwd)")
 
 
-def prepare(root: Path, scenario_path: Path):
-    inp = load_inputs(root)
-    raw = load_scenario_file(scenario_path)
-    scen = resolve(raw, root / "scenarios")
-    validate(scen, root / "scenarios" / "schema.json")
-    p = central_params(root / "data" / "processed" / "params" / "registry.yaml")
-    p = apply_levers(p, scen.get("levers", {}))
-    p = apply_overrides(p, scen.get("overrides", {}))
-    return inp, scen, p
-
-
 def cmd_run(args: argparse.Namespace) -> int:
+    from .pipeline import Context, load_scenario_by_path_or_id, run_scenario
     root = find_root()
-    t0 = time.perf_counter()
-    inp, scen, p = prepare(root, Path(args.scenario))
-    shash = scenario_hash(scen, SPEC_VERSION, inp.data_version)
-    r = run_central(inp, p, scen)
-    t1 = time.perf_counter()
-    channels = None if args.no_channels else channel_decomposition(inp, p, scen, r)
-    doc = build_results(inp, r, scen, shash, channels)
-    doc["meta"]["timing_s"] = {"central": round(t1 - t0, 3), "total": round(time.perf_counter() - t0, 3)}
+    ctx = Context(root)
+    scen = load_scenario_by_path_or_id(ctx, args.scenario)
+    doc, raw = run_scenario(ctx, scen, draws=args.draws, ensemble=args.ensemble, with_channels=not args.no_channels,
+                            with_tornado=not args.no_tornado, workers=args.workers)
     out = Path(args.out) if args.out else root / "data" / "cache" / f"{scen['id']}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(doc, separators=(",", ":")))
-    q = r.quarters
-    print(f"scenario {scen['id']} hash {shash}  data {inp.data_version}  central {t1-t0:.2f}s  -> {out}")
+    np.savez_compressed(out.with_suffix(".npz"), **raw)
+    m = doc["meta"]; q = m["quarters"]; s = doc["series"]["US"]
+    print(f"scenario {scen['id']} hash {m['scenario_hash']} draws {m['draws']} ensemble {m['ensemble']} timing {m['timing_s']} -> {out}")
+
+    def band(name: str, i: int, unit: str = "%") -> str:
+        x = s[name]
+        if "p10" in x:
+            return f"{x['central'][i]:+6.2f}{unit} [{x['p10'][i]:+6.2f}, {x['p90'][i]:+6.2f}]"
+        return f"{x['central'][i]:+6.2f}{unit}"
     for i in (q.index("2027Q4"), q.index("2030Q4"), q.index("2035Q4"), len(q) - 1):
-        print(f"  {q[i]}: horizon {r.horizon_hours[i]:8.1f}h  adopt(emp) {100*r.adoption_emp[i]:5.1f}%  emp {100*r.employment_pct[i]:+6.2f}%  "
-              f"realw {100*r.real_wage_pct[i]:+6.2f}%  gdp {100*r.gdp_pct[i]:+6.2f}%  tfp {100*r.tfp_pct[i]:+5.2f}%  "
-              f"wshare {r.wage_share_pp[i]:+5.2f}pp  displaced {r.displaced_cum[i]/1e6:5.2f}M")
-    if args.diag:
-        Dw = (r.D * r.N0).sum(axis=0) / r.N0.sum(axis=0); Uw = (r.U * r.N0).sum(axis=0) / r.N0.sum(axis=0)
-        print("  year   C   D(emp-w)  U(emp-w)  Q/Q0    mu     XS    emp%   nomw%  P%   tfp%  gdp%")
-        for i in range(0, len(q), 4):
-            print(f"  {q[i][:4]}  {r.C[i]:5.1f}  {Dw[i]:7.3f}  {Uw[i]:7.3f}  {r.q_ratio[i]:6.3f} {r.mu[i]:+6.3f} {r.xs[i]:6.3f} "
-                  f"{100*r.employment_pct[i]:+6.1f} {100*r.nominal_wage_pct[i]:+6.1f} {100*(np.exp(r.ln_P[i])-1):+5.1f} {100*r.tfp_pct[i]:+5.1f} {100*r.gdp_pct[i]:+6.1f}")
+        print(f"  {q[i]}: horizon {s['capability_horizon_hours']['central'][i]:8.1f}h  adopt {s['adoption_share']['central'][i]:5.1f}%  "
+              f"emp {band('employment_pct_vs_baseline', i)}  realw {band('real_wage_pct_vs_baseline', i)}  gdp {band('gdp_pct_vs_baseline', i)}  "
+              f"wshare {band('wage_share_pp_vs_baseline', i, 'pp')}")
     for n in doc["explain"]["notes"]:
         print("  -", n)
+    if doc.get("tornado"):
+        print("  tornado (employment 2040):", ", ".join(f"{r['param']} {r['swing']:.2f}" for r in doc["tornado"]["employment_pct_vs_baseline"][:6]))
     return 0
 
 
 def cmd_calibrate(args: argparse.Namespace) -> int:
     from .calibrate import fit, write_fitted
     root = find_root()
-    inp, scen, p = prepare(root, root / "scenarios" / "baseline.json")
-    fitted = fit(inp, p, scen)
+    from .pipeline import Context, load_scenario_by_path_or_id
+    ctx = Context(root)
+    scen = load_scenario_by_path_or_id(ctx, "baseline")
+    fitted = fit(ctx.inputs, ctx.params_for(scen), scen)
     out = write_fitted(root, fitted)
     print(json.dumps(fitted, indent=2)); print("->", out)
     return 0
@@ -97,8 +82,10 @@ def cmd_validate(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aiwsim", description=f"AI workforce impact simulation (spec v{SPEC_VERSION})")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run"); r.add_argument("--scenario", required=True); r.add_argument("--out"); r.add_argument("--seed", type=int, default=42)
-    r.add_argument("--no-channels", action="store_true"); r.add_argument("--diag", action="store_true"); r.set_defaults(fn=cmd_run)
+    r = sub.add_parser("run"); r.add_argument("--scenario", required=True, help="scenario id or path"); r.add_argument("--out")
+    r.add_argument("--draws", type=int, default=None, help="Monte Carlo draws (default: scenario's, 200)")
+    r.add_argument("--ensemble", choices=["all", "central"], default=None); r.add_argument("--workers", type=int, default=None)
+    r.add_argument("--no-channels", action="store_true"); r.add_argument("--no-tornado", action="store_true"); r.set_defaults(fn=cmd_run)
     c = sub.add_parser("calibrate"); c.set_defaults(fn=cmd_calibrate)
     d = sub.add_parser("data"); d.add_argument("action", choices=["build", "status"]); d.set_defaults(fn=cmd_data)
     v = sub.add_parser("validate"); v.set_defaults(fn=cmd_validate)
