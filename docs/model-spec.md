@@ -20,6 +20,19 @@ Decisions already confirmed with the owner (2026-09-01):
 | Data | Open sources only |
 | Tooling | Python 3.12 + uv + polars/numpy; Vue 3 + TS + pnpm; monorepo |
 
+Decisions taken on the six reviewer questions (§13), 2026-09-01, by the modeler on the owner's instruction:
+
+| Question | Decision | Reason |
+|---|---|---|
+| 1. Capability units in the UI | Horizon units ("AI completes 8-hour tasks at 50% reliability"), with the abstract index in tooltips | Explains itself to a non-technical viewer; the METR definition is the only public one with a time series |
+| 2. Ever-automatable defaults | Keep 0.9 / 0.7 / 0.25 for E1 / E2 / E0 | E1 near-certain given observed usage; E2 needs tooling that is arriving; E0 non-zero because labels are GPT-4-era, but low because most E0 non-physical work is presence-bound. Copula correlation across the three keeps the aggregate band honest |
+| 3. Recession shock sign on adoption | Neutral default; lever range from capex-cut (−) to labor-cost-pressure (+) | Literature disagrees; a neutral default avoids encoding a side |
+| 4. U.S. states in Phase 1 | Yes | The map is the first view a viewer sees; state OEWS data is in the same release; IPF construction is cheap |
+| 5. Presets first-class in compare | Yes | "Why does Goldman say 7% and Acemoglu 0.7%" is the most useful demo the tool can give |
+| 6. Structural ensemble on by default | Yes, with a "central mechanisms" toggle under Advanced, labelled as narrower than the model's real uncertainty | A single-mechanism band is the false precision the brief forbids |
+
+Phase 1 scope adjustment: cohorts and aging (§1.4, §5.6) move to Phase 2 with the cohort view, so Phase 1 tracks occupation × sector × state. Nothing in the equations changes; the cohort dimension is added, not re-derived.
+
 Notation: every parameter has an ID (`P.xx`), a central value, a range, a source, and a provenance tag: `S` sourced, `D` derived from cited data by a stated transformation, `E` **estimated by us** (flagged and exposed as a lever). All cited numbers were checked against primary sources on 2026-09-01; the data inventory records verification status.
 
 ---
@@ -576,8 +589,8 @@ Counts: 77 parameters; 18 `S`, 21 `D`, 38 `E`. The estimated share rose from v0.
 
 | Phase | Spec sections implemented | Regions | Draws |
 |---|---|---|---|
-| 1 | §1–2, §3.2–3.4 (US), §4, §5.2–5.6, §6.1–6.2, §7.5–7.6 | US (+ states if Q4 = yes) | central only |
-| 2 | §7.1–7.4, §8, §9 | US | 200 |
+| 1 | §1–3 (excl. 1.4), §3.2–3.4 (US), §4, §5.2–5.5, §5.7, §6.1–6.2, §7.5–7.6 | US national + states | central only |
+| 2 | §1.4, §5.6 (cohorts, aging), §7.1–7.4, §8, §9 | US | 200 |
 | 3 | §3.1, §3.3, §3.6, §4 spillover and entrants, §5.7, §6.3–6.6 | all | 200 |
 | 4 | chat over §9 | all | 200 |
 | 5 | methodology write-up | all | 200 |
