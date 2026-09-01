@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/saro-saravanan/ai-workforce-sim/scenarios/schema.json",
+  "title": "AI Workforce Sim scenario (v0.1 draft, for review)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "name"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "description": {
+      "type": "string"
+    },
+    "parent": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Scenario id to inherit from; null only for baseline."
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "author": {
+      "type": "string"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 42
+    },
+    "draws": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2000,
+      "default": 200
+    },
+    "horizon": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "string",
+          "pattern": "^20[0-9]{2}Q[1-4]$",
+          "default": "2024Q1"
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^20[0-9]{2}Q[1-4]$",
+          "default": "2040Q4"
+        }
+      }
+    },
+    "levers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability": {
+          "type": "object",
+          "properties": {
+            "doubling_months": {
+              "type": "number",
+              "minimum": 2,
+              "maximum": 36
+            },
+            "doubling_drift_per_year": {
+              "type": "number",
+              "minimum": -0.5,
+              "maximum": 0.5
+            },
+            "feedback_from_revenue": {
+              "type": "boolean",
+              "default": false
+            },
+            "robotics_doubling_months": {
+              "type": "number",
+              "minimum": 6,
+              "maximum": 96
+            },
+            "per_actor": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "frontier_lag_quarters": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 16
+                  },
+                  "releases_per_year": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 12
+                  },
+                  "weights": {
+                    "enum": [
+                      "closed",
+                      "open-lagged",
+                      "open-frontier"
+                    ]
+                  },
+                  "price_decline_per_year": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "properties": {
+            "price_decline_per_year": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "open_weights_multiplier": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 1
+            },
+            "cost_floor_decline_per_year": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 5
+            }
+          }
+        },
+        "regulation": {
+          "type": "object",
+          "properties": {
+            "EU": {
+              "type": "object",
+              "properties": {
+                "ai_act": {
+                  "enum": [
+                    "repealed",
+                    "baseline",
+                    "delayed_2y",
+                    "strict_original_2026"
+                  ]
+                }
+              }
+            },
+            "US": {
+              "type": "object",
+              "properties": {
+                "regime": {
+                  "enum": [
+                    "none",
+                    "state_patchwork",
+                    "federal_light",
+                    "federal_strict"
+                  ]
+                }
+              }
+            },
+            "CN": {
+              "type": "object",
+              "properties": {
+                "licensing": {
+                  "enum": [
+                    "liberalized",
+                    "baseline",
+                    "tightened"
+                  ]
+                }
+              }
+            },
+            "export_controls": {
+              "enum": [
+                "rescinded",
+                "2026_status_quo",
+                "tightened"
+              ]
+            }
+          }
+        },
+        "adoption": {
+          "type": "object",
+          "properties": {
+            "sector_friction_scale": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "small_firm_friction_scale": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "intensity_ceiling": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 1
+            },
+            "spillover_lag_quarters": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 16
+            },
+            "per_sector": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 4
+              }
+            }
+          }
+        },
+        "labor": {
+          "type": "object",
+          "properties": {
+            "reinstatement_ratio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.5
+            },
+            "demand_elasticity_scale": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 3
+            },
+            "layoff_friction": {
+              "type": "number",
+              "minimum": 0.02,
+              "maximum": 1
+            }
+          }
+        },
+        "policy": {
+          "type": "object",
+          "description": "Keyed by region id (US, EU, UK, CN, JP, KR, IN, TW, SG, RoA).",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "retraining_subsidy_pct_wage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "wage_insurance_replacement": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.5
+              },
+              "wage_insurance_years": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "ubi_monthly_usd": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3000
+              },
+              "ai_tax_pct_of_ai_spend": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 50
+              },
+              "work_week_hours": {
+                "type": "number",
+                "minimum": 28,
+                "maximum": 40
+              },
+              "immigration_scale": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3
+              }
+            }
+          }
+        }
+      }
+    },
+    "shocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "at"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "frontier_breakthrough",
+              "lab_exit",
+              "open_weights_release",
+              "supply_chain_cut",
+              "recession"
+            ]
+          },
+          "at": {
+            "type": "string",
+            "pattern": "^20[0-9]{2}Q[1-4]$"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "delta_doublings": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "frontier_lag_quarters": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 8
+          },
+          "duration_quarters": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "severity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "depth": {
+            "type": "number",
+            "minimum": -0.15,
+            "maximum": 0
+          },
+          "region": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "description": "Direct parameter overrides by registry id, e.g. \"P.61\".",
+      "propertyNames": {
+        "pattern": "^P\\.[0-9]{2}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "central": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "by": {
+            "type": "object",
+            "description": "Optional per-index override (sector, region, cohort)."
+          }
+        }
+      }
+    }
+  }
+}

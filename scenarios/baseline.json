@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1",
+  "id": "baseline",
+  "name": "Consensus central",
+  "description": "v0.1 defaults from docs/model-spec.md section 10. All levers at central values, no shocks.",
+  "parent": null,
+  "seed": 42,
+  "draws": 200,
+  "horizon": {
+    "start": "2024Q1",
+    "end": "2040Q4"
+  },
+  "levers": {
+    "capability": {
+      "doubling_months": 6,
+      "doubling_drift_per_year": 0.0,
+      "feedback_from_revenue": false,
+      "robotics_doubling_months": 24
+    },
+    "cost": {
+      "price_decline_per_year": 10,
+      "open_weights_multiplier": 0.25,
+      "cost_floor_decline_per_year": 2
+    },
+    "regulation": {
+      "EU": {
+        "ai_act": "baseline"
+      },
+      "US": {
+        "regime": "state_patchwork"
+      },
+      "CN": {
+        "licensing": "baseline"
+      },
+      "export_controls": "2026_status_quo"
+    },
+    "adoption": {
+      "sector_friction_scale": 1.0,
+      "small_firm_friction_scale": 1.0,
+      "intensity_ceiling": 0.7,
+      "spillover_lag_quarters": 4
+    },
+    "labor": {
+      "reinstatement_ratio": 0.4,
+      "demand_elasticity_scale": 1.0,
+      "layoff_friction": 0.25
+    },
+    "policy": {
+      "US": {
+        "retraining_subsidy_pct_wage": 0,
+        "wage_insurance_replacement": 0,
+        "wage_insurance_years": 0,
+        "ubi_monthly_usd": 0,
+        "ai_tax_pct_of_ai_spend": 0,
+        "work_week_hours": 40,
+        "immigration_scale": 1.0
+      }
+    }
+  },
+  "shocks": [],
+  "overrides": {}
+}
