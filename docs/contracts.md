@@ -163,3 +163,45 @@ Phase 2 build: deciles derived from OEWS percentiles per occupation (lognormal f
 ## 10. Web state additions
 
 `compare=` in the URL selects the comparison scenario by scenario id (preferred, shareable) or by result hash; `cell=` selects a mechanism cell in the dashboard's structural view; `cohort=age|education|income` selects the cohort facet.
+
+---
+
+# Phase 3 additions (contracts v0.4): regions, actors, supply timeline
+
+## 11. Regional input tables (`data/processed/regions/`)
+
+Region ids: `US`, `EU` (EU-27), `UK`, `CN`, `JP`, `KR`, `IN`, `TW`, `SG`, `RoA` (rest of Asia). The U.S. keeps its state split; the EU gets a member split.
+
+| Table | Key | Columns |
+|---|---|---|
+| `regions.csv` | `region_id` | `name`, `population`, `gdp_bn_usd`, `employment_total`, `wage_level_rel_us` (mean wage relative to U.S.), `emp_growth_10y` (baseline), `import_share` (tradable demand met by imports), `epl_multiplier` (layoff friction multiplier, EU-style protection < 1), `avail_delay_quarters` (δ^reg for closed frontier models), `frontier_lag_quarters` (domestic-actor lag when foreign frontier is unavailable), `compliance_premium_high_risk`, `regime` (`state_patchwork` / `eu_ai_act` / `licensing` / `light`), `data_center_share` (share of global inference capacity located there), `spillover_weight_us` (adoption spillover weight from the U.S.), `source_tag` |
+| `region_members.csv` | `iso3` | `region_id`, `name`, `population`, `gdp_bn_usd` (Natural Earth estimates, real), `source_tag`. Every Natural Earth country appears; countries outside the ten regions carry `region_id = ""` and are drawn neutral on the map |
+| `occ_region.csv` | (`occ_code`, `region_id`) | `emp` (heads), `wage_mean_annual_usd`, `source_tag`. Phase 3 build: FIXTURE structural proxy: U.S. occupational mix tilted by log GDP per capita (high-skill major groups scale up with income, physical/agricultural groups scale down), scaled to `employment_total`; wages = U.S. occupation wage × `wage_level_rel_us`. Replaced by the ILOSTAT / Eurostat LFS ingest through the SOC↔ISCO crosswalk |
+| `trade_weights.csv` | (`region_from`, `region_to`) | `weight` (share of `region_to`'s tradable demand that is met from `region_from`; rows sum to 1 over `region_from` for each `region_to`, including the domestic share), `source_tag` (FIXTURE until OECD TiVA ingest) |
+| `actors.csv` | `actor_id` | `name`, `region_id`, `role` (`lab` / `compute` / `chokepoint`), `weights_posture` (`closed` / `open-lagged` / `open-frontier`), `frontier_lag_quarters`, `releases_per_year`, `price_frontier_usd_per_mtok`, `avail_US`, `avail_EU`, `avail_UK`, `avail_CN`, `avail_JP`, `avail_KR`, `avail_IN`, `avail_TW`, `avail_SG`, `avail_RoA` (0–1), `source_tag` |
+| `actor_releases.csv` | (`actor_id`, `model`) | `date` (YYYY-MM-DD), `capability_index` (doublings on the METR clock where the model appears in `series/metr_horizons.csv`, else null), `open_weights` (0/1), `note`, `source_tag` (transcribed public release history; replaced by the Epoch Notable Models ingest) |
+| `value_chain.csv` | `stage` | `share_of_spend` (model / compute / chips / integration, sums to 1), `allocation` (`market_share` / `data_center` / `fixed` / `domestic`), `fixed_US`, `fixed_TW`, `fixed_EU`, `fixed_KR` (used when allocation = fixed), `source_tag` |
+
+## 12. Results document additions
+
+- `meta.regions` lists the region ids in the run; `series` is keyed by region id and contains the same metrics for every region, plus `ai_rents_received_bn` (rents accruing to the region by value-chain stage, `{"model": s, "compute": s, "chips": s, "integration": s, "total": s}`) and `ai_spend_bn`.
+- `regions`: `[ { "region_id", "name", "employment_total", "gdp_bn_usd", "data_flags": {...} } ]`.
+- `world`: `[ { "iso3", "name", "region_id", "employment_pct_vs_baseline": {slim}, "real_wage_pct_vs_baseline": {slim} } ]` — one entry per Natural Earth country in a modelled region; members carry their region's series (composition only) until member-level data exists, and `meta.data_flags.members` says so.
+- `states` unchanged (U.S.).
+- `occupations[].by_region`: `{ region_id: { "displacement": {central}, "employment_pct_vs_baseline": {central} } }` for the non-U.S. regions (central only, document size).
+- `supply`: `{ "clock": {percentiles of capability_index}, "horizon_hours": {…}, "regional_capability": { region_id: {"central": [...]}}, "price_frontier_usd_per_mtok": {"central": [...]}, "price_fixed_capability_usd_per_mtok": {"central": [...]}, "releases": [ {actor_id, name, region_id, model, date, quarter, capability_index, open_weights} ], "regulatory_events": [ {event_id, region, date, quarter, kind, description} ], "availability": { region_id: { actor_id: [0/1 per quarter] } }, "market_share": { region_id: { actor_id: {"central": [...]} } } }`.
+- `channels` per region for the U.S. only in Phase 3 (runtime); other regions carry `channels` on request in Phase 5.
+- `explain.notes` gain region comparisons (which region is hit first, where rents flow).
+
+## 13. API additions
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/api/geo/world` | Natural Earth 110m admin-0 GeoJSON reduced to `{iso3, name, region_id}` |
+| GET | `/api/regions` | `regions.csv` rows |
+| GET | `/api/actors` | actors and releases |
+| POST | `/api/run` | unchanged; `regions` in the body (list of ids) restricts the run, default all |
+
+## 14. Web state additions
+
+`region=` in the URL (`world` default, or a region id) selects the region every view reads; the map drills `World › EU › Germany` and `World › US › Ohio`.

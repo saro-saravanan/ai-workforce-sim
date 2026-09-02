@@ -177,6 +177,30 @@ SOURCES: dict[str, Source] = {
                "https://cps.ipums.org/cps/", "IPUMS terms", ("P.63", "P.67"), "indirect", 29),
         Source("btos_young", "BTOS young-firm cut", "https://www.census.gov/programs-surveys/btos.html",
                "Public domain", ("P.52",), "indirect", 30),
+        Source(
+            "natural_earth_50m", "Natural Earth admin-0 countries (1:50m)",
+            "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson",
+            "Public domain", ("geo/world.geojson", "regions/region_members", "regions/regions"), "direct (repo)", 21,
+            "1:50m because Singapore is absent at 1:110m; POP_EST / GDP_MD carry POP_YEAR / GDP_YEAR (mostly 2019).",
+            extra_urls=("https://www.naturalearthdata.com/",),
+        ),
+        # Phase 3 transcriptions (not in the inventory): actor facts, list prices and release dates were
+        # written from memory in a sandbox that reaches only github.com; each carries "verify at ingest".
+        Source(
+            "vendor_pricing", "Vendor list prices (OpenAI, Anthropic, Google, xAI, Amazon, Mistral, DeepSeek, "
+            "Moonshot, Zhipu pricing pages)",
+            "https://openai.com/api/pricing/", "Public price lists; transcribed from memory, not fetched",
+            ("regions/actors.price_frontier_usd_per_mtok",), "transcribed from memory; verify at ingest", None,
+            "Blended 3:1 input:output per million tokens; replaced by Epoch inference price data (row 10).",
+            extra_urls=("https://www.anthropic.com/pricing", "https://ai.google.dev/pricing",
+                        "https://api-docs.deepseek.com/quick_start/pricing", "https://mistral.ai/pricing"),
+        ),
+        Source(
+            "release_history", "Public model release announcements (vendor blogs, model cards)",
+            "https://epoch.ai/data/notable-ai-models", "Public announcements; transcribed from memory, not fetched",
+            ("regions/actor_releases", "regions/actors"), "transcribed from memory; verify at ingest", None,
+            "Replaced by ingest/epoch_models.py (Epoch Notable AI Models, CC BY 4.0).",
+        ),
         # Fixture-only source (not in the inventory): used for the Phase 1 state share proxy.
         Source(
             "census_apportionment_2020", "U.S. Census Bureau, 2020 Census apportionment — resident population by state",

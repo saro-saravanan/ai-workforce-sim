@@ -1,0 +1,11 @@
+region_id,name,population,gdp_bn_usd,employment_total,wage_level_rel_us,emp_growth_10y,import_share,epl_multiplier,avail_delay_quarters,frontier_lag_quarters,compliance_premium_high_risk,regime,data_center_share,spillover_weight_us,source_tag,n_members,emp_to_pop_ratio
+US,United States,328239523,21433.226,157554971,1.0,0.0784,0.15,1.0,0,0,0.03,state_patchwork,0.55,0.0,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.48
+EU,European Union (EU-27),447512041,15626.435,196905298,0.75,0.02,0.2,0.5,1,0,0.1,eu_ai_act,0.12,0.5,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",27,0.44
+UK,United Kingdom,66834405,2829.108,32748858,0.8,0.03,0.3,0.8,0,0,0.03,light,0.04,0.7,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.49
+CN,China,1405862845,14762.473,731048679,0.25,-0.03,0.15,0.7,4,4,0.05,licensing,0.15,0.2,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",3,0.52
+JP,Japan,126264931,5081.769,69445712,0.65,-0.05,0.18,0.6,0,0,0.02,light,0.05,0.4,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.55
+KR,South Korea,51709098,1646.739,28440004,0.6,-0.02,0.35,0.7,0,0,0.02,light,0.02,0.5,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.55
+IN,India,1366417754,2868.929,560231279,0.08,0.12,0.2,0.6,0,0,0.02,light,0.03,0.4,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.41
+TW,Taiwan,23568378,1127.0,11784189,0.5,-0.02,0.45,0.8,0,0,0.02,light,0.01,0.5,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.5
+SG,Singapore,5703569,372.062,3707320,0.9,0.05,0.6,0.9,0,0,0.02,light,0.02,0.6,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",1,0.65
+RoA,Rest of Asia,1153932832,3574.241,519269774,0.15,0.1,0.3,0.8,1,0,0.02,light,0.01,0.3,"partial:natural_earth_pop_gdp;E(other columns, aiwsim.data.regions)",19,0.45

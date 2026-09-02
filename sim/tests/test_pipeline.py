@@ -36,10 +36,17 @@ def test_monte_carlo_budget(ctx):
 
 def test_percentiles_ordered_and_central_present(baseline_doc):
     doc, _ = baseline_doc
-    for name, s in doc["series"]["US"].items():
-        assert "central" in s and "p50" in s, name
+    def check(name, s):
+        if "central" not in s:            # nested (e.g. ai_rents_received_bn by stage)
+            for sub, ss in s.items():
+                check(f"{name}.{sub}", ss)
+            return
+        assert "p50" in s, name
         for lo, hi in (("p10", "p25"), ("p25", "p50"), ("p50", "p75"), ("p75", "p90")):
             assert all(a <= b + 1e-9 for a, b in zip(s[lo], s[hi], strict=True)), name
+
+    for name, s in doc["series"]["US"].items():
+        check(name, s)
 
 
 def test_ensemble_cells_and_confidence(baseline_doc):

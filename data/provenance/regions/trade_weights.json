@@ -1,0 +1,18 @@
+{
+  "table": "regions/trade_weights",
+  "source": "regions.csv import_share and GDP",
+  "source_url": "docs/contracts.md",
+  "license": "n/a (fixture)",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "f917e8969aa1e34995f5eeadaaaa42a8d50a66ddc652a67dca2747e045d4cc54",
+  "transformations": [
+    "weight(to, to) = 1 - import_share",
+    "weight(from, to) = import_share x gdp_from / sum of GDP over the other nine regions"
+  ],
+  "status": "FIXTURE",
+  "notes": "Rest of the world is not a source region, so the import share is fully attributed to the nine modelled partners. Replaced by ingest/oecd_tiva.py.",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/trade_weights.csv",
+  "extra": {}
+}

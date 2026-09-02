@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { extent } from 'd3'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { CATEGORICAL } from '@/lib/palette'
 import { divergingScale, niceSymmetric, symmetricDomain } from '@/lib/scales'
@@ -21,6 +22,7 @@ import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const regionStore = useRegionStore()
 const theme = useThemeStore()
 results.loadGeo()
 
@@ -59,7 +61,7 @@ function swap() {
 }
 
 const seriesA = computed(() => results.series?.[metric.value])
-const seriesB = computed(() => results.docB?.series.US?.[metric.value])
+const seriesB = computed(() => results.seriesB?.[metric.value])
 /** shared y domain so both panels read on one scale */
 const yDomain = computed<[number, number]>(() => {
   const all: number[] = []
@@ -174,6 +176,7 @@ const traceStory = computed(() => {
         A: <span class="a">{{ results.scenarioName }}</span> vs B:
         <span class="b">{{ results.compareName ?? '—' }}</span>
       </h2>
+      <span class="badge region">{{ regionStore.label }}</span>
       <span v-if="results.compareLoading" class="muted">Comparing…</span>
     </div>
     <div class="filters">
@@ -351,6 +354,10 @@ const traceStory = computed(() => {
 </template>
 
 <style scoped>
+.badge.region {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
 .a {
   color: var(--ink);
 }

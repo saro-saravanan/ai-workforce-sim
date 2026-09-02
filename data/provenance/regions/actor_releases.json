@@ -1,0 +1,21 @@
+{
+  "table": "regions/actor_releases",
+  "source": "Public model release announcements (vendor blogs, model cards)",
+  "source_url": "https://epoch.ai/data/notable-ai-models",
+  "license": "Public announcements; transcribed from memory, not fetched",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "aa726d589ea0f661e75f96e94386b7d1cf67fdd51be5f69bf813732f6922e091",
+  "transformations": [
+    "release dates transcribed from public announcements (day precision unless noted)",
+    "capability_index = log2(METR 50% horizon minutes) for models in series/metr_horizons.csv",
+    "open_weights = 1 where weights were published at release"
+  ],
+  "status": "real (transcribed; verify at ingest)",
+  "notes": "Only releases whose dates the author is confident of; fewer, correct rows over coverage. Replaced by ingest/epoch_models.py (Epoch Notable AI Models, with ECI).",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/actor_releases.csv",
+  "extra": {
+    "n_with_capability_index": 3
+  }
+}

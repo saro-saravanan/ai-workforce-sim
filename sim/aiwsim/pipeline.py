@@ -13,6 +13,7 @@ from .engine import channel_decomposition, load_cohorts, load_fitted
 from .inputs import Inputs, load_inputs
 from .mc import BatchOutput, run_batch, run_batch_parallel
 from .params import Params, apply_levers, apply_overrides, central_params
+from .regions import load_regional
 from .results2 import build_results_v3, tornado
 from .sampling import draw_parameters, tornado_draws
 
@@ -30,6 +31,7 @@ class Context:
         self.inputs: Inputs = load_inputs(root)
         self.fitted = load_fitted(root)
         self.cohorts, self.cohort_flag = load_cohorts(root, self.inputs)
+        self.regional = load_regional(root, self.inputs)
         self.registry = root / "data" / "processed" / "params" / "registry.yaml"
         self.schema = root / "scenarios" / "schema.json"
         self.scen_dir = root / "scenarios"
@@ -49,7 +51,8 @@ class Context:
 
 
 def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, ensemble: str | None = None,
-                 with_channels: bool = True, with_tornado: bool = True, workers: int | None = None) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
+                 with_channels: bool = True, with_tornado: bool = True, workers: int | None = None,
+                 regions: list[str] | None = None) -> tuple[dict[str, Any], dict[str, np.ndarray]]:
     """Returns (results document, per-draw arrays for paired comparison)."""
     t0 = time.perf_counter()
     p = ctx.params_for(scen)
@@ -57,19 +60,21 @@ def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, e
     ens = ensemble or scen.get("ensemble", {}).get("mechanisms", "all")
     seed = int(scen.get("seed", 42))
     inp = ctx.inputs
+    regional = ctx.regional
+    region_ids = regions or (regional.order if regional else ["US"])
     if n_draws > 1:
         ds = draw_parameters(p, n_draws, seed, ens)
-        out = run_batch_parallel(inp, p, scen, ds, fitted=ctx.fitted, cohorts=ctx.cohorts, workers=workers)
+        out = run_batch_parallel(inp, p, scen, ds, fitted=ctx.fitted, cohorts=ctx.cohorts, workers=workers, regional=regional, regions=region_ids)
     else:
-        out = run_batch(inp, p, scen, None, fitted=ctx.fitted, cohorts=ctx.cohorts)
+        out = run_batch(inp, p, scen, None, fitted=ctx.fitted, cohorts=ctx.cohorts, regional=regional, regions=region_ids)
     t1 = time.perf_counter()
     torn = None
     if with_tornado:
         td = tornado_draws(p, TORNADO_KEYS)
-        ot = run_batch_parallel(inp, p, scen, td, fitted=ctx.fitted, cohorts=ctx.cohorts, workers=workers)
+        ot = run_batch_parallel(inp, p, scen, td, fitted=ctx.fitted, cohorts=ctx.cohorts, workers=workers, regional=regional, regions=region_ids)
         torn = tornado(inp, ot, td.keys, td.ranges, p.specs, out.quarters)
     t2 = time.perf_counter()
-    channels = channel_decomposition(inp, p, scen, _central_view(out), ctx.fitted, ctx.cohorts) if with_channels else None
+    channels = channel_decomposition(inp, p, scen, _central_view(out), ctx.fitted, ctx.cohorts, regional, region_ids) if with_channels else None
     t3 = time.perf_counter()
     dif = None
     if scen.get("parent"):
@@ -78,7 +83,7 @@ def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, e
             dif = scenario_diff(parent, scen)
         except FileNotFoundError:
             dif = None
-    doc = build_results_v3(inp, out, scen, ctx.hash(scen), channels, torn, dif, n_draws, ens if n_draws > 1 else "central", ctx.cohort_flag)
+    doc = build_results_v3(inp, out, scen, ctx.hash(scen), channels, torn, dif, n_draws, ens if n_draws > 1 else "central", ctx.cohort_flag, regional)
     doc["meta"]["timing_s"] = {"monte_carlo": round(t1 - t0, 2), "tornado": round(t2 - t1, 2), "channels": round(t3 - t2, 2),
                                "total": round(time.perf_counter() - t0, 2), "workers": workers}
     raw = {"employment_pct": out.employment_pct, "gdp_pct": out.gdp_pct, "real_wage_pct": out.real_wage_pct,

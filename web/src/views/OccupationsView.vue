@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { cappedCategorical } from '@/lib/scales'
 import { quarterLabel } from '@/lib/format'
@@ -13,7 +14,34 @@ import OccupationTable from '@/components/OccupationTable.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const regionStore = useRegionStore()
 const theme = useThemeStore()
+
+/**
+ * Phase 3: non-U.S. regions carry a central-only path per occupation (`by_region`); the bands and
+ * the wage columns stay U.S.-only. World shows the U.S. detail (there is no world occupation split).
+ */
+const regionKey = computed(() => regionStore.seriesKey)
+const usesByRegion = computed(
+  () =>
+    !!regionKey.value &&
+    regionKey.value !== 'US' &&
+    results.occupations.some((o) => o.by_region?.[regionKey.value!]),
+)
+const regionNote = computed(() => {
+  if (regionStore.isWorld) return 'Occupation detail is U.S.-only for World (no world occupation split).'
+  if (regionKey.value === 'US') return ''
+  if (usesByRegion.value)
+    return `${regionStore.label}: central run only — bands and wage columns are U.S.-only in Phase 3.`
+  return `No occupation paths for ${regionStore.label} in this run — showing the U.S.`
+})
+function displacementAt(occ: OccupationResult, q: number): number {
+  if (usesByRegion.value) {
+    const c = occ.by_region?.[regionKey.value!]?.displacement.central[q]
+    if (c != null) return c
+  }
+  return occ.displacement.p50[q] ?? 0
+}
 
 const mode = ref<'scatter' | 'table'>('scatter')
 const colorBy = ref<'group' | 'single'>('group')
@@ -23,13 +51,14 @@ const qLabel = computed(() => quarterLabel(results.quarters[scrubber.q]))
 const points = computed<ScatterPoint[]>(() =>
   results.occupations.map((occ) => {
     const x = occ.automatable_share
-    const y = occ.displacement.p50[scrubber.q] ?? 0
+    const y = displacementAt(occ, scrubber.q)
     return { occ, x, y, gap: x - y }
   }),
 )
 const yMax = computed(() => {
   let m = 0
-  for (const o of results.occupations) for (const v of o.displacement.p50) m = Math.max(m, v)
+  for (const o of results.occupations)
+    for (let i = 0; i < o.displacement.p50.length; i++) m = Math.max(m, displacementAt(o, i))
   return Math.max(0.1, Math.ceil((m + 0.02) * 10) / 10)
 })
 
@@ -71,10 +100,16 @@ const labelled = computed(() => {
 <template>
   <section class="view">
     <div class="view-header">
-      <h2>Exposure vs realized displacement, {{ qLabel }}</h2>
+      <h2>
+        Exposure vs realized displacement,
+        {{ usesByRegion ? regionStore.label : 'US' }}, {{ qLabel }}
+      </h2>
       <span class="chart-note"
-        >Size = 2023 employment. Below the diagonal = exposed but not yet hit.</span
+        >Size = 2023 U.S. employment. Below the diagonal = exposed but not yet hit.</span
       >
+      <span v-if="regionNote" class="badge composition" :title="regionNote">{{
+        usesByRegion ? 'bands U.S.-only' : 'U.S. detail'
+      }}</span>
     </div>
     <div class="filters">
       <div class="seg" role="group" aria-label="Rendering">
@@ -121,6 +156,7 @@ const labelled = computed(() => {
       </div>
       <OccupationTable v-else :points="points" :q="scrubber.q" :quarter-label="qLabel" />
     </div>
+    <p v-if="regionNote" class="chart-note">{{ regionNote }}</p>
     <ol class="rank" aria-label="Largest gaps">
       <li v-for="p in sorted.slice(0, 5)" :key="p.occ.occ_code">
         <span>{{ p.occ.title }}</span>
@@ -135,6 +171,10 @@ const labelled = computed(() => {
 </template>
 
 <style scoped>
+.badge.composition {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
 .body {
   flex: 1;
   min-height: 0;

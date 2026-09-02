@@ -1,0 +1,5 @@
+stage,share_of_spend,allocation,fixed_US,fixed_TW,fixed_EU,fixed_KR,source_tag
+model,0.25,market_share,,,,,partial:public_gross_margins;D
+compute,0.35,data_center,,,,,partial:public_gross_margins;D
+chips,0.25,fixed,0.55,0.35,0.1,0.0,partial:public_gross_margins;D
+integration,0.15,domestic,,,,,partial:public_gross_margins;D

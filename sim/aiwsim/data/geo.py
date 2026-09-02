@@ -28,3 +28,23 @@ def build_us_states(raw_path: Path) -> dict:
     if len(feats) != 51:
         raise ValueError(f"expected 51 U.S. features, got {len(feats)}")
     return {"type": "FeatureCollection", "name": "us_states_110m", "features": feats}
+
+
+def build_world(raw_path: Path, region_of: dict[str, str]) -> dict:
+    """World admin-0 GeoJSON: drop Antarctica; properties reduced to {iso3, name, region_id}
+    (``iso3`` = Natural Earth ADM0_A3; ``region_id`` from ``region_of``, "" outside the ten regions).
+    Geometry unchanged."""
+    src = json.loads(Path(raw_path).read_text(encoding="utf-8"))
+    feats = []
+    for f in src["features"]:
+        p = f["properties"]
+        iso3 = p["ADM0_A3"]
+        if iso3 == "ATA":
+            continue
+        feats.append({
+            "type": "Feature",
+            "properties": {"iso3": iso3, "name": p["NAME"], "region_id": region_of.get(iso3, "")},
+            "geometry": f["geometry"],
+        })
+    feats.sort(key=lambda f: f["properties"]["iso3"])
+    return {"type": "FeatureCollection", "name": "world_admin0", "features": feats}

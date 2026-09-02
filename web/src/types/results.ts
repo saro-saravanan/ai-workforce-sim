@@ -73,7 +73,34 @@ export const HEADLINE_METRICS: HeadlineMetric[] = [
   'wage_share_pp_vs_baseline',
 ]
 
-export type RegionSeries = Record<NationalMetric, Series>
+/** Phase 3: rents accruing to a region by value-chain stage (spec §6.3), $bn per quarter-year. */
+export type RentStage = 'model' | 'compute' | 'chips' | 'integration'
+export const RENT_STAGES: RentStage[] = ['model', 'compute', 'chips', 'integration']
+export type RentsByStage = Record<RentStage | 'total', Series>
+
+export type RegionSeries = Record<NationalMetric, Series> & {
+  /** Phase 3 (contracts §12) */
+  ai_rents_received_bn?: RentsByStage
+}
+
+/** Phase 3 region ids (contracts §11), in display order. */
+export type RegionId = 'US' | 'EU' | 'UK' | 'CN' | 'JP' | 'KR' | 'IN' | 'TW' | 'SG' | 'RoA'
+export const REGION_IDS: RegionId[] = ['US', 'EU', 'UK', 'CN', 'JP', 'KR', 'IN', 'TW', 'SG', 'RoA']
+export const REGION_NAMES: Record<RegionId, string> = {
+  US: 'United States',
+  EU: 'European Union',
+  UK: 'United Kingdom',
+  CN: 'China',
+  JP: 'Japan',
+  KR: 'South Korea',
+  IN: 'India',
+  TW: 'Taiwan',
+  SG: 'Singapore',
+  RoA: 'Rest of Asia',
+}
+export function isRegionId(v: unknown): v is RegionId {
+  return typeof v === 'string' && (REGION_IDS as string[]).includes(v)
+}
 
 export interface OccupationResult {
   occ_code: string
@@ -87,6 +114,13 @@ export interface OccupationResult {
   displacement: Series
   employment_pct_vs_baseline: Series
   real_wage_pct_vs_baseline: Series
+  /** Phase 3: central-only paths for the non-U.S. regions (contracts §12) */
+  by_region?: Record<string, OccupationByRegion>
+}
+
+export interface OccupationByRegion {
+  displacement: Pick<Series, 'central'> & { central: number[] }
+  employment_pct_vs_baseline: Pick<Series, 'central'> & { central: number[] }
 }
 
 export type StateMetric =
@@ -233,6 +267,127 @@ export interface ResultsDocument {
   tornado?: Partial<Record<HeadlineMetric, TornadoRow[]>>
   cohorts?: CohortsSection
   flows?: FlowsSection
+  // ---------- Phase 3 (contracts §12) ----------
+  regions?: RegionInfo[]
+  world?: WorldEntry[]
+  supply?: SupplySection
+}
+
+// ---------- Phase 3 sections (contracts §12–13) ----------
+
+export interface RegionInfo {
+  region_id: RegionId | string
+  name: string
+  employment_total: number
+  gdp_bn_usd: number
+  data_flags: Record<string, DataFlag>
+}
+
+/** Slim series: p10/p50/p90 only (document size). */
+export type SlimSeries = Pick<Series, 'p10' | 'p50' | 'p90'>
+
+export type WorldMetric = 'employment_pct_vs_baseline' | 'real_wage_pct_vs_baseline'
+
+/** One entry per Natural Earth country in a modelled region; members carry their region's series. */
+export interface WorldEntry {
+  iso3: string
+  name: string
+  region_id: RegionId | string
+  employment_pct_vs_baseline: SlimSeries
+  real_wage_pct_vs_baseline: SlimSeries
+}
+
+export type CentralSeries = { central: number[] }
+
+export interface SupplyRelease {
+  actor_id: string
+  name: string
+  region_id: RegionId | string
+  model: string
+  /** YYYY-MM-DD */
+  date: string
+  /** "2025Q3" */
+  quarter: string
+  /** doublings on the METR clock, or null when the model is not on the METR series */
+  capability_index: number | null
+  open_weights: boolean
+}
+
+export type RegulatoryKind =
+  | 'ai_act'
+  | 'export_control'
+  | 'licensing'
+  | 'state_law'
+  | 'guidance'
+  | 'localization'
+  | string
+
+export interface RegulatoryEvent {
+  event_id: string
+  region: RegionId | string
+  date: string
+  quarter: string
+  kind: RegulatoryKind
+  description: string
+}
+
+export interface SupplySection {
+  /** the global frontier clock, capability index (doublings) */
+  clock: Series
+  /** 2^clock / 60, hours */
+  horizon_hours: Series
+  /** available capability per region (contracts §12, central only) */
+  regional_capability: Record<string, CentralSeries>
+  price_frontier_usd_per_mtok: CentralSeries
+  price_fixed_capability_usd_per_mtok: CentralSeries
+  releases: SupplyRelease[]
+  regulatory_events: RegulatoryEvent[]
+  /** region → actor → 0/1 per quarter */
+  availability: Record<string, Record<string, number[]>>
+  market_share: Record<string, Record<string, CentralSeries>>
+}
+
+/** GET /api/regions — regions.csv rows (only the columns the web app reads are typed). */
+export interface RegionRow {
+  region_id: RegionId | string
+  name: string
+  population?: number
+  gdp_bn_usd?: number
+  employment_total?: number
+  regime?: string
+  data_center_share?: number
+  [key: string]: unknown
+}
+
+/** GET /api/actors */
+export interface ActorRow {
+  actor_id: string
+  name: string
+  region_id: RegionId | string
+  role: 'lab' | 'compute' | 'chokepoint' | string
+  weights_posture: 'closed' | 'open-lagged' | 'open-frontier' | string
+  [key: string]: unknown
+}
+export interface ActorsResponse {
+  actors: ActorRow[]
+  releases: SupplyRelease[]
+}
+
+/** GET /api/geo/world — Natural Earth 110m admin-0 reduced to {iso3, name, region_id} */
+export interface WorldProperties {
+  iso3: string
+  name: string
+  /** "" for countries outside the ten regions */
+  region_id: RegionId | '' | string
+}
+export interface WorldFeature {
+  type: 'Feature'
+  properties: WorldProperties
+  geometry: GeoJSON.Geometry
+}
+export interface WorldGeoJSON {
+  type: 'FeatureCollection'
+  features: WorldFeature[]
 }
 
 // ---------- scenarios and API (contracts §3, §9) ----------

@@ -5,7 +5,7 @@ Model specification: `docs/model-spec.md` (v0.2). Contracts between packages: `d
 
 ## Layout
 - `sim/aiwsim/` simulation core (Python 3.12, numpy/polars, pure functions, deterministic). Modules follow the spec layers:
-  `mc.py` (the batched engine: §2–§6 with a leading draw axis), `clock.py` (§3 helpers), `sampling.py` (§7.1 copula draws, §7.2 ensemble cells, tornado draws), `engine.py` (central view + channel decomposition), `pipeline.py` (one scenario end to end, paired compare), `results2.py` (contract §2/§8 document), `calibrate.py` (§7.4), `params.py` (registry + levers), `scenario.py` (§8.1), `labor.py` (channel switches), `data/` (ingestion and fixtures).
+  `mc.py` (the batched engine: §2–§6 with a leading draw axis and a region axis; regions read the shared task layer at their access lag), `clock.py` (§3 helpers), `sampling.py` (§7.1 copula draws, §7.2 ensemble cells, tornado draws), `engine.py` (central view + channel decomposition), `pipeline.py` (one scenario end to end, paired compare), `results2.py` (contract §2/§8 document), `calibrate.py` (§7.4), `params.py` (registry + levers), `scenario.py` (§8.1), `regions.py` (regional inputs, wage tiers, consistency guard), `labor.py` (channel switches), `data/` (ingestion and fixtures).
 - `api/aiwsim_api/` FastAPI service (contract §3). `web/` Vue 3 + TypeScript + Pinia + D3 (no React).
 - `data/processed/` committed canonical tables with `data/provenance/*.json`; `data/raw/` and `data/cache/` are gitignored.
 - `scenarios/` versioned JSON scenarios and `schema.json`.

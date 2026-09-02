@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { fmtCompact, quarterLabel } from '@/lib/format'
 import { stackCategorical } from '@/lib/scales'
@@ -11,7 +12,13 @@ import SankeyChart from '@/components/charts/SankeyChart.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const regionStore = useRegionStore()
 const theme = useThemeStore()
+/** Phase 3: the flow section is U.S.-only; the selected region's cumulative displacement is shown for context. */
+const regionDisplaced = computed(() => {
+  const s = results.series?.displaced_workers_cum
+  return s ? fmtCompact(s.p50[scrubber.q]) : '—'
+})
 
 const qLabel = computed(() => quarterLabel(results.quarters[scrubber.q]))
 const total = computed(() =>
@@ -33,7 +40,13 @@ const destRows = computed(() =>
 <template>
   <section class="view">
     <div class="view-header">
-      <h2>Where displaced workers went, 2024 → {{ qLabel }} (cumulative)</h2>
+      <h2>Where displaced U.S. workers went, 2024 → {{ qLabel }} (cumulative)</h2>
+      <span
+        v-if="regionStore.region !== 'US'"
+        class="badge composition"
+        :title="`Flows are published for the U.S. only in Phase 3; ${regionStore.label} cumulative displacement is ${regionDisplaced}`"
+        >flows U.S.-only · {{ regionStore.label }} displaced {{ regionDisplaced }}</span
+      >
       <span class="chart-note">
         Flow widths carry the median; hover for the 10–90 band. Total displaced:
         <strong class="mono">{{ fmtCompact(total) }}</strong>
@@ -83,6 +96,10 @@ const destRows = computed(() =>
 </template>
 
 <style scoped>
+.badge.composition {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
 .layout {
   display: flex;
   gap: 12px;

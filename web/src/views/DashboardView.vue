@@ -2,40 +2,78 @@
 import { computed, ref } from 'vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
-import { DASHBOARD_TILES } from '@/lib/metrics'
+import { DASHBOARD_TILES, RENTS_DEF, RENT_STAGE_LABELS, type MetricDef } from '@/lib/metrics'
 import { CATEGORICAL } from '@/lib/palette'
 import { quarterLabel } from '@/lib/format'
 import { referenceQuarter } from '@/lib/confidence'
-import type { HeadlineMetric, NationalMetric } from '@/types/results'
-import { HEADLINE_METRICS } from '@/types/results'
+import { WORLD_RULE, WORLD_RULE_LABEL } from '@/lib/world'
+import { stackCategorical } from '@/lib/scales'
+import type { ChannelDecomposition, HeadlineMetric, NationalMetric, Series } from '@/types/results'
+import { HEADLINE_METRICS, RENT_STAGES, REGION_NAMES, isRegionId } from '@/types/results'
 import StatTile from '@/components/StatTile.vue'
 import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
 import SeriesChart, { type Overlay } from '@/components/charts/SeriesChart.vue'
 import StackedChannels from '@/components/charts/StackedChannels.vue'
 import TornadoChart from '@/components/charts/TornadoChart.vue'
+import RentsByRegion from '@/components/charts/RentsByRegion.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const regionStore = useRegionStore()
 const theme = useThemeStore()
 
-const expanded = ref<NationalMetric | null>(null)
+const RENTS_KEY = 'ai_rents_received_bn' as const
+type TileKey = NationalMetric | typeof RENTS_KEY
+const expanded = ref<TileKey | null>(null)
 const ensembleView = ref<'parametric' | 'structural'>('parametric')
 const hue = computed(() => CATEGORICAL[theme.mode][0] ?? '#2a78d6')
 const cellHue = computed(() => CATEGORICAL[theme.mode][1] ?? '#eb6834')
 const qLabel = computed(() => quarterLabel(results.quarters[scrubber.q]))
 const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
-const tiles = computed(() =>
-  DASHBOARD_TILES.map((t) => ({ ...t, series: results.national(t.key) })).filter((t) => t.series),
-)
+/** For World the tile subtitle says how the aggregate was formed (lib/world.ts). */
+function unitFor(key: TileKey, def: MetricDef) {
+  if (!regionStore.isWorld) return def.unit
+  const rule = key === RENTS_KEY ? 'sum' : WORLD_RULE[key]
+  return `${def.unit} · World = ${WORLD_RULE_LABEL[rule]}`
+}
+const tiles = computed<Array<{ key: TileKey; def: MetricDef; series: Series | undefined }>>(() => {
+  const base: Array<{ key: TileKey; def: MetricDef; series: Series | undefined }> = DASHBOARD_TILES.map((t) => ({
+    ...t,
+    series: results.national(t.key),
+  }))
+  base.push({ key: RENTS_KEY, def: RENTS_DEF, series: results.rents?.total })
+  return base.filter((t) => t.series)
+})
 const expandedTile = computed(() => tiles.value.find((t) => t.key === expanded.value))
-const expandedChannels = computed(() =>
-  expanded.value ? results.channels[expanded.value] : undefined,
-)
+const expandedChannels = computed<ChannelDecomposition | undefined>(() => {
+  if (!expanded.value) return undefined
+  if (expanded.value === RENTS_KEY) {
+    const r = results.rents
+    if (!r) return undefined
+    const contributions: ChannelDecomposition['contributions'] = {}
+    for (const st of RENT_STAGES) (contributions as Record<string, number[]>)[st] = r[st].p50
+    return { order: RENT_STAGES as unknown as ChannelDecomposition['order'], contributions }
+  }
+  return results.channels[expanded.value]
+})
+const stageColor = computed(() => stackCategorical(RENT_STAGES, theme.mode))
+/** World: one stacked bar per region (rents are a sum, so the split is exact). */
+const rentsByRegion = computed(() => {
+  if (!regionStore.isWorld || expanded.value !== RENTS_KEY || !results.doc) return []
+  return results.regionIds
+    .map((id) => ({
+      id,
+      name: isRegionId(id) ? REGION_NAMES[id] : id,
+      rents: results.doc!.series[id]?.ai_rents_received_bn,
+    }))
+    .filter((r): r is typeof r & { rents: NonNullable<typeof r.rents> } => !!r.rents)
+})
 const hasAnyBand = computed(() => tiles.value.some((t) => t.series?.p10 && t.series?.p90))
 const hasInner = computed(() => tiles.value.some((t) => t.series?.p25 && t.series?.p75))
 
-function isHeadline(k: NationalMetric | null): k is HeadlineMetric {
+function isHeadline(k: TileKey | null): k is HeadlineMetric {
   return !!k && (HEADLINE_METRICS as string[]).includes(k)
 }
 const expandedStructural = computed(() =>
@@ -77,7 +115,7 @@ const tornadoBase = computed(() => {
   return s ? (s.central?.[i] ?? s.p50[i] ?? 0) : 0
 })
 
-function toggle(k: NationalMetric) {
+function toggle(k: TileKey) {
   expanded.value = expanded.value === k ? null : k
 }
 function selectCell(id: string) {
@@ -88,7 +126,12 @@ function selectCell(id: string) {
 <template>
   <section class="view">
     <div class="view-header">
-      <h2>US economy vs no-AI baseline, {{ qLabel }}</h2>
+      <h2>{{ regionStore.label }} economy vs no-AI baseline, {{ qLabel }}</h2>
+      <span v-if="!results.hasRegion" class="badge fixture">no series for {{ regionStore.region }} in this run — showing U.S.</span>
+      <span v-if="regionStore.isWorld" class="chart-note">
+        World is aggregated client-side from each region's series, weighted by
+        <code>regions[].employment_total</code> (see each tile's subtitle).
+      </span>
       <span class="chart-note">
         Median line{{ hasAnyBand ? ' with 10–90 band' : '' }}{{ hasInner ? ' (darker 25–75)' : '' }};
         dashed line = central-parameter run; dotted line = baseline (no frontier AI after 2023).
@@ -101,7 +144,7 @@ function selectCell(id: string) {
         v-for="t in tiles"
         :key="t.key"
         :label="t.def.label"
-        :unit="t.def.unit"
+        :unit="unitFor(t.key, t.def)"
         :series="t.series!"
         :q="scrubber.q"
         :hue="hue"
@@ -190,8 +233,13 @@ function selectCell(id: string) {
         </dl>
       </template>
       <template v-if="expandedChannels">
-        <h3 class="sub">Channel decomposition</h3>
-        <p class="chart-note">
+        <h3 class="sub">{{ expanded === RENTS_KEY ? 'By value-chain stage' : 'Channel decomposition' }}</h3>
+        <p v-if="expanded === RENTS_KEY" class="chart-note">
+          Spec §6.3: model-provider margin follows actor market shares, compute follows data-center
+          location, chips are fixed (US design 55%, TW fab 35%, EU equipment 10%), integration stays
+          in the adopting region. Stages sum to the total line.
+        </p>
+        <p v-else class="chart-note">
           Stacked contributions sum to the net line; hover for values, click the chart to move the
           scrubber.
         </p>
@@ -209,6 +257,15 @@ function selectCell(id: string) {
       <p v-else class="chart-note">
         No channel decomposition is published for this metric in this run.
       </p>
+      <template v-if="rentsByRegion.length">
+        <h3 class="sub">Rents by region, {{ qLabel }}</h3>
+        <div class="stage-legend" role="list" aria-label="Stages">
+          <span v-for="st in RENT_STAGES" :key="st" class="item" role="listitem">
+            <span class="sw" :style="{ background: stageColor(st) }"></span>{{ RENT_STAGE_LABELS[st] }}
+          </span>
+        </div>
+        <RentsByRegion :rows="rentsByRegion" :q="scrubber.q" :mode="theme.mode" :quarter-label="qLabel" />
+      </template>
       <template v-if="expandedTornado && expandedTornado.length">
         <h3 class="sub">Sensitivity (tornado), 2040 Q4</h3>
         <p class="chart-note">
@@ -230,6 +287,24 @@ function selectCell(id: string) {
 </template>
 
 <style scoped>
+.stage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.stage-legend .item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.stage-legend .sw {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  display: inline-block;
+}
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

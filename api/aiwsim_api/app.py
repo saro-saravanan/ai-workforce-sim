@@ -187,6 +187,34 @@ def levers():
     return out
 
 
+@app.get("/api/geo/world")
+def geo_world():
+    f = ROOT / "data" / "processed" / "geo" / "world.geojson"
+    if not f.exists():
+        raise HTTPException(404, "world.geojson not built; run `aiwsim data build`")
+    return json.loads(f.read_text())
+
+
+@app.get("/api/regions")
+def regions():
+    c = ctx()
+    if c.regional is None:
+        return []
+    return [{"region_id": x, "name": r.name, "population": r.population, "gdp_bn_usd": r.gdp_bn, "employment_total": r.employment_total,
+             "wage_level_rel_us": r.wage_level, "regime": r.regime, "avail_delay_quarters": r.avail_delay_q, "frontier_lag_quarters": r.frontier_lag_q,
+             "data_center_share": r.data_center_share} for x, r in c.regional.regions.items()]
+
+
+@app.get("/api/actors")
+def actors():
+    c = ctx()
+    if c.regional is None:
+        return {"actors": [], "releases": []}
+    return {"actors": [{"actor_id": a_.actor_id, "name": a_.name, "region_id": a_.region_id, "role": a_.role, "weights_posture": a_.posture,
+                        "frontier_lag_quarters": a_.frontier_lag_q, "price_frontier_usd_per_mtok": a_.price, "availability": a_.avail} for a_ in c.regional.actors],
+            "releases": c.regional.releases}
+
+
 @app.get("/api/geo/us-states")
 def geo_us_states():
     f = ROOT / "data" / "processed" / "geo" / "us_states.geojson"
@@ -203,7 +231,7 @@ def _paths(shash: str) -> tuple[Path, Path]:
 @app.post("/api/run")
 def run(body: dict[str, Any]):
     c = ctx()
-    draws = body.pop("draws", None); ensemble = body.pop("ensemble", None)
+    draws = body.pop("draws", None); ensemble = body.pop("ensemble", None); region_sel = body.pop("regions", None)
     if "id" in body and len(body) == 1:
         raw = _find(body["id"])
     else:
@@ -219,7 +247,7 @@ def run(body: dict[str, Any]):
     shash = c.hash(scen)
     jpath, npath = _paths(shash)
     if not jpath.exists():
-        doc, rawarr = run_scenario(c, scen)
+        doc, rawarr = run_scenario(c, scen, regions=region_sel)
         CACHE.mkdir(parents=True, exist_ok=True)
         jpath.write_text(json.dumps(doc, separators=(",", ":")))
         np.savez_compressed(npath, **rawarr)

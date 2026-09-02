@@ -26,6 +26,9 @@ Ranking criterion: expected swing in the 2035 U.S. net employment effect (or GDP
 | 20 | **No general equilibrium.** | Overstates unemployment persistence in tails | Validity warning when displacement > 15%/decade | — |
 | 21 | **Baseline reconstruction.** Restoring BLS AI-adjusted occupations to trend depends on BLS documentation being complete. | ±0.5 pp on net effects | Lever to keep the projection instead | `baseline.bls_ai_adjustment` |
 | 22 | **Policy financing rules are static.** | Policy comparisons depend on who pays | Rule per lever; fiscal balance shown | `policy.*.financing` |
+| 23 | **Regional occupation structure is a fixture.** Every non-U.S. region runs the U.S. task mix tilted by income, with U.S. cohort shares. | Regional employment effects are composition effects until ILOSTAT/Eurostat data replace the fixture; China and India are the least trustworthy | ±50% on non-U.S. displacement | Hatched on the map; `meta.regions[].data_flags`; ingest scripts ready | (data flag) |
+| 24 | **Access lags and market shares are estimates.** China's 4-quarter lag and the actor lags are judgement calls from public release history; list prices are transcribed. | Decides where model-stage rents go and how far China trails | ±2 quarters; ±15 pp on rent shares | Export-control and AI Act levers move them; `ingest/epoch_models.py` replaces release dates | `regulation.export_controls`, `regulation.EU.ai_act` |
+| 25 | **Value-chain split is from public gross margins.** Model 25 / compute 35 / chips 25 / integration 15 and the chip split US 55 / TW 35 / EU 10. | The rents map is only as good as this | ±10 pp per stage | Tagged D; one table to edit | `P.85` |
 
 ## Assumptions stated once
 

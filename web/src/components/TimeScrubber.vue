@@ -2,10 +2,24 @@
 import { computed } from 'vue'
 import { useScrubberStore } from '@/stores/scrubber'
 import { useResultsStore } from '@/stores/results'
+import { useRegionStore } from '@/stores/region'
 import { quarterLabel } from '@/lib/format'
 
 const scrubber = useScrubberStore()
 const results = useResultsStore()
+const regionStore = useRegionStore()
+
+/** the drill level under the region: a U.S. state, an EU member, or "all" */
+const drill = computed(() => {
+  if (regionStore.isWorld) return 'All regions'
+  if (regionStore.region === 'US')
+    return scrubber.state
+      ? (results.states.find((s) => s.fips === scrubber.state)?.name ?? scrubber.state)
+      : 'All states'
+  if (regionStore.member)
+    return results.world.find((w) => w.iso3 === regionStore.member)?.name ?? regionStore.member
+  return regionStore.region === 'EU' ? 'All members' : 'Whole region'
+})
 
 const label = computed(() => quarterLabel(results.quarters[scrubber.q]))
 const hasBand = computed(() => !!results.series?.employment_pct_vs_baseline.p10)
@@ -75,12 +89,7 @@ function onInput(e: Event) {
       <output class="q-label" aria-live="polite">{{ label || '—' }}</output>
       <span class="muted sep">·</span>
       <span class="muted"
-        >Region: <strong>US</strong> ›
-        {{
-          scrubber.state
-            ? (results.states.find((s) => s.fips === scrubber.state)?.name ?? scrubber.state)
-            : 'All states'
-        }}</span
+        >Region: <strong>{{ regionStore.label }}</strong> › {{ drill }}</span
       >
       <span class="spacer"></span>
       <span class="muted legend">

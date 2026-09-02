@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { VIEWS } from '@/router'
 import { useResultsStore } from '@/stores/results'
+import { REGION_OPTIONS, useRegionStore } from '@/stores/region'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const results = useResultsStore()
+const regionStore = useRegionStore()
 defineProps<{ explainOpen: boolean; leversOpen: boolean }>()
 defineEmits<{ toggleExplain: []; toggleLevers: [] }>()
 
@@ -18,6 +20,16 @@ const groups = computed(() => [
 function onScenario(e: Event) {
   results.scenarioId = (e.target as HTMLSelectElement).value
 }
+/** World, then the ten regions; regions absent from the run stay listed but are marked. */
+const regionOptions = computed(() =>
+  REGION_OPTIONS.map((o) => ({
+    ...o,
+    missing: o.id !== 'world' && results.doc != null && !results.regionIds.includes(o.id),
+  })),
+)
+function onRegion(e: Event) {
+  regionStore.setRegion((e.target as HTMLSelectElement).value)
+}
 </script>
 
 <template>
@@ -26,7 +38,7 @@ function onScenario(e: Event) {
       <div class="brand">
         <span class="dot" aria-hidden="true"></span>
         <h1>AI Workforce Sim</h1>
-        <span class="muted sub">U.S. 2024–2040 · vs no-AI baseline</span>
+        <span class="muted sub">10 regions · 2024–2040 · vs no-AI baseline</span>
       </div>
       <label class="scenario">
         <span class="muted">Scenario</span>
@@ -46,6 +58,20 @@ function onScenario(e: Event) {
             :value="results.scenarioId"
           >
             {{ results.scenarioId }}
+          </option>
+        </select>
+      </label>
+      <label class="scenario">
+        <span class="muted">Region</span>
+        <select
+          class="select"
+          :value="regionStore.region"
+          aria-label="Region"
+          title="region= in the URL; every view reads this region's series"
+          @change="onRegion"
+        >
+          <option v-for="o in regionOptions" :key="o.id" :value="o.id">
+            {{ o.label }}{{ o.missing ? ' (not in run)' : '' }}
           </option>
         </select>
       </label>

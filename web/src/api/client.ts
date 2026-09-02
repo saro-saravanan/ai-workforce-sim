@@ -9,8 +9,12 @@ import type {
   StatesGeoJSON,
   TornadoRow,
   HeadlineMetric,
+  WorldGeoJSON,
+  RegionRow,
+  ActorsResponse,
 } from '@/types/results'
 import { pairedCompare } from '@/lib/compare'
+import { seriesFor } from '@/lib/world'
 
 export const USE_MOCK =
   import.meta.env.VITE_USE_MOCK === '1' || import.meta.env.VITE_USE_MOCK === 'true'
@@ -152,10 +156,19 @@ export async function fetchLevers(): Promise<LeverDef[]> {
   return getJson<LeverDef[]>('/api/levers')
 }
 
-/** GET /api/compare?a=HASH&b=HASH. In mock mode: paired differences of the two documents. */
-export async function compareRuns(a: ResultsDocument, b: ResultsDocument): Promise<CompareResponse> {
-  if (USE_MOCK) return pairedCompare(a, b)
+/**
+ * GET /api/compare?a=HASH&b=HASH. In mock mode: paired differences of the two documents for the
+ * selected region ('world' aggregates client-side). The API takes an optional `region=`; without
+ * it the series delta is the U.S.
+ */
+export async function compareRuns(
+  a: ResultsDocument,
+  b: ResultsDocument,
+  region = 'US',
+): Promise<CompareResponse> {
+  if (USE_MOCK) return pairedCompare(a, b, region)
   const qs = new URLSearchParams({ a: a.meta.scenario_hash, b: b.meta.scenario_hash })
+  if (region !== 'US') qs.set('region', region)
   return getJson<CompareResponse>(`/api/compare?${qs}`)
 }
 
@@ -170,10 +183,11 @@ export async function fetchExplain(
   doc: ResultsDocument,
   metric: HeadlineMetric,
   quarter: string,
+  region = 'US',
 ): Promise<ExplainResponse | null> {
   if (USE_MOCK) {
     const i = doc.meta.quarters.indexOf(quarter)
-    const s = doc.series.US?.[metric]
+    const s = seriesFor(doc, region)?.[metric]
     if (!s || i < 0) return null
     const ref = quarter >= '2040Q4' ? '2040Q4' : quarter > '2030Q4' ? '2040Q4' : '2030Q4'
     const trace = doc.explain.trace?.[metric]?.[ref]
@@ -192,6 +206,7 @@ export async function fetchExplain(
     }
   }
   const qs = new URLSearchParams({ metric, quarter })
+  if (region !== 'US') qs.set('region', region)
   return getJson<ExplainResponse>(`/api/explain/${encodeURIComponent(doc.meta.scenario_hash)}?${qs}`)
 }
 
@@ -201,4 +216,40 @@ export async function fetchStatesGeo(): Promise<StatesGeoJSON> {
     return getJson<StatesGeoJSON>(url)
   }
   return getJson<StatesGeoJSON>('/api/geo/us-states')
+}
+
+// ---------- Phase 3 endpoints (contracts §13) ----------
+
+/** GET /api/geo/world — Natural Earth 110m admin-0 reduced to {iso3, name, region_id}. */
+export async function fetchWorldGeo(): Promise<WorldGeoJSON> {
+  if (USE_MOCK) {
+    const url = (await import('@/mock/world.geojson?url')).default
+    return getJson<WorldGeoJSON>(url)
+  }
+  return getJson<WorldGeoJSON>('/api/geo/world')
+}
+
+/** GET /api/regions — regions.csv rows. In mock mode: derived from the results document's `regions`. */
+export async function fetchRegions(doc?: ResultsDocument | null): Promise<RegionRow[]> {
+  if (USE_MOCK) return (doc?.regions ?? []).map((r) => ({ ...r }))
+  return getJson<RegionRow[]>('/api/regions')
+}
+
+/** GET /api/actors — actors and releases. In mock mode: derived from `supply.releases`. */
+export async function fetchActors(doc?: ResultsDocument | null): Promise<ActorsResponse> {
+  if (USE_MOCK) {
+    const releases = doc?.supply?.releases ?? []
+    const seen = new Map<string, ActorsResponse['actors'][number]>()
+    for (const r of releases)
+      if (!seen.has(r.actor_id))
+        seen.set(r.actor_id, {
+          actor_id: r.actor_id,
+          name: r.name,
+          region_id: r.region_id,
+          role: 'lab',
+          weights_posture: r.open_weights ? 'open-lagged' : 'closed',
+        })
+    return { actors: [...seen.values()], releases }
+  }
+  return getJson<ActorsResponse>('/api/actors')
 }

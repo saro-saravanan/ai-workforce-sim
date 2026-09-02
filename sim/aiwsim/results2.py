@@ -173,6 +173,19 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
     if c:
         notes.append(f"Confidence in the sign of the {q[t_end]} employment effect: {c['level']} (sign holds in {100*c['sign_share']:.0f}% of draws; mechanism cells {'agree' if c['cells_agree'] else 'disagree'}"
                      + (f"; parameters that can flip it: {', '.join(c['flip_params'])}" if c['flip_params'] else "") + ").")
+    if len(o.order) > 1:
+        emps = {x: 100 * o.regions[x].employment_pct[0, t_end] for x in o.order}
+        first_hit = sorted(o.order, key=lambda x: emps[x])[:3]
+        rents = {x: float(sum(o.regions[x].rents.values())[0, t_end]) for x in o.order}
+        tot = max(sum(rents.values()), 1e-9)
+        top_rent = sorted(o.order, key=lambda x: -rents[x])[:3]
+        notes.append(f"Regions with the largest {q[t_end]} employment effect: " + "; ".join(f"{x} {emps[x]:+.1f}%" for x in first_hit)
+                     + f". AI rents by {q[t_end]} accrue " + ", ".join(f"{100*rents[x]/tot:.0f}% to {x}" for x in top_rent) + ".")
+        lags = o.trace.get("access_lag", {})
+        late = [x for x in o.order if lags.get(x, 0) >= 2]
+        if late:
+            notes.append("Frontier access lags of two or more quarters: " + ", ".join(f"{x} ({lags[x]}q)" for x in late)
+                         + ", which delays adoption and shifts model-stage rents toward domestic labs.")
     la = o.lost_by_age[0, :, t_end]
     if la.sum() > 0:
         notes.append(f"Jobs below baseline by age in {q[t_end]}: 16–24 {100*la[0]/la.sum():.0f}%, 25–44 {100*la[1]/la.sum():.0f}%, 45–54 {100*la[2]/la.sum():.0f}%, 55+ {100*la[3]/la.sum():.0f}%, against employment shares of {100*o.N0_age[0]/o.N0_age.sum():.0f}/{100*o.N0_age[1]/o.N0_age.sum():.0f}/{100*o.N0_age[2]/o.N0_age.sum():.0f}/{100*o.N0_age[3]/o.N0_age.sum():.0f}%.")
@@ -206,9 +219,58 @@ def annotate_diff(d: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def region_series(ro) -> dict[str, Any]:
+    return {
+        "gdp_pct_vs_baseline": pct(ro.gdp_pct, 100.0), "employment_pct_vs_baseline": pct(ro.employment_pct, 100.0),
+        "real_wage_pct_vs_baseline": pct(ro.real_wage_pct, 100.0), "nominal_wage_pct_vs_baseline": pct(ro.nominal_wage_pct, 100.0),
+        "wage_share_pp_vs_baseline": pct(ro.wage_share_pp), "tfp_pct_vs_baseline": pct(ro.tfp_pct, 100.0),
+        "price_index_pct_vs_baseline": pct(np.exp(ro.ln_P) - 1.0, 100.0), "displaced_workers_cum": pct(ro.displaced_cum, 1.0, 0),
+        "laid_off_cum": pct(ro.laid_off_cum, 1.0, 0), "unhired_entrants_cum": pct(ro.unhired_cum, 1.0, 0), "reemployed_cum": pct(ro.reemployed_cum, 1.0, 0),
+        "retraining_cum": pct(ro.retraining_cum, 1.0, 0), "exited_cum": pct(ro.exited_cum, 1.0, 0), "unemployed_stock": pct(ro.unemployed_stock, 1.0, 0),
+        "adoption_share": pct(ro.adoption_emp, 100.0), "adoption_share_firm_weighted": pct(ro.adoption_firm, 100.0),
+        "ai_spend_bn": pct(ro.ai_spend, 1.0, 1), "ai_production_jobs": pct(ro.ai_jobs, 1.0, 0),
+        "ai_rents_received_bn": {**{s_: pct(a, 1.0, 1) for s_, a in ro.rents.items()}, "total": pct(sum(ro.rents.values()), 1.0, 1)},
+        "net_ai_trade_bn": pct(ro.net_ai_trade, 1.0, 1), "regional_capability_index": pct(ro.C_region, 1.0, 2),
+    }
+
+
+def _quarter_of(date: str, quarters: list[str]) -> str | None:
+    try:
+        y, m = int(date[:4]), int(date[5:7])
+    except (ValueError, TypeError):
+        return None
+    qn = f"{y}Q{(m - 1) // 3 + 1}"
+    return qn if qn in quarters else None
+
+
+def _releases(regional: Any, quarters: list[str]) -> list[dict[str, Any]]:
+    if regional is None:
+        return []
+    names = {a_.actor_id: (a_.name, a_.region_id) for a_ in regional.actors}
+    out = []
+    for r in regional.releases:
+        nm, rid = names.get(r.get("actor_id"), (r.get("actor_id"), ""))
+        out.append({"actor_id": r.get("actor_id"), "name": nm, "region_id": rid, "model": r.get("model"), "date": r.get("date"),
+                    "quarter": _quarter_of(str(r.get("date")), quarters), "capability_index": r.get("capability_index"),
+                    "open_weights": int(r.get("open_weights") or 0)})
+    return out
+
+
+def _reg_events(inp: Inputs, quarters: list[str]) -> list[dict[str, Any]]:
+    f = inp.root / "data" / "processed" / "series" / "regulatory_events.csv"
+    if not f.exists():
+        return []
+    import polars as pl
+    out = []
+    for r in pl.read_csv(f).fill_null("").to_dicts():
+        out.append({"event_id": r.get("event_id"), "region": r.get("region"), "date": r.get("date"), "quarter": _quarter_of(str(r.get("date")), quarters),
+                    "kind": r.get("kind"), "description": r.get("description")})
+    return out
+
+
 def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shash: str, channels: dict[str, Any] | None,
                      torn: dict[str, Any] | None, diff: list[dict[str, Any]] | None, draws: int, ensemble: str,
-                     cohort_flag: str) -> dict[str, Any]:
+                     cohort_flag: str, regional: Any = None) -> dict[str, Any]:
     q = o.quarters
     flags = dict(inp.data_flags); flags["aei_anchoring"] = "unavailable"; flags["cohorts"] = cohort_flag
     conf = confidence(o, torn, q)
@@ -219,17 +281,37 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "percentiles": PCTS, "quarters": q, "regions": ["US"], "baseline": "no_frontier_ai_after_2023", "data_flags": flags,
             "data_version": inp.data_version, "capability_units": "doublings of METR 50% task horizon (minutes = 2^index)",
             "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups")}
-    series = {"US": {
-        "gdp_pct_vs_baseline": pct(o.gdp_pct, 100.0), "employment_pct_vs_baseline": pct(o.employment_pct, 100.0),
-        "real_wage_pct_vs_baseline": pct(o.real_wage_pct, 100.0), "nominal_wage_pct_vs_baseline": pct(o.nominal_wage_pct, 100.0),
-        "wage_share_pp_vs_baseline": pct(o.wage_share_pp), "tfp_pct_vs_baseline": pct(o.tfp_pct, 100.0),
-        "price_index_pct_vs_baseline": pct(np.exp(o.ln_P) - 1.0, 100.0), "displaced_workers_cum": pct(o.displaced_cum, 1.0, 0),
-        "laid_off_cum": pct(o.laid_off_cum, 1.0, 0), "unhired_entrants_cum": pct(o.unhired_cum, 1.0, 0), "reemployed_cum": pct(o.reemployed_cum, 1.0, 0),
-        "retraining_cum": pct(o.retraining_cum, 1.0, 0), "exited_cum": pct(o.exited_cum, 1.0, 0), "unemployed_stock": pct(o.unemployed_stock, 1.0, 0),
-        "adoption_share": pct(o.adoption_emp, 100.0), "adoption_share_firm_weighted": pct(o.adoption_firm, 100.0),
-        "ai_spend_bn": pct(o.ai_spend, 1.0, 1), "ai_production_jobs": pct(o.ai_jobs, 1.0, 0), "capability_index": pct(o.C, 1.0, 2),
-        "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1), "compute_price_multiplier": pct(o.price_mult, 1.0, 3),
-    }}
+    series = {x: region_series(o.regions[x]) for x in o.order}
+    series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
+                         "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})
+    regions_meta: list[dict[str, Any]] = []
+    world: list[dict[str, Any]] = []
+    if regional is not None:
+        for x in o.order:
+            rg = regional.regions.get(x)
+            if rg:
+                regions_meta.append({"region_id": x, "name": rg.name, "employment_total": rg.employment_total, "gdp_bn_usd": rg.gdp_bn,
+                                     "population": rg.population, "wage_level_rel_us": rg.wage_level,
+                                     "access_lag_quarters": o.trace.get("access_lag", {}).get(x),
+                                     "data_flags": {"occ_region": "US national" if x == "US" else regional.data_flags.get("regions/occ_region", "FIXTURE")}})
+        for m in regional.members:
+            rid = m.get("region_id") or ""
+            if rid in o.regions:
+                ro = o.regions[rid]
+                world.append({"iso3": m["iso3"], "name": m["name"], "region_id": rid, "employment_pct_vs_baseline": slim(ro.employment_pct, 100.0),
+                              "real_wage_pct_vs_baseline": slim(ro.real_wage_pct, 100.0)})
+            else:
+                world.append({"iso3": m["iso3"], "name": m["name"], "region_id": ""})
+        flags["members"] = "member countries carry their region's series (composition only)"
+    supply = {
+        "clock": pct(o.C, 1.0, 2), "horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
+        "regional_capability": {x: {"central": rl(o.regions[x].C_region[0], 1.0, 2)} for x in o.order},
+        "price_frontier_usd_per_mtok": {"central": rl(o.price_frontier, 1.0, 3)},
+        "price_fixed_capability_usd_per_mtok": {"central": rl(o.price_fixed, 1.0, 4)},
+        "releases": _releases(regional, q), "regulatory_events": _reg_events(inp, q),
+        "availability": {x: {a_: [int(v) for v in arr] for a_, arr in o.availability.get(x, {}).items()} for x in o.order},
+        "market_share": {x: {a_: {"central": rl(arr, 1.0, 3)} for a_, arr in o.market_share.get(x, {}).items()} for x in o.order},
+    }
     beta = inp.occ_exposure_beta
     occs = []
     for i in range(inp.n_occ):
@@ -237,7 +319,8 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
                      "emp0": int(inp.emp0[i]), "wage0": int(inp.wage_mean[i]), "automatable_share": round(float(o.automatable[0, i]), 4),
                      "exposure_beta": round(float(beta[i]), 4), "displacement": slim(o.D_[:, i, :]), "augmentation": {"central": rl(o.U[0, i, :])},
                      "employment_pct_vs_baseline": slim(o.N[:, i, :] / np.maximum(o.N0[i], 1.0)[None, :] - 1.0, 100.0),
-                     "real_wage_pct_vs_baseline": {"central": rl(np.exp(o.ln_w[0, i, :] - o.ln_P[0]) - 1.0, 100.0)}})
+                     "real_wage_pct_vs_baseline": {"central": rl(np.exp(o.ln_w[0, i, :] - o.ln_P[0]) - 1.0, 100.0)},
+                     "by_region": {x: {"displacement": {"central": rl(o.regions[x].D_[0, i, :])}} for x in o.order if x != "US"}})
     ratio = o.N / np.maximum(o.N0, 1.0)[None, :, :]
     state_share = inp.occ_state.sum(axis=0) / max(inp.occ_state.sum(), 1.0)
     states = []
@@ -248,7 +331,9 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
         states.append({"fips": inp.state_fips[g], "name": inp.state_names[g], "abbrev": inp.state_abbrev[g],
                        "employment_pct_vs_baseline": slim(emp_g / tot - 1.0, 100.0), "real_wage_pct_vs_baseline": slim(np.exp(lnw_g) - 1.0, 100.0),
                        "displaced_workers_cum": slim(o.displaced_cum * state_share[g], 1.0, 0)})
-    return {"meta": meta, "series": series, "occupations": occs, "states": states, "channels": channels or {},
+    meta["regions"] = list(o.order)
+    return {"meta": meta, "series": series, "occupations": occs, "states": states, "regions": regions_meta, "world": world, "supply": supply,
+            "channels": channels or {},
             "structural": structural(o, q) if cells else {}, "confidence": conf, "tornado": torn or {},
             "cohorts": cohorts_section(o), "flows": flows_section(o),
             "explain": {"notes": explain_notes(inp, o, conf), "trace": trace(o, q), "diff": annotate_diff(diff or [])}}

@@ -1,0 +1,242 @@
+iso3,region_id,name,population,gdp_bn_usd,source_tag,continent,subregion,pop_year,gdp_year
+ABW,"",Aruba,106314,3.056,real:natural_earth_admin0_50m,North America,Caribbean,2019,2017
+AFG,RoA,Afghanistan,38041754,19.291,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+AGO,"",Angola,31825295,88.815,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+AIA,"",Anguilla,14731,0.175,real:natural_earth_admin0_50m,North America,Caribbean,2018,2009
+ALB,"",Albania,2854191,15.279,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+ALD,"",Åland,29884,1.563,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2016
+AND,"",Andorra,77142,3.154,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+ARE,"",United Arab Emirates,9770529,421.142,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ARG,"",Argentina,44938712,445.445,real:natural_earth_admin0_50m,South America,South America,2019,2019
+ARM,"",Armenia,2957731,13.672,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ASM,"",American Samoa,55312,0.636,real:natural_earth_admin0_50m,Oceania,Polynesia,2019,2018
+ATC,"",Ashmore and Cartier Is.,0,0.0,real:natural_earth_admin0_50m,Oceania,Australia and New Zealand,2019,2019
+ATF,"",Fr. S. Antarctic Lands,140,0.016,real:natural_earth_admin0_50m,Seven seas (open ocean),Seven seas (open ocean),2017,2016
+ATG,"",Antigua and Barb.,97118,1.661,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+AUS,"",Australia,25364307,1396.567,real:natural_earth_admin0_50m,Oceania,Australia and New Zealand,2019,2019
+AUT,EU,Austria,8877067,445.075,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+AZE,"",Azerbaijan,10023318,48.047,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+BDI,"",Burundi,11530580,3.012,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+BEL,EU,Belgium,11484055,533.097,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+BEN,"",Benin,11801151,14.39,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+BFA,"",Burkina Faso,20321378,15.99,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+BGD,RoA,Bangladesh,163046161,302.571,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+BGR,EU,Bulgaria,6975761,68.558,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+BHR,"",Bahrain,1641172,38.574,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+BHS,"",Bahamas,389482,13.578,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+BIH,"",Bosnia and Herz.,3301000,20.164,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+BLM,"",St-Barthélemy,9961,0.255,real:natural_earth_admin0_50m,North America,Caribbean,2017,2016
+BLR,"",Belarus,9466856,63.08,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+BLZ,"",Belize,390353,1.879,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+BMU,"",Bermuda,63918,7.484,real:natural_earth_admin0_50m,North America,Northern America,2019,2019
+BOL,"",Bolivia,11513100,40.895,real:natural_earth_admin0_50m,South America,South America,2019,2019
+BRA,"",Brazil,211049527,1839.758,real:natural_earth_admin0_50m,South America,South America,2019,2019
+BRB,"",Barbados,287025,5.209,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+BRN,RoA,Brunei,433285,13.469,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+BTN,RoA,Bhutan,763092,2.53,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+BWA,"",Botswana,2303697,18.34,real:natural_earth_admin0_50m,Africa,Southern Africa,2019,2019
+CAF,"",Central African Rep.,4745185,2.22,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+CAN,"",Canada,37589262,1736.425,real:natural_earth_admin0_50m,North America,Northern America,2019,2019
+CHE,"",Switzerland,8574832,703.082,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+CHL,"",Chile,18952038,282.318,real:natural_earth_admin0_50m,South America,South America,2019,2019
+CHN,CN,China,1397715000,14342.903,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+CIV,"",Côte d'Ivoire,25716544,58.539,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+CMR,"",Cameroon,25876380,39.007,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+COD,"",Dem. Rep. Congo,86790567,50.4,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+COG,"",Congo,5380508,12.267,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+COK,"",Cook Is.,17459,0.244,real:natural_earth_admin0_50m,Oceania,Polynesia,2016,2010
+COL,"",Colombia,50339443,323.615,real:natural_earth_admin0_50m,South America,South America,2019,2019
+COM,"",Comoros,850886,1.165,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+CPV,"",Cabo Verde,549935,1.981,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+CRI,"",Costa Rica,5047561,61.801,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+CUB,"",Cuba,11333483,100.023,real:natural_earth_admin0_50m,North America,Caribbean,2019,2018
+CUW,"",Curaçao,157538,3.101,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+CYM,"",Cayman Is.,64948,5.517,real:natural_earth_admin0_50m,North America,Caribbean,2019,2018
+CYN,"",N. Cyprus,326000,3.6,real:natural_earth_admin0_50m,Asia,Western Asia,2017,2013
+CYP,EU,Cyprus,1198575,24.948,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+CZE,EU,Czechia,10669709,250.68,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+DEU,EU,Germany,83132799,3861.123,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+DJI,"",Djibouti,973560,3.324,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+DMA,"",Dominica,71808,0.582,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+DNK,EU,Denmark,5818553,350.104,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+DOM,"",Dominican Rep.,10738958,88.941,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+DZA,"",Algeria,43053054,171.091,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+ECU,"",Ecuador,17373662,107.435,real:natural_earth_admin0_50m,South America,South America,2019,2019
+EGY,"",Egypt,100388073,303.092,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+ERI,"",Eritrea,6081196,2.065,real:natural_earth_admin0_50m,Africa,Eastern Africa,2020,2011
+ESP,EU,Spain,47076781,1393.49,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+EST,EU,Estonia,1326590,31.471,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+ETH,"",Ethiopia,112078730,95.912,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+FIN,EU,Finland,5520314,269.296,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+FJI,"",Fiji,889953,5.496,real:natural_earth_admin0_50m,Oceania,Melanesia,2019,2019
+FLK,"",Falkland Is.,3398,0.282,real:natural_earth_admin0_50m,South America,South America,2016,2012
+FRA,EU,France,67059887,2715.518,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+FRO,"",Faeroe Is.,48678,3.116,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2018
+FSM,"",Micronesia,113815,0.401,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2018
+GAB,"",Gabon,2172579,16.874,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+GBR,UK,United Kingdom,66834405,2829.108,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+GEO,"",Georgia,3720382,17.477,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+GGY,"",Guernsey,62792,3.465,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2015
+GHA,"",Ghana,30417856,66.983,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+GIN,"",Guinea,12771246,12.296,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+GMB,"",Gambia,2347706,1.826,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+GNB,"",Guinea-Bissau,1920922,1.339,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+GNQ,"",Eq. Guinea,1355986,11.026,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+GRC,EU,Greece,10716322,209.852,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+GRD,"",Grenada,112003,1.21,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+GRL,"",Greenland,56225,3.051,real:natural_earth_admin0_50m,North America,Northern America,2019,2018
+GTM,"",Guatemala,16604026,76.71,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+GUM,"",Guam,167294,5.92,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2018
+GUY,"",Guyana,782766,5.173,real:natural_earth_admin0_50m,South America,South America,2019,2019
+HKG,CN,Hong Kong,7507400,365.711,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+HMD,"",Heard I. and McDonald Is.,0,0.0,real:natural_earth_admin0_50m,Seven seas (open ocean),Seven seas (open ocean),2019,2016
+HND,"",Honduras,9746117,25.095,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+HRV,EU,Croatia,4067500,60.752,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+HTI,"",Haiti,11263077,14.332,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+HUN,EU,Hungary,9769949,163.469,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+IDN,RoA,Indonesia,270625568,1119.19,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+IMN,"",Isle of Man,84584,7.491,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2018
+IND,IN,India,1366417754,2868.929,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+IOA,"",Indian Ocean Ter.,2387,0.035,real:natural_earth_admin0_50m,Asia,Seven seas (open ocean),2016,2016
+IOT,"",Br. Indian Ocean Ter.,3000,0.12,real:natural_earth_admin0_50m,Seven seas (open ocean),Seven seas (open ocean),2018,2013
+IRL,EU,Ireland,4941444,388.698,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+IRN,"",Iran,82913906,453.996,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2018
+IRQ,"",Iraq,39309783,234.094,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ISL,"",Iceland,361313,24.188,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+ISR,"",Israel,9053300,394.652,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ITA,EU,Italy,60297396,2003.576,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+JAM,"",Jamaica,2948279,16.458,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+JEY,"",Jersey,107800,5.08,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2015
+JOR,"",Jordan,10101694,44.502,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+JPN,JP,Japan,126264931,5081.769,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+KAS,RoA,Siachen Glacier,6000,0.015,real:natural_earth_admin0_50m,Asia,Southern Asia,2013,2013
+KAZ,"",Kazakhstan,18513930,181.665,real:natural_earth_admin0_50m,Asia,Central Asia,2019,2019
+KEN,"",Kenya,52573973,95.503,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+KGZ,"",Kyrgyzstan,6456900,8.454,real:natural_earth_admin0_50m,Asia,Central Asia,2019,2019
+KHM,RoA,Cambodia,16486542,27.089,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+KIR,"",Kiribati,117606,0.194,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2019
+KNA,"",St. Kitts and Nevis,52834,1.053,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+KOR,KR,South Korea,51709098,1646.739,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+KOS,"",Kosovo,1794248,7.926,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+KWT,"",Kuwait,4207083,134.628,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+LAO,RoA,Laos,7169455,18.173,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+LBN,"",Lebanon,6855713,51.991,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+LBR,"",Liberia,4937374,3.07,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+LBY,"",Libya,6777452,52.091,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+LCA,"",Saint Lucia,182790,2.122,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+LIE,"",Liechtenstein,38019,6.876,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2018
+LKA,RoA,Sri Lanka,21803000,84.008,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+LSO,"",Lesotho,2125268,2.376,real:natural_earth_admin0_50m,Africa,Southern Africa,2019,2019
+LTU,EU,Lithuania,2786844,54.627,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+LUX,EU,Luxembourg,619896,71.104,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+LVA,EU,Latvia,1912789,34.102,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+MAC,CN,Macao,640445,53.859,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+MAF,"",St-Martin,38002,0.562,real:natural_earth_admin0_50m,North America,Caribbean,2019,2016
+MAR,"",Morocco,36471769,119.7,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+MCO,"",Monaco,38964,7.188,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2018
+MDA,"",Moldova,2657637,11.968,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+MDG,"",Madagascar,26969307,14.114,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+MDV,"",Maldives,530953,5.642,real:natural_earth_admin0_50m,Seven seas (open ocean),Southern Asia,2019,2019
+MEX,"",Mexico,127575529,1268.87,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+MHL,"",Marshall Is.,58791,0.221,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2018
+MKD,"",North Macedonia,2083459,12.547,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+MLI,"",Mali,19658031,17.279,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+MLT,EU,Malta,502653,14.989,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+MMR,RoA,Myanmar,54045420,76.085,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+MNE,"",Montenegro,622137,5.542,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+MNG,RoA,Mongolia,3225167,13.996,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2019
+MNP,"",N. Mariana Is.,57216,1.323,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2018
+MOZ,"",Mozambique,30366036,15.291,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+MRT,"",Mauritania,4525696,7.6,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+MSR,"",Montserrat,4649,0.044,real:natural_earth_admin0_50m,North America,Caribbean,2019,2006
+MUS,"",Mauritius,1265711,14.048,real:natural_earth_admin0_50m,Seven seas (open ocean),Eastern Africa,2019,2019
+MWI,"",Malawi,18628747,7.666,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+MYS,RoA,Malaysia,31949777,364.681,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+NAM,"",Namibia,2494530,12.366,real:natural_earth_admin0_50m,Africa,Southern Africa,2019,2019
+NCL,"",New Caledonia,287800,10.77,real:natural_earth_admin0_50m,Oceania,Melanesia,2019,2016
+NER,"",Niger,23310715,12.911,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+NFK,"",Norfolk Island,2169,0.032,real:natural_earth_admin0_50m,Oceania,Australia and New Zealand,2011,2016
+NGA,"",Nigeria,200963599,448.12,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+NIC,"",Nicaragua,6545502,12.52,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+NIU,"",Niue,1620,0.01,real:natural_earth_admin0_50m,Oceania,Polynesia,2018,2003
+NLD,EU,Netherlands,17332850,907.05,real:natural_earth_admin0_50m,Europe,Western Europe,2019,2019
+NOR,"",Norway,5347896,403.336,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+NPL,RoA,Nepal,28608710,30.641,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+NRU,"",Nauru,12581,0.118,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2019
+NZL,"",New Zealand,4917000,206.928,real:natural_earth_admin0_50m,Oceania,Australia and New Zealand,2019,2019
+OMN,"",Oman,4974986,76.331,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+PAK,RoA,Pakistan,216565318,278.221,real:natural_earth_admin0_50m,Asia,Southern Asia,2019,2019
+PAN,"",Panama,4246439,66.8,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+PCN,"",Pitcairn Is.,54,0.0,real:natural_earth_admin0_50m,Oceania,Polynesia,2016,2016
+PER,"",Peru,32510453,226.848,real:natural_earth_admin0_50m,South America,South America,2019,2019
+PHL,RoA,Philippines,108116615,376.795,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+PLW,"",Palau,18008,0.268,real:natural_earth_admin0_50m,Oceania,Micronesia,2019,2019
+PNG,"",Papua New Guinea,8776109,24.829,real:natural_earth_admin0_50m,Oceania,Melanesia,2019,2019
+POL,EU,Poland,37970874,595.858,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+PRI,"",Puerto Rico,3193694,104.988,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+PRK,RoA,North Korea,25666161,40.0,real:natural_earth_admin0_50m,Asia,Eastern Asia,2019,2016
+PRT,EU,Portugal,10269417,238.785,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+PRY,"",Paraguay,7044636,38.145,real:natural_earth_admin0_50m,South America,South America,2019,2019
+PSX,"",Palestine,4685306,16.276,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2018
+PYF,"",Fr. Polynesia,279287,5.49,real:natural_earth_admin0_50m,Oceania,Polynesia,2019,2016
+QAT,"",Qatar,2832067,175.837,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ROU,EU,Romania,19356544,250.077,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+RUS,"",Russia,144373535,1699.876,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+RWA,"",Rwanda,12626950,10.354,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+SAH,"",W. Sahara,603253,0.907,real:natural_earth_admin0_50m,Africa,Northern Africa,2017,2007
+SAU,"",Saudi Arabia,34268528,792.966,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+SDN,"",Sudan,42813238,30.513,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+SDS,"",S. Sudan,11062113,11.998,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2015
+SEN,"",Senegal,16296364,23.578,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+SGP,SG,Singapore,5703569,372.062,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+SGS,"",S. Geo. and the Is.,30,0.0,real:natural_earth_admin0_50m,Seven seas (open ocean),Seven seas (open ocean),2017,2016
+SHN,"",Saint Helena,4534,0.031,real:natural_earth_admin0_50m,Seven seas (open ocean),Western Africa,2016,2010
+SLB,"",Solomon Is.,669823,1.589,real:natural_earth_admin0_50m,Oceania,Melanesia,2019,2019
+SLE,"",Sierra Leone,7813215,4.121,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+SLV,"",El Salvador,6453553,27.022,real:natural_earth_admin0_50m,North America,Central America,2019,2019
+SMR,"",San Marino,33860,1.655,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2018
+SOL,"",Somaliland,5096159,17.836,real:natural_earth_admin0_50m,Africa,Eastern Africa,2014,2013
+SOM,"",Somalia,10192317,4.719,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2016
+SPM,"",St. Pierre and Miquelon,5997,0.215,real:natural_earth_admin0_50m,North America,Northern America,2017,2016
+SRB,"",Serbia,6944975,51.475,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+STP,"",São Tomé and Principe,215056,0.418,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+SUR,"",Suriname,581363,3.697,real:natural_earth_admin0_50m,South America,South America,2019,2019
+SVK,EU,Slovakia,5454073,105.079,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+SVN,EU,Slovenia,2087946,54.174,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+SWE,EU,Sweden,10285453,530.883,real:natural_earth_admin0_50m,Europe,Northern Europe,2019,2019
+SWZ,"",eSwatini,1148130,4.471,real:natural_earth_admin0_50m,Africa,Southern Africa,2019,2019
+SXM,"",Sint Maarten,40733,1.185,real:natural_earth_admin0_50m,North America,Caribbean,2019,2018
+SYC,"",Seychelles,97625,1.703,real:natural_earth_admin0_50m,Seven seas (open ocean),Eastern Africa,2019,2019
+SYR,"",Syria,17070135,98.83,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2015
+TCA,"",Turks and Caicos Is.,38191,1.197,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+TCD,"",Chad,15946876,11.314,real:natural_earth_admin0_50m,Africa,Middle Africa,2019,2019
+TGO,"",Togo,8082366,5.49,real:natural_earth_admin0_50m,Africa,Western Africa,2019,2019
+THA,RoA,Thailand,69625582,543.548,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+TJK,"",Tajikistan,9321018,8.116,real:natural_earth_admin0_50m,Asia,Central Asia,2019,2019
+TKM,"",Turkmenistan,5942089,40.761,real:natural_earth_admin0_50m,Asia,Central Asia,2019,2018
+TLS,RoA,Timor-Leste,1293119,2.017,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+TON,"",Tonga,104494,0.512,real:natural_earth_admin0_50m,Oceania,Polynesia,2019,2019
+TTO,"",Trinidad and Tobago,1394973,24.269,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+TUN,"",Tunisia,11694719,38.796,real:natural_earth_admin0_50m,Africa,Northern Africa,2019,2019
+TUR,"",Turkey,83429615,761.425,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+TUV,"",Tuvalu,11646,0.047,real:natural_earth_admin0_50m,Oceania,Polynesia,2019,2019
+TWN,TW,Taiwan,23568378,1127.0,real:natural_earth_admin0_50m,Asia,Eastern Asia,2020,2016
+TZA,"",Tanzania,58005463,63.177,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+UGA,"",Uganda,44269594,35.165,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+UKR,"",Ukraine,44385155,153.781,real:natural_earth_admin0_50m,Europe,Eastern Europe,2019,2019
+URY,"",Uruguay,3461734,56.045,real:natural_earth_admin0_50m,South America,South America,2019,2019
+USA,US,United States of America,328239523,21433.226,real:natural_earth_admin0_50m,North America,Northern America,2019,2019
+UZB,"",Uzbekistan,33580650,57.921,real:natural_earth_admin0_50m,Asia,Central Asia,2019,2019
+VAT,"",Vatican,825,0.0,real:natural_earth_admin0_50m,Europe,Southern Europe,2019,2019
+VCT,"",St. Vin. and Gren.,110589,0.824,real:natural_earth_admin0_50m,North America,Caribbean,2019,2019
+VEN,"",Venezuela,28515829,482.359,real:natural_earth_admin0_50m,South America,South America,2019,2014
+VGB,"",British Virgin Is.,30030,0.5,real:natural_earth_admin0_50m,North America,Caribbean,2019,2017
+VIR,"",U.S. Virgin Is.,106631,3.855,real:natural_earth_admin0_50m,North America,Caribbean,2019,2017
+VNM,RoA,Vietnam,96462106,261.921,real:natural_earth_admin0_50m,Asia,South-Eastern Asia,2019,2019
+VUT,"",Vanuatu,299882,0.934,real:natural_earth_admin0_50m,Oceania,Melanesia,2019,2019
+WLF,"",Wallis and Futuna Is.,11558,0.06,real:natural_earth_admin0_50m,Oceania,Polynesia,2018,2016
+WSM,"",Samoa,197097,0.852,real:natural_earth_admin0_50m,Oceania,Polynesia,2019,2019
+YEM,"",Yemen,29161922,22.581,real:natural_earth_admin0_50m,Asia,Western Asia,2019,2019
+ZAF,"",South Africa,58558270,351.431,real:natural_earth_admin0_50m,Africa,Southern Africa,2019,2019
+ZMB,"",Zambia,17861030,23.309,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019
+ZWE,"",Zimbabwe,14645468,21.44,real:natural_earth_admin0_50m,Africa,Eastern Africa,2019,2019

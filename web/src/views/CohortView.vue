@@ -2,16 +2,24 @@
 import { computed, ref } from 'vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { CATEGORICAL } from '@/lib/palette'
 import { quarterLabel } from '@/lib/format'
 import { COHORT_FACET_LABELS, COHORT_METRICS, cohortBandLabel, type CohortMetric } from '@/lib/metrics'
+import { fmtPct } from '@/lib/format'
 import type { CohortFacet } from '@/types/results'
 import CohortBars from '@/components/charts/CohortBars.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const regionStore = useRegionStore()
 const theme = useThemeStore()
+/** Phase 3: the cohort split is U.S.-only; the selected region's headline is shown for context. */
+const regionHeadline = computed(() => {
+  const s = results.series?.employment_pct_vs_baseline
+  return s ? fmtPct(s.p50[scrubber.q]) : '—'
+})
 
 const FACETS: CohortFacet[] = ['age', 'education', 'income_decile']
 const metric = ref<CohortMetric>('employment_pct_vs_baseline')
@@ -58,6 +66,12 @@ const selectedRow = computed(() => {
   <section class="view">
     <div class="view-header">
       <h2>Outcomes by cohort, US, {{ qLabel }}</h2>
+      <span
+        v-if="regionStore.region !== 'US'"
+        class="badge composition"
+        :title="`Cohort splits are published for the U.S. only in Phase 3; ${regionStore.label} net employment at ${qLabel} is ${regionHeadline}`"
+        >cohorts U.S.-only · {{ regionStore.label }} net employment {{ regionHeadline }}</span
+      >
       <span class="chart-note">
         Bars = median; whiskers = 10–90 band. One scale across the three panels.
       </span>
@@ -139,6 +153,10 @@ const selectedRow = computed(() => {
 </template>
 
 <style scoped>
+.badge.composition {
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
 .panels {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

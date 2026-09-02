@@ -122,15 +122,16 @@ def run_central(inp: Inputs, p: Params, scenario: dict[str, Any], channels: Chan
 
 
 def channel_decomposition(inp: Inputs, p: Params, scenario: dict[str, Any], full: BatchOutput,
-                          fitted: dict[str, Any] | None = None, cohorts: dict[str, np.ndarray] | None = None) -> dict[str, Any]:
+                          fitted: dict[str, Any] | None = None, cohorts: dict[str, np.ndarray] | None = None,
+                          regional: Any = None, regions: list[str] | None = None) -> dict[str, Any]:
     """Sequential switch-on attribution in the documented order (spec §9), on the central draw."""
     n_q = len(full.quarters)
     prev_emp = np.zeros(n_q); prev_gdp = np.zeros(n_q)
     contrib_emp: dict[str, list[float]] = {}; contrib_gdp: dict[str, list[float]] = {}
     for i, name in enumerate(CHANNEL_ORDER):
         cfg = Channels(**{c: (c in CHANNEL_ORDER[: i + 1]) for c in CHANNEL_ORDER})
-        r = full if i == len(CHANNEL_ORDER) - 1 else run_batch(inp, p, scenario, None, cfg, fitted, cohorts)
-        e = r.employment_pct[0]; g = r.gdp_pct[0]
+        r = full if i == len(CHANNEL_ORDER) - 1 else run_batch(inp, p, scenario, None, cfg, fitted, cohorts, regional, regions)
+        e = r.regions["US"].employment_pct[0]; g = r.regions["US"].gdp_pct[0]
         contrib_emp[name] = [round(float(v), 4) for v in 100.0 * (e - prev_emp)]
         contrib_gdp[name] = [round(float(v), 4) for v in 100.0 * (g - prev_gdp)]
         prev_emp, prev_gdp = e, g

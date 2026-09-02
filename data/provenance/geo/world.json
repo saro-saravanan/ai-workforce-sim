@@ -1,0 +1,23 @@
+{
+  "table": "geo/world",
+  "source": "Natural Earth admin-0 countries (1:50m) (ne_50m_admin_0_countries.geojson)",
+  "source_url": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson",
+  "license": "Public domain",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "32ab89fa0ce055a6d6abab740f492e12ac008719f0a6486df884810cc270cad2",
+  "transformations": [
+    "Antarctica (ATA) dropped",
+    "properties reduced to {iso3 (= ADM0_A3), name, region_id}",
+    "features sorted by iso3; geometry unchanged (1:50m)"
+  ],
+  "status": "real",
+  "notes": "241 features, 2.16 MB. 1:50m used because Singapore is absent at 1:110m (contracts §13 says 110m; deviation recorded here).",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/geo/world.geojson",
+  "extra": {
+    "extra_urls": [
+      "https://www.naturalearthdata.com/"
+    ]
+  }
+}

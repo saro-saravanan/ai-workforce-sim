@@ -1,22 +1,28 @@
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref, shallowRef, watch } from 'vue'
 import type {
   ResultsDocument,
   ScenarioSummary,
   ScenarioDocument,
   StatesGeoJSON,
+  WorldGeoJSON,
   NationalMetric,
   Series,
   LeverDef,
   CompareResponse,
   HeadlineMetric,
+  RegionSeries,
 } from '@/types/results'
 import * as api from '@/api/client'
 import { useToastStore } from '@/stores/toast'
+import { useRegionStore } from '@/stores/region'
+import { seriesFor } from '@/lib/world'
 
 export const useResultsStore = defineStore('results', () => {
+  const regionStore = useRegionStore()
   const doc = shallowRef<ResultsDocument | null>(null)
   const geo = shallowRef<StatesGeoJSON | null>(null)
+  const worldGeo = shallowRef<WorldGeoJSON | null>(null)
   const scenarios = ref<ScenarioSummary[]>([])
   const scenarioId = ref('baseline')
   /** the canonical (resolved) scenario document of the current run, for the levers form */
@@ -36,7 +42,42 @@ export const useResultsStore = defineStore('results', () => {
 
   const quarters = computed(() => doc.value?.meta.quarters ?? [])
   const meta = computed(() => doc.value?.meta ?? null)
-  const series = computed(() => doc.value?.series.US ?? null)
+  // ----- regions (Phase 3) -----
+  const regions = computed(() => doc.value?.regions ?? [])
+  const world = computed(() => doc.value?.world ?? [])
+  const supply = computed(() => doc.value?.supply ?? null)
+  /** the region ids present in this run */
+  const regionIds = computed(() => doc.value?.meta.regions ?? Object.keys(doc.value?.series ?? {}))
+  /** true when the selected region has a series block (or is World) */
+  const hasRegion = computed(
+    () => regionStore.isWorld || !!doc.value?.series[regionStore.region],
+  )
+  /**
+   * The series block every view reads: `series[region]`, or the client-side World aggregate
+   * (lib/world.ts). Falls back to the U.S. when the run has no block for the selected region.
+   */
+  const series = computed<RegionSeries | null>(() => {
+    const d = doc.value
+    if (!d) return null
+    return seriesFor(d, regionStore.region) ?? d.series.US ?? null
+  })
+  /** the same selection applied to scenario B */
+  const seriesB = computed<RegionSeries | null>(() => {
+    const d = docB.value
+    if (!d) return null
+    return seriesFor(d, regionStore.region) ?? d.series.US ?? null
+  })
+  const rents = computed(() => series.value?.ai_rents_received_bn ?? null)
+  const regionInfo = computed(() =>
+    regions.value.find((r) => r.region_id === regionStore.region) ?? null,
+  )
+  /**
+   * The region's occupational composition is imputed (`data_flags.occ_region === 'FIXTURE'`, the
+   * structural proxy of contracts §11): drawn hatched on the map. Shared fixtures such as
+   * trade_weights apply to every region and are not hatched.
+   */
+  const isRegionFixture = (id: string) =>
+    regions.value.find((r) => r.region_id === id)?.data_flags.occ_region === 'FIXTURE'
   const occupations = computed(() => doc.value?.occupations ?? [])
   const states = computed(() => doc.value?.states ?? [])
   const channels = computed(() => doc.value?.channels ?? {})
@@ -87,6 +128,15 @@ export const useResultsStore = defineStore('results', () => {
     if (geo.value) return
     try {
       geo.value = await api.fetchStatesGeo()
+    } catch (e) {
+      error.value = (e as Error).message
+    }
+  }
+
+  async function loadWorldGeo() {
+    if (worldGeo.value) return
+    try {
+      worldGeo.value = await api.fetchWorldGeo()
     } catch (e) {
       error.value = (e as Error).message
     }
@@ -173,13 +223,21 @@ export const useResultsStore = defineStore('results', () => {
     try {
       const next = docB.value?.meta.scenario_id === b ? docB.value : await api.runScenario(b)
       docB.value = next
-      compare.value = await api.compareRuns(a, next)
+      compare.value = await api.compareRuns(a, next, regionStore.region)
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       compareLoading.value = false
     }
   }
+
+  // the paired delta is per region: recompute when the selection changes
+  watch(
+    () => regionStore.region,
+    () => {
+      if (compareId.value && doc.value) void loadCompare()
+    },
+  )
 
   function setCompare(id: string | null) {
     if (id === scenarioId.value) id = null
@@ -195,6 +253,17 @@ export const useResultsStore = defineStore('results', () => {
   return {
     doc,
     geo,
+    worldGeo,
+    regions,
+    world,
+    supply,
+    regionIds,
+    hasRegion,
+    seriesB,
+    rents,
+    regionInfo,
+    isRegionFixture,
+    loadWorldGeo,
     scenarios,
     scenarioId,
     scenarioDoc,

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { CohortFacet, StateMetric } from '@/types/results'
-import { STATE_METRIC_KEYS } from '@/lib/metrics'
+import type { CohortFacet } from '@/types/results'
+import { MAP_METRIC_KEYS, type MapMetric } from '@/lib/metrics'
 
 /** URL value ↔ cohort facet key (`cohort=age|education|income`) */
 export const COHORT_URL: Record<CohortFacet, string> = {
@@ -29,7 +29,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
   const q = ref(0)
   const length = ref(0)
   const playing = ref(false)
-  const metric = ref<StateMetric>('employment_pct_vs_baseline')
+  /** the map metric (`metric=`): state metrics plus, for the world map, regional AI rents */
+  const metric = ref<MapMetric>('employment_pct_vs_baseline')
   const state = ref<string | null>(null)
   /** Phase 2: cohort facet (`cohort=`) and structural mechanism cell (`cell=`) */
   const cohort = ref<CohortFacet>('age')
@@ -79,7 +80,7 @@ export const useScrubberStore = defineStore('scrubber', () => {
   }
 
   function setMetric(m: string) {
-    if ((STATE_METRIC_KEYS as string[]).includes(m)) metric.value = m as StateMetric
+    if ((MAP_METRIC_KEYS as string[]).includes(m)) metric.value = m as MapMetric
   }
 
   function selectState(fips: string | null) {
@@ -115,8 +116,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
       q.value = 0
     }
     metric.value =
-      query.metric && (STATE_METRIC_KEYS as string[]).includes(query.metric)
-        ? (query.metric as StateMetric)
+      query.metric && (MAP_METRIC_KEYS as string[]).includes(query.metric)
+        ? (query.metric as MapMetric)
         : 'employment_pct_vs_baseline'
     state.value = query.state && /^\d{2}$/.test(query.state) ? query.state : null
     cohort.value = (query.cohort && COHORT_FROM_URL[query.cohort]) || 'age'

@@ -1,0 +1,36 @@
+{
+  "table": "regions/region_members",
+  "source": "Natural Earth admin-0 countries (1:50m) (ne_50m_admin_0_countries.geojson)",
+  "source_url": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson",
+  "license": "Public domain",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "64e58aed8c66a2cf88e76024260f40fa4c9437c1b3f30f87fd5f209bdf9226d6",
+  "transformations": [
+    "one row per admin-0 feature (ADM0_A3 = iso3), Antarctica dropped",
+    "population = POP_EST; gdp_bn_usd = GDP_MD / 1000",
+    "region_id: USA->US; EU-27 members->EU; GBR->UK; CHN, HKG, MAC->CN; JPN->JP; KOR->KR; IND->IN; TWN->TW; SGP->SG; CONTINENT 'Asia' minus SUBREGION 'Western Asia'/'Central Asia' and Iran->RoA; else '' (aiwsim.data.regions.assign_region)"
+  ],
+  "status": "real",
+  "notes": "Natural Earth POP_EST / GDP_MD are mostly 2019 estimates (pop_year / gdp_year columns). Members per region: {'': 185, 'CN': 3, 'EU': 27, 'IN': 1, 'JP': 1, 'KR': 1, 'RoA': 19, 'SG': 1, 'TW': 1, 'UK': 1, 'US': 1}.",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/region_members.csv",
+  "extra": {
+    "members_per_region": {
+      "": 185,
+      "CN": 3,
+      "EU": 27,
+      "IN": 1,
+      "JP": 1,
+      "KR": 1,
+      "RoA": 19,
+      "SG": 1,
+      "TW": 1,
+      "UK": 1,
+      "US": 1
+    },
+    "extra_urls": [
+      "https://www.naturalearthdata.com/"
+    ]
+  }
+}

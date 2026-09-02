@@ -18,7 +18,7 @@
   ],
   "status": "real",
   "notes": "Labels and weights are real (status real); modality, presence, use_case and consequence_high are E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. Label source counts: {'human_labels': 19235}. Tasks dropped because the SOC is not published in OEWS: 30 (['45-3031']). Rows with missing Task Type given weight 1: 1310. Classifier distribution (row shares): {'modality': {'interpersonal': 0.2594, 'other_cognitive': 0.2332, 'physical': 0.2278, 'software': 0.2796}, 'use_case': {'high_risk': 0.0477, 'transparency': 0.0193, 'unregulated': 0.933}, 'consequence_high': {'0': 0.7697, '1': 0.2303}, 'presence': {'mean': 0.422, 'p10': 0.1, 'p50': 0.45, 'p90': 0.7}}",
-  "built_at": "2026-09-02T00:09:32+00:00",
+  "built_at": "2026-09-02T00:52:29+00:00",
   "output": "data/processed/tasks.csv",
   "extra": {
     "classifier_distribution": {

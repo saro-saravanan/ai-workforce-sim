@@ -1,0 +1,63 @@
+{
+  "table": "regions/occ_region",
+  "source": "U.S. occupational mix (occupations.csv, OEWS May 2021) tilted by GDP per capita; regions.csv",
+  "source_url": "docs/contracts.md",
+  "license": "n/a (fixture); underlying OEWS public domain",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "328215989b9882ce8abf889b2c4809d0fe84050dbd4e119c94af49ab60b58bc3",
+  "transformations": [
+    "U.S. employment shares x (gdp_pc/gdp_pc_US)^(+0.35) for major groups ['11', '13', '15', '17', '19', '21', '23', '25', '27', '29'] and ^(-0.35) for ['35', '37', '45', '47', '51', '53'], unchanged elsewhere; renormalised",
+    "emp = largest-remainder integer allocation of employment_total (sums exactly)",
+    "wage_mean_annual_usd = U.S. wage_mean_annual x wage_level_rel_us"
+  ],
+  "status": "FIXTURE",
+  "notes": "STRUCTURAL PROXY, not observed: every region carries the U.S. within-group mix. The U.S. rows equal the OEWS mix scaled to employment_total (which exceeds the OEWS wage-and-salary total); the U.S. model keeps occupations.csv / occ_state.csv. Replaced by ingest/ilostat.py and ingest/eurostat_lfs.py through the ISCO->SOC crosswalk chain. Tilt by region (gdp_pc ratio, high-skill share): {'US': {'gdp_pc_ratio': 1.0, 'high_skill_share': 0.3445}, 'EU': {'gdp_pc_ratio': 0.5348, 'high_skill_share': 0.275}, 'UK': {'gdp_pc_ratio': 0.6483, 'high_skill_share': 0.2957}, 'CN': {'gdp_pc_ratio': 0.1608, 'high_skill_share': 0.164}, 'JP': {'gdp_pc_ratio': 0.6164, 'high_skill_share': 0.2902}, 'KR': {'gdp_pc_ratio': 0.4877, 'high_skill_share': 0.2653}, 'IN': {'gdp_pc_ratio': 0.0322, 'high_skill_share': 0.0706}, 'TW': {'gdp_pc_ratio': 0.7323, 'high_skill_share': 0.3092}, 'SG': {'gdp_pc_ratio': 0.999, 'high_skill_share': 0.3444}, 'RoA': {'gdp_pc_ratio': 0.0474, 'high_skill_share': 0.0877}}.",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/occ_region.csv",
+  "extra": {
+    "tilt_exponent": 0.35,
+    "tilt": {
+      "US": {
+        "gdp_pc_ratio": 1.0,
+        "high_skill_share": 0.3445
+      },
+      "EU": {
+        "gdp_pc_ratio": 0.5348,
+        "high_skill_share": 0.275
+      },
+      "UK": {
+        "gdp_pc_ratio": 0.6483,
+        "high_skill_share": 0.2957
+      },
+      "CN": {
+        "gdp_pc_ratio": 0.1608,
+        "high_skill_share": 0.164
+      },
+      "JP": {
+        "gdp_pc_ratio": 0.6164,
+        "high_skill_share": 0.2902
+      },
+      "KR": {
+        "gdp_pc_ratio": 0.4877,
+        "high_skill_share": 0.2653
+      },
+      "IN": {
+        "gdp_pc_ratio": 0.0322,
+        "high_skill_share": 0.0706
+      },
+      "TW": {
+        "gdp_pc_ratio": 0.7323,
+        "high_skill_share": 0.3092
+      },
+      "SG": {
+        "gdp_pc_ratio": 0.999,
+        "high_skill_share": 0.3444
+      },
+      "RoA": {
+        "gdp_pc_ratio": 0.0474,
+        "high_skill_share": 0.0877
+      }
+    }
+  }
+}

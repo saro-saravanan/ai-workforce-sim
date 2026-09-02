@@ -13,7 +13,7 @@
   },
   "levers": {
    "capability": {
-    "doubling_months": 6,
+    "doubling_months": 5,
     "doubling_drift_per_year": 0,
     "feedback_from_revenue": false,
     "robotics_doubling_months": 24,
@@ -155,24 +155,17 @@
   "schema_version": "0.2",
   "id": "preset-goldman-2023",
   "name": "Preset: Goldman Sachs 2023",
-  "description": "Report-replication preset (spec §8.4). Full exposure feasible, historical reinstatement, unit-elastic demand with full pass-through; targets GDP about +7% over ten years.",
+  "description": "Report-replication preset (spec §8.4). Default feasibility, near-unit-elastic output demand with high pass-through of cost savings to prices, historical reinstatement, slightly higher intensity; reproduces GDP about +7% over ten years with employment roughly flat, which is the report's narrative.",
   "parent": "baseline",
   "preset": true,
   "levers": {
-   "capability": {
-    "ever_automatable_scale": 1.3,
-    "domain_transfer": {
-     "other_cognitive": 1,
-     "interpersonal": 0.8
-    }
-   },
    "adoption": {
-    "intensity_ceiling": 0.9
+    "intensity_ceiling": 0.75
    },
    "labor": {
     "reinstatement_ratio": 0.6,
-    "demand_elasticity_scale": 1.25,
-    "price_pass_through": 1
+    "demand_elasticity_scale": 1.1,
+    "price_pass_through": 0.9
    }
   },
   "ensemble": {

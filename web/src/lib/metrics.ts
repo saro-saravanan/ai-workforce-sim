@@ -1,5 +1,5 @@
 import type { NationalMetric, StateMetric } from '@/types/results'
-import { fmtCompact, fmtPct, fmtPp, fmtShare } from './format'
+import { fmtBn, fmtCompact, fmtPct, fmtPp, fmtShare } from './format'
 
 export type Polarity = 'diverging' | 'magnitude'
 
@@ -182,4 +182,53 @@ export const PARAM_TAG_LABELS: Record<string, string> = {
   S: 'S: sourced from a study',
   D: 'D: derived from data',
   E: 'E: estimated / expert prior',
+}
+
+// ---------- Phase 3 ----------
+
+import type { RegulatoryKind, RentStage, WorldMetric } from '@/types/results'
+
+/** The dashboard tile for `ai_rents_received_bn.total` (spec §6.3). */
+export const RENTS_DEF: MetricDef = {
+  label: 'AI rents received',
+  short: 'AI rents',
+  unit: '$bn per year, by value-chain stage',
+  polarity: 'magnitude',
+  format: (v) => fmtBn(v),
+  axisFormat: (v) => fmtBn(v),
+}
+
+export const RENT_STAGE_LABELS: Record<RentStage, string> = {
+  model: 'Model provider margin',
+  compute: 'Compute / cloud operations',
+  chips: 'Chips and equipment',
+  integration: 'Integration services',
+}
+// the stacked-channels chart labels its keys through CHANNEL_LABELS
+Object.assign(CHANNEL_LABELS, RENT_STAGE_LABELS)
+
+/** Metrics the world map can colour by: the two slim `world[]` series plus regional rents. */
+export type MapMetric = WorldMetric | 'ai_rents_received_bn' | StateMetric
+export const WORLD_METRICS: Record<WorldMetric | 'ai_rents_received_bn', MetricDef> = {
+  employment_pct_vs_baseline: STATE_METRICS.employment_pct_vs_baseline,
+  real_wage_pct_vs_baseline: STATE_METRICS.real_wage_pct_vs_baseline,
+  ai_rents_received_bn: { ...RENTS_DEF, unit: '$bn per year, region total' },
+}
+export const MAP_METRIC_KEYS = [
+  ...new Set<MapMetric>([
+    ...(Object.keys(WORLD_METRICS) as Array<keyof typeof WORLD_METRICS>),
+    ...STATE_METRIC_KEYS,
+  ]),
+]
+export function mapMetricDef(k: MapMetric): MetricDef {
+  return (WORLD_METRICS as Record<string, MetricDef>)[k] ?? STATE_METRICS[k as StateMetric]
+}
+
+export const REGULATORY_KIND_LABELS: Record<RegulatoryKind, string> = {
+  ai_act: 'AI act',
+  export_control: 'Export control',
+  licensing: 'Licensing',
+  state_law: 'State law',
+  guidance: 'Guidance',
+  localization: 'Data localization',
 }

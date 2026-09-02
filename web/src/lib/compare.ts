@@ -13,6 +13,7 @@ import type {
   Series,
 } from '@/types/results'
 import { HEADLINE_METRICS } from '@/types/results'
+import { seriesFor } from '@/lib/world'
 
 /** z(0.9) − z(0.1) */
 const Z_RANGE = 2.5631
@@ -76,14 +77,21 @@ export function confidenceFromShare(share: number, cellsAgree: boolean, flip: st
   return { level, sign_share: Number(share.toFixed(3)), cells_agree: cellsAgree, flip_params: flip }
 }
 
-/** Mock of GET /api/compare?a&b from two full documents. */
-export function pairedCompare(a: ResultsDocument, b: ResultsDocument, rho = DEFAULT_RHO): CompareResponse {
+/** Mock of GET /api/compare?a&b from two full documents, for one region selection ('world' aggregates). */
+export function pairedCompare(
+  a: ResultsDocument,
+  b: ResultsDocument,
+  region = 'US',
+  rho = DEFAULT_RHO,
+): CompareResponse {
   const series: CompareResponse['delta']['series'] = {}
-  const A = a.series.US
-  const B = b.series.US
+  const A = seriesFor(a, region)
+  const B = seriesFor(b, region)
   if (A && B) {
     for (const k of Object.keys(A) as NationalMetric[]) {
-      if (B[k]) series[k] = pairedDeltaSeries(A[k], B[k], rho)
+      const sa = A[k]
+      const sb = B[k]
+      if (sa && sb && 'p50' in sa && 'p50' in sb) series[k] = pairedDeltaSeries(sa, sb, rho)
     }
   }
   const aStates = new Map(a.states.map((s) => [s.fips, s]))

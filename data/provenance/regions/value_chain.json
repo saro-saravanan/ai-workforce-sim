@@ -1,0 +1,18 @@
+{
+  "table": "regions/value_chain",
+  "source": "spec §6.3 table (P.85) from Public gross margins (NVIDIA, TSMC, ASML, Microsoft, Alphabet, Amazon)",
+  "source_url": "https://www.sec.gov/edgar/search/",
+  "license": "Public filings; press estimates flagged E",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "893244e2a076fecdbcbd21f8a95823027fd312fdc6d507f664631f7eb8c561c7",
+  "transformations": [
+    "stage shares model 0.25 / compute 0.35 / chips 0.25 / integration 0.15 as in spec §6.3",
+    "chips fixed split US 0.55 (design), TW 0.35 (fab), EU 0.10 (ASML), KR 0 (memory not split out)"
+  ],
+  "status": "partial (D, public gross margins, approximate)",
+  "notes": "Shares are the spec's central values derived from public gross margins (D); not fitted here.",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/value_chain.csv",
+  "extra": {}
+}

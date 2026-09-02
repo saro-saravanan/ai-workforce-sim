@@ -22,11 +22,13 @@ from pathlib import Path
 
 import polars as pl
 
+from aiwsim.data import actors as ac
 from aiwsim.data import classify, series
 from aiwsim.data import clusters as cl
 from aiwsim.data import cohorts as co
 from aiwsim.data import fixtures as fx
-from aiwsim.data.geo import build_us_states
+from aiwsim.data import regions as rg
+from aiwsim.data.geo import build_us_states, build_world
 from aiwsim.data.provenance import list_provenance, status_kind, write_provenance
 from aiwsim.data.registry import write_registry
 from aiwsim.data.sources import SOURCES
@@ -36,7 +38,11 @@ TABLES = [
     "series/btos", "series/metr_horizons", "series/capex", "series/regulatory_events",
     "params/registry", "geo/us_states",
     "cohorts/occ_decile", "cohorts/national_deciles", "cohorts/occ_education", "cohorts/occ_age",
+    # Phase 3 (contracts §11)
+    "regions/region_members", "regions/regions", "regions/occ_region", "regions/trade_weights",
+    "regions/actors", "regions/actor_releases", "regions/value_chain", "geo/world",
 ]
+NE_WORLD_50M = "ne_50m_admin_0_countries.geojson"
 
 RAW_GPTS = Path("data/raw/gpts_are_gpts")
 RAW_NE = Path("data/raw/natural_earth")
@@ -426,6 +432,177 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
 
     # ---- cohorts/ (contracts §7) -------------------------------------------------------------
     statuses.update(build_cohorts(root, raw, occ, commit, log))
+    # ---- regions/ + geo/world (contracts §11) -------------------------------------------------
+    statuses.update(build_regions(root, occ, log))
+    return statuses
+
+
+def build_regions(root: Path, occ: pl.DataFrame, log) -> dict[str, str]:
+    """Write the seven ``data/processed/regions/`` tables, ``geo/world.geojson`` and provenance."""
+    out = root / PROCESSED / "regions"
+    ne = SOURCES["natural_earth_50m"]
+    raw_ne = root / RAW_NE / NE_WORLD_50M
+    if not raw_ne.exists():
+        raise FileNotFoundError(f"{raw_ne} missing: fetch {ne.url.replace('/blob/', '/raw/')} (public domain)")
+    src = json.loads(raw_ne.read_text(encoding="utf-8"))
+    feats = [f for f in src["features"] if f["properties"]["ADM0_A3"] != "ATA"]
+    statuses: dict[str, str] = {}
+    vintage = "Natural Earth POP_EST / GDP_MD are mostly 2019 estimates (pop_year / gdp_year columns)."
+
+    # region_members.csv
+    members = rg.region_members(feats)
+    p = _write_csv(members, out / "region_members.csv")
+    statuses["regions/region_members"] = "real"
+    by_region = {k: int(v) for k, v in members.group_by("region_id").len().sort("region_id").iter_rows()}
+    write_provenance(
+        root, "regions/region_members", p, source=f"{ne.name} ({NE_WORLD_50M})", source_url=ne.url,
+        license=ne.license, status="real",
+        transformations=[
+            "one row per admin-0 feature (ADM0_A3 = iso3), Antarctica dropped",
+            "population = POP_EST; gdp_bn_usd = GDP_MD / 1000",
+            ("region_id: USA->US; EU-27 members->EU; GBR->UK; CHN, HKG, MAC->CN; JPN->JP; KOR->KR; IND->IN; "
+             "TWN->TW; SGP->SG; CONTINENT 'Asia' minus SUBREGION 'Western Asia'/'Central Asia' and Iran->RoA; "
+             "else '' (aiwsim.data.regions.assign_region)"),
+        ],
+        notes=f"{vintage} Members per region: {by_region}.",
+        extra={"members_per_region": by_region, "extra_urls": list(ne.extra_urls)},
+    )
+    log(f"regions/region_members.csv: {members.height} countries; per region {by_region}")
+
+    # regions.csv
+    o = occ.select(pl.col("emp_national").cast(pl.Float64), pl.col("baseline_growth_10y").cast(pl.Float64))
+    us_growth = float((o["emp_national"] * o["baseline_growth_10y"]).sum() / o["emp_national"].sum())
+    regions = rg.regions_frame(members, us_growth)
+    p = _write_csv(regions, out / "regions.csv")
+    statuses["regions/regions"] = "partial (Natural Earth pop/GDP real; other columns E)"
+    write_provenance(
+        root, "regions/regions", p,
+        source="Natural Earth admin-0 (population, GDP) aggregated over region_members.csv; other columns are the "
+               "constant tables in aiwsim.data.regions",
+        source_url=ne.url, license=f"{ne.license} (Natural Earth); n/a (estimates)",
+        status="partial (Natural Earth pop/GDP real; other columns E)",
+        transformations=[
+            "population, gdp_bn_usd = sums over members",
+            "employment_total = round(population x EMP_TO_POP_RATIO) (employment / total population, ~2024, E)",
+            "emp_growth_10y US = employment-weighted mean of occupations.csv baseline_growth_10y (EP 2020-30)",
+            "remaining columns transcribed from the constant tables; per-column tags in extra.column_tags",
+        ],
+        notes=f"{vintage} EMP_TO_POP_RATIO is employment over TOTAL population, not the 15+/16+ headline ratio. "
+              "import_share is replaced by ingest/oecd_tiva.py; epl_multiplier is an approximate reading of OECD EPL "
+              "strictness ratios (D); regime and avail_delay_quarters follow spec §8.2 / P.30.",
+        extra={"column_tags": rg.REGION_COLUMN_TAGS, "emp_to_pop_ratio": rg.EMP_TO_POP_RATIO,
+               "us_emp_growth_10y": round(us_growth, 4)},
+    )
+    log(f"regions/regions.csv: {regions.height} regions; employment_total "
+        + ", ".join(f"{r} {e/1e6:.0f}M" for r, e in zip(regions["region_id"], regions["employment_total"])))
+
+    # occ_region.csv (FIXTURE)
+    occ_region, tilt_notes = rg.occ_region_frame(occ, regions)
+    p = _write_csv(occ_region, out / "occ_region.csv")
+    statuses["regions/occ_region"] = "FIXTURE"
+    write_provenance(
+        root, "regions/occ_region", p,
+        source="U.S. occupational mix (occupations.csv, OEWS May 2021) tilted by GDP per capita; regions.csv",
+        source_url="docs/contracts.md", license="n/a (fixture); underlying OEWS public domain", status="FIXTURE",
+        transformations=[
+            (f"U.S. employment shares x (gdp_pc/gdp_pc_US)^(+{rg.TILT_EXPONENT}) for major groups "
+             f"{sorted(rg.TILT_UP_GROUPS)} and ^(-{rg.TILT_EXPONENT}) for {sorted(rg.TILT_DOWN_GROUPS)}, "
+             "unchanged elsewhere; renormalised"),
+            "emp = largest-remainder integer allocation of employment_total (sums exactly)",
+            "wage_mean_annual_usd = U.S. wage_mean_annual x wage_level_rel_us",
+        ],
+        notes="STRUCTURAL PROXY, not observed: every region carries the U.S. within-group mix. The U.S. rows equal "
+              "the OEWS mix scaled to employment_total (which exceeds the OEWS wage-and-salary total); the U.S. "
+              "model keeps occupations.csv / occ_state.csv. Replaced by ingest/ilostat.py and ingest/eurostat_lfs.py "
+              f"through the ISCO->SOC crosswalk chain. Tilt by region (gdp_pc ratio, high-skill share): {tilt_notes}.",
+        extra={"tilt_exponent": rg.TILT_EXPONENT, "tilt": tilt_notes},
+    )
+    log(f"regions/occ_region.csv: {occ_region.height} rows (FIXTURE)")
+
+    # trade_weights.csv (FIXTURE)
+    tw = rg.trade_weights_frame(regions)
+    p = _write_csv(tw, out / "trade_weights.csv")
+    statuses["regions/trade_weights"] = "FIXTURE"
+    write_provenance(
+        root, "regions/trade_weights", p, source="regions.csv import_share and GDP", source_url="docs/contracts.md",
+        license="n/a (fixture)", status="FIXTURE",
+        transformations=["weight(to, to) = 1 - import_share",
+                         "weight(from, to) = import_share x gdp_from / sum of GDP over the other nine regions"],
+        notes="Rest of the world is not a source region, so the import share is fully attributed to the nine "
+              "modelled partners. Replaced by ingest/oecd_tiva.py.",
+    )
+
+    # actors.csv
+    actors = ac.actors_frame()
+    p = _write_csv(actors, out / "actors.csv")
+    statuses["regions/actors"] = "partial (public facts; E lags/availability; prices S verify at ingest)"
+    vp, rh = SOURCES["vendor_pricing"], SOURCES["release_history"]
+    null_price = actors.filter(pl.col("price_frontier_usd_per_mtok").is_null())["actor_id"].to_list()
+    write_provenance(
+        root, "regions/actors", p, source="spec §3.1 actor list; public facts (region, role, weights posture); "
+        f"{vp.name}", source_url=vp.url, license=vp.license,
+        status="partial (public facts; E lags/availability; prices S verify at ingest)",
+        transformations=[
+            "frontier_lag_quarters, releases_per_year: E per contracts §11 build notes",
+            "price_frontier_usd_per_mtok = (3 x input + output) / 4 of the vendor list price named in price_note",
+            "avail_<region>: rule per actor (availability_rule column) in aiwsim.data.actors.availability",
+        ],
+        notes="Prices were transcribed from memory (no web access); each carries its date and 'verify at ingest'. "
+              f"Actors with null price: {null_price}. Microsoft and Amazon are labs with a cloud note; NVIDIA is "
+              "compute; TSMC and ASML are chokepoints with export-control availability in CN (E). "
+              f"Replaced by ingest/epoch_models.py ({rh.url}).",
+        extra={"null_price_actors": null_price, "extra_urls": list(vp.extra_urls)},
+    )
+    log(f"regions/actors.csv: {actors.height} actors ({len(null_price)} without a list price)")
+
+    # actor_releases.csv
+    rel = ac.releases_frame(series.metr_horizons())
+    p = _write_csv(rel, out / "actor_releases.csv")
+    statuses["regions/actor_releases"] = "real (transcribed; verify at ingest)"
+    write_provenance(
+        root, "regions/actor_releases", p, source=rh.name, source_url=rh.url, license=rh.license,
+        status="real (transcribed; verify at ingest)",
+        transformations=["release dates transcribed from public announcements (day precision unless noted)",
+                         "capability_index = log2(METR 50% horizon minutes) for models in series/metr_horizons.csv",
+                         "open_weights = 1 where weights were published at release"],
+        notes="Only releases whose dates the author is confident of; fewer, correct rows over coverage. "
+              "Replaced by ingest/epoch_models.py (Epoch Notable AI Models, with ECI).",
+        extra={"n_with_capability_index": int(rel["capability_index"].is_not_null().sum())},
+    )
+    log(f"regions/actor_releases.csv: {rel.height} releases")
+
+    # value_chain.csv
+    vc = rg.value_chain_frame()
+    p = _write_csv(vc, out / "value_chain.csv")
+    statuses["regions/value_chain"] = "partial (D, public gross margins, approximate)"
+    sm = SOURCES["sec_margins"]
+    write_provenance(
+        root, "regions/value_chain", p, source=f"spec §6.3 table (P.85) from {sm.name}", source_url=sm.url,
+        license=sm.license, status="partial (D, public gross margins, approximate)",
+        transformations=["stage shares model 0.25 / compute 0.35 / chips 0.25 / integration 0.15 as in spec §6.3",
+                         "chips fixed split US 0.55 (design), TW 0.35 (fab), EU 0.10 (ASML), KR 0 (memory not split out)"],
+        notes="Shares are the spec's central values derived from public gross margins (D); not fitted here.",
+    )
+
+    # geo/world.geojson
+    region_of = {iso3: rid for iso3, rid in zip(members["iso3"], members["region_id"])}
+    gj = build_world(raw_ne, region_of)
+    p = root / PROCESSED / "geo" / "world.geojson"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(gj, separators=(",", ":")), encoding="utf-8")
+    size_mb = p.stat().st_size / 1e6
+    if size_mb > 3.0:
+        raise ValueError(f"geo/world.geojson is {size_mb:.2f} MB (> 3 MB); simplify (drop small islands or use 110m)")
+    statuses["geo/world"] = "real"
+    write_provenance(
+        root, "geo/world", p, source=f"{ne.name} ({NE_WORLD_50M})", source_url=ne.url, license=ne.license, status="real",
+        transformations=["Antarctica (ATA) dropped", "properties reduced to {iso3 (= ADM0_A3), name, region_id}",
+                         "features sorted by iso3; geometry unchanged (1:50m)"],
+        notes=f"{len(gj['features'])} features, {size_mb:.2f} MB. 1:50m used because Singapore is absent at 1:110m "
+              "(contracts §13 says 110m; deviation recorded here).",
+        extra={"extra_urls": list(ne.extra_urls)},
+    )
+    log(f"geo/world.geojson: {len(gj['features'])} features, {size_mb:.2f} MB")
     return statuses
 
 

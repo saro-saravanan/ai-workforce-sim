@@ -15,7 +15,11 @@ An interactive, multi-region simulation of how AI models reshape the workforce a
 | [scenarios/schema.json](scenarios/schema.json) | JSON schema for versioned, diffable scenarios |
 | [scenarios/baseline.json](scenarios/baseline.json) | The "consensus central" scenario |
 
-## Phase 2 (in progress)
+## Phase 3 (in progress)
+
+EU-27, UK, China, Japan, South Korea, India, Taiwan, Singapore, and rest of Asia run jointly with the U.S. through a shared capability clock, regional access lags, wage tiers, adoption spillover, trade-linked demand, and AI rents by value-chain stage; 23 supply-side actors with market shares and availability; world map with drill-down, region selector, AI supply timeline. Ten regions at 200 draws run in about 18 s. Findings: `docs/findings-phase3.md`. Non-U.S. occupation structures are fixtures until the ILOSTAT/Eurostat ingest runs.
+
+## Phase 2
 
 Monte Carlo through a correlated copula, 2×2×2 structural ensemble, tornado sensitivity, confidence classification, cohorts with aging, labor flows, report presets with replication tests, compare and explain endpoints, what-if levers, compare view, cohort view, Sankey. `uv run aiwsim run --scenario baseline` runs 200 draws in about 9 s on 4 cores. Findings: `docs/findings-phase2.md`.
 

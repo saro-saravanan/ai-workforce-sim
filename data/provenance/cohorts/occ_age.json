@@ -13,7 +13,7 @@
   ],
   "status": "FIXTURE",
   "notes": "FIXTURE: the national vector is approximate (transcribed, not fetched) and the tilt is a guess. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0418, 'jz2': 0.3449, 'jz3': 0.2393, 'jz4': 0.2052, 'jz5': 0.1688}. Employment-weighted age shares: {'16-24': 0.1264, '25-44': 0.4393, '45-54': 0.1997, '55+': 0.2346}.",
-  "built_at": "2026-09-02T00:09:32+00:00",
+  "built_at": "2026-09-02T00:52:30+00:00",
   "output": "data/processed/cohorts/occ_age.csv",
   "extra": {
     "job_zone_unmatched": {

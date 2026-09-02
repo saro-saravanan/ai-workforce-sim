@@ -1,0 +1,51 @@
+actor_id,model,date,capability_index,open_weights,note,source_tag
+openai,GPT-4,2023-03-14,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude 2,2023-07-11,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+meta,Llama 2,2023-07-18,,1,community licence,transcribed public release history; verify via ingest/epoch_models.py
+naver,HyperCLOVA X,2023-08-24,,0,Korean-language model; not frontier,transcribed public release history; verify via ingest/epoch_models.py
+baidu,ERNIE 4.0,2023-10-17,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-4 Turbo,2023-11-06,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+google_deepmind,Gemini 1.0,2023-12-06,,0,Ultra / Pro announced,transcribed public release history; verify via ingest/epoch_models.py
+mistral,Mixtral 8x7B,2023-12-11,,1,Apache 2.0,transcribed public release history; verify via ingest/epoch_models.py
+google_deepmind,Gemini 1.5 Pro,2024-02-15,,0,announcement; 1M-token context,transcribed public release history; verify via ingest/epoch_models.py
+mistral,Mistral Large,2024-02-26,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude 3,2024-03-04,,0,Opus / Sonnet / Haiku,transcribed public release history; verify via ingest/epoch_models.py
+xai,Grok-1,2024-03-17,,1,weights released Apache 2.0,transcribed public release history; verify via ingest/epoch_models.py
+meta,Llama 3,2024-04-18,,1,8B / 70B,transcribed public release history; verify via ingest/epoch_models.py
+deepseek,DeepSeek-V2,2024-05-06,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-4o,2024-05-13,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude 3.5 Sonnet,2024-06-20,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+meta,Llama 3.1,2024-07-23,,1,405B,transcribed public release history; verify via ingest/epoch_models.py
+mistral,Mistral Large 2,2024-07-24,,1,weights under the Mistral Research License,transcribed public release history; verify via ingest/epoch_models.py
+openai,o1-preview,2024-09-12,,0,reasoning model,transcribed public release history; verify via ingest/epoch_models.py
+alibaba,Qwen2.5,2024-09-19,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+tencent,Hunyuan-Large,2024-11-05,,1,389B MoE,transcribed public release history; verify via ingest/epoch_models.py
+amazon,Amazon Nova,2024-12-03,,0,Nova Pro / Lite / Micro at re:Invent,transcribed public release history; verify via ingest/epoch_models.py
+openai,o1,2024-12-05,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+google_deepmind,Gemini 2.0 Flash,2024-12-11,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+deepseek,DeepSeek-V3,2024-12-26,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+deepseek,DeepSeek-R1,2025-01-20,,1,MIT licence,transcribed public release history; verify via ingest/epoch_models.py
+bytedance,Doubao-1.5-pro,2025-01-22,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+xai,Grok 3,2025-02-17,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude 3.7 Sonnet,2025-02-24,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-4.5,2025-02-27,,0,research preview,transcribed public release history; verify via ingest/epoch_models.py
+baidu,ERNIE 4.5,2025-03-16,,0,weights opened 2025-06-30,transcribed public release history; verify via ingest/epoch_models.py
+google_deepmind,Gemini 2.5 Pro,2025-03-25,,0,experimental release,transcribed public release history; verify via ingest/epoch_models.py
+meta,Llama 4,2025-04-05,,1,Scout / Maverick,transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-4.1,2025-04-14,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+openai,o3,2025-04-16,,0,with o4-mini,transcribed public release history; verify via ingest/epoch_models.py
+alibaba,Qwen3,2025-04-29,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude 4,2025-05-22,,0,Opus 4 / Sonnet 4,transcribed public release history; verify via ingest/epoch_models.py
+xai,Grok 4,2025-07-09,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+moonshot,Kimi K2,2025-07-11,,1,1T MoE,transcribed public release history; verify via ingest/epoch_models.py
+zhipu,GLM-4.5,2025-07-28,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude Opus 4.1,2025-08-05,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+openai,gpt-oss-120b,2025-08-05,,1,Apache 2.0; with gpt-oss-20b,transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-5,2025-08-07,7.098,0,"",transcribed public release history; verify via ingest/epoch_models.py
+deepseek,DeepSeek-V3.1,2025-08-21,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude Sonnet 4.5,2025-09-29,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+moonshot,Kimi K2 Thinking,2025-11-06,,1,"",transcribed public release history; verify via ingest/epoch_models.py
+google_deepmind,Gemini 3 Pro,2025-11-18,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude Opus 4.5,2025-11-24,,0,"",transcribed public release history; verify via ingest/epoch_models.py
+anthropic,Claude Mythos Preview,2026-03-01,9.907,0,month precision; date and horizon from series/metr_horizons.csv,transcribed public release history; verify via ingest/epoch_models.py
+openai,GPT-5.6 Sol,2026-06-26,9.405,0,date is the series/metr_horizons.csv entry date (METR); release date to verify,transcribed public release history; verify via ingest/epoch_models.py

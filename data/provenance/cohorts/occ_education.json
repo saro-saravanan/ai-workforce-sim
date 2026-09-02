@@ -12,7 +12,7 @@
   ],
   "status": "partial (estimated E)",
   "notes": "MAPPING MATRIX IS AN ESTIMATE (E), not fitted to microdata. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0418, 'jz2': 0.3449, 'jz3': 0.2393, 'jz4': 0.2052, 'jz5': 0.1688}. Employment-weighted education shares: {'lt_hs': 0.067, 'hs': 0.3667, 'some_college': 0.2616, 'ba_plus': 0.3047}. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real.",
-  "built_at": "2026-09-02T00:09:32+00:00",
+  "built_at": "2026-09-02T00:52:30+00:00",
   "output": "data/processed/cohorts/occ_education.csv",
   "extra": {
     "job_zone_unmatched": {

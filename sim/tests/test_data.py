@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 from itertools import pairwise
 from pathlib import Path
@@ -230,3 +231,145 @@ def test_occ_decile_employment_weighted_shares_near_ten_percent(built):
     g = d.group_by("decile").agg((pl.col("share") * pl.col("emp_national")).sum() / pl.col("emp_national").sum())
     assert ((g["share"] - 0.1).abs() < 0.05).all(), g.sort("decile")["share"].to_list()
     assert abs(g["share"].sum() - 1.0) < 1e-6
+
+
+# ---- Phase 3 regional tables (contracts §11) ------------------------------------------------------
+REGION_IDS = ["US", "EU", "UK", "CN", "JP", "KR", "IN", "TW", "SG", "RoA"]
+REGION_TABLES = ["regions/region_members", "regions/regions", "regions/occ_region", "regions/trade_weights",
+                 "regions/actors", "regions/actor_releases", "regions/value_chain"]
+EU27 = {"AUT", "BEL", "BGR", "HRV", "CYP", "CZE", "DNK", "EST", "FIN", "FRA", "DEU", "GRC", "HUN", "IRL", "ITA",
+        "LVA", "LTU", "LUX", "MLT", "NLD", "POL", "PRT", "ROU", "SVK", "SVN", "ESP", "SWE"}
+
+
+def test_region_tables_registered_with_provenance(built):
+    recs = list_provenance(ROOT)
+    for table in [*REGION_TABLES, "geo/world"]:
+        assert table in TABLES and table in built, table
+        assert table in recs and status_kind(recs[table].status) in STATUS_VALUES, table
+    assert status_kind(recs["regions/occ_region"].status) == "FIXTURE"
+    assert status_kind(recs["regions/trade_weights"].status) == "FIXTURE"
+    assert status_kind(recs["regions/region_members"].status) == "real"
+
+
+def test_region_members_cover_the_world(built):
+    m = _read("regions/region_members.csv")
+    assert m.height >= 170 and m["iso3"].n_unique() == m.height
+    reg = dict(zip(m["iso3"], m["region_id"]))
+    assert all(reg[c] == "EU" for c in EU27)
+    for iso3, rid in [("USA", "US"), ("GBR", "UK"), ("CHN", "CN"), ("JPN", "JP"), ("KOR", "KR"), ("IND", "IN"),
+                      ("TWN", "TW"), ("SGP", "SG"), ("IDN", "RoA"), ("VNM", "RoA")]:
+        assert reg[iso3] == rid, iso3
+    assert reg["SAU"] == "" and reg["KAZ"] == "" and reg["BRA"] == "" and "ATA" not in reg
+    assert set(m["region_id"]) == set(REGION_IDS) | {""}
+    assert m["population"].cast(pl.Int64).min() >= 0 and m["gdp_bn_usd"].cast(pl.Float64).min() >= 0
+
+
+def test_regions_table(built):
+    r = _read("regions/regions.csv")
+    assert r["region_id"].to_list() == REGION_IDS
+    need = {"name", "population", "gdp_bn_usd", "employment_total", "wage_level_rel_us", "emp_growth_10y",
+            "import_share", "epl_multiplier", "avail_delay_quarters", "frontier_lag_quarters",
+            "compliance_premium_high_risk", "regime", "data_center_share", "spillover_weight_us", "source_tag"}
+    assert need <= set(r.columns)
+    assert set(r["regime"]) <= {"state_patchwork", "eu_ai_act", "licensing", "light"}
+    m = _read("regions/region_members.csv").with_columns(pl.col("population").cast(pl.Int64))
+    us_pop = m.filter(pl.col("iso3") == "USA")["population"][0]
+    assert r.filter(pl.col("region_id") == "US")["population"].cast(pl.Int64)[0] == us_pop
+    eu_pop = m.filter(pl.col("region_id") == "EU")["population"].sum()
+    assert r.filter(pl.col("region_id") == "EU")["population"].cast(pl.Int64)[0] == eu_pop
+    dc = r["data_center_share"].cast(pl.Float64).sum()
+    assert abs(dc - 1.0) < 1e-6
+    for c in ("import_share", "epl_multiplier", "spillover_weight_us", "compliance_premium_high_risk"):
+        v = r[c].cast(pl.Float64)
+        assert v.min() >= 0 and v.max() <= 1, c
+
+
+def test_occ_region_covers_every_occupation_and_sums_to_employment_total(built):
+    occ_codes = set(_read("occupations.csv")["occ_code"])
+    o = _read("regions/occ_region.csv").with_columns(pl.col("emp").cast(pl.Int64),
+                                                     pl.col("wage_mean_annual_usd").cast(pl.Float64))
+    assert o.select(["occ_code", "region_id"]).n_unique() == o.height
+    for rid in REGION_IDS:
+        sub = o.filter(pl.col("region_id") == rid)
+        assert set(sub["occ_code"]) == occ_codes and sub.height == 831, rid
+    r = _read("regions/regions.csv").with_columns(pl.col("employment_total").cast(pl.Int64))
+    tot = o.group_by("region_id").agg(pl.col("emp").sum().alias("s")).join(r, on="region_id")
+    assert ((tot["s"] - tot["employment_total"]).abs() <= 1).all()
+    assert o["emp"].min() >= 0 and o["wage_mean_annual_usd"].min() > 0
+    # the tilt: India's professional share is below the U.S. share, its farm/production share above
+    occ = _read("occupations.csv").select("occ_code", "major_group")
+    j = o.join(occ, on="occ_code").with_columns(pl.col("major_group").is_in(["11", "13", "15", "17", "19", "21", "23",
+                                                                              "25", "27", "29"]).alias("hi"))
+    share = j.group_by("region_id").agg((pl.col("emp").filter(pl.col("hi")).sum() / pl.col("emp").sum()).alias("hi"))
+    s = dict(zip(share["region_id"], share["hi"]))
+    assert s["IN"] < s["US"] < s["SG"] or s["IN"] < s["US"]
+
+
+def test_trade_weights_rows_sum_to_one(built):
+    t = _read("regions/trade_weights.csv").with_columns(pl.col("weight").cast(pl.Float64))
+    assert t.height == 100 and t.select(["region_from", "region_to"]).n_unique() == 100
+    g = t.group_by("region_to").agg(pl.col("weight").sum())
+    assert ((g["weight"] - 1.0).abs() < 1e-5).all()
+    assert t["weight"].min() >= 0
+    r = _read("regions/regions.csv").with_columns(pl.col("import_share").cast(pl.Float64))
+    dom = t.filter(pl.col("region_from") == pl.col("region_to")).join(r, left_on="region_to", right_on="region_id")
+    assert ((dom["weight"] - (1 - dom["import_share"])).abs() < 1e-5).all()
+
+
+def test_actors_and_availability(built):
+    a = _read("regions/actors.csv")
+    assert a["actor_id"].n_unique() == a.height == 23
+    assert set(a["role"]) == {"lab", "compute", "chokepoint"}
+    assert set(a["weights_posture"]) <= {"closed", "open-lagged", "open-frontier"}
+    assert set(a["region_id"]) <= set(REGION_IDS)
+    for rid in REGION_IDS:
+        v = a[f"avail_{rid}"].cast(pl.Float64)
+        assert v.null_count() == 0 and v.min() >= 0 and v.max() <= 1, rid
+    row = {r["actor_id"]: r for r in a.to_dicts()}
+    assert float(row["openai"]["avail_CN"]) == 0.0 and float(row["openai"]["avail_EU"]) == 1.0
+    assert float(row["deepseek"]["avail_US"]) == 0.5 and float(row["baidu"]["avail_EU"]) == 0.2
+    assert row["nvidia"]["role"] == "compute" and row["tsmc"]["role"] == "chokepoint" and row["asml"]["role"] == "chokepoint"
+    assert row["deepseek"]["weights_posture"] == "open-frontier" and row["meta"]["weights_posture"] == "open-lagged"
+    prices = a["price_frontier_usd_per_mtok"].cast(pl.Float64, strict=False)
+    assert prices.drop_nulls().min() > 0
+    assert a["frontier_lag_quarters"].cast(pl.Int64).min() >= 0 and a["releases_per_year"].cast(pl.Int64).min() >= 1
+
+
+def test_actor_releases_dates_parse_and_are_sorted(built):
+    rel = _read("regions/actor_releases.csv")
+    assert rel.select(["actor_id", "model"]).n_unique() == rel.height
+    d = rel["date"].str.to_date("%Y-%m-%d")
+    assert d.null_count() == 0
+    assert d.to_list() == sorted(d.to_list())
+    assert d.min() >= dt.date(2023, 3, 1) and d.max() <= dt.date(2026, 6, 30)
+    assert set(rel["actor_id"]) <= set(_read("regions/actors.csv")["actor_id"])
+    assert set(rel["open_weights"]) <= {"0", "1"}
+    ci = rel["capability_index"].cast(pl.Float64, strict=False)
+    metr = _read("series/metr_horizons.csv")
+    assert ci.drop_nulls().len() == metr.height
+    gpt5 = rel.filter(pl.col("model") == "GPT-5")["capability_index"].cast(pl.Float64)[0]
+    assert abs(gpt5 - 7.1) < 0.05
+
+
+def test_value_chain_shares(built):
+    v = _read("regions/value_chain.csv").with_columns(pl.col("share_of_spend").cast(pl.Float64))
+    assert v["stage"].to_list() == ["model", "compute", "chips", "integration"]
+    assert abs(v["share_of_spend"].sum() - 1.0) < 1e-9
+    assert set(v["allocation"]) == {"market_share", "data_center", "fixed", "domestic"}
+    chips = v.filter(pl.col("stage") == "chips")
+    fixed = sum(float(chips[c][0]) for c in ("fixed_US", "fixed_TW", "fixed_EU", "fixed_KR"))
+    assert abs(fixed - 1.0) < 1e-9
+
+
+def test_geo_world_matches_members(built):
+    p = PROCESSED / "geo" / "world.geojson"
+    assert p.stat().st_size <= 3_000_000
+    gj = json.loads(p.read_text())
+    m = _read("regions/region_members.csv")
+    assert len(gj["features"]) == m.height
+    reg = dict(zip(m["iso3"], m["region_id"]))
+    for f in gj["features"]:
+        pr = f["properties"]
+        assert set(pr) == {"iso3", "name", "region_id"}
+        assert reg[pr["iso3"]] == pr["region_id"]
+    assert "ATA" not in reg

@@ -1,0 +1,42 @@
+{
+  "table": "regions/actors",
+  "source": "spec §3.1 actor list; public facts (region, role, weights posture); Vendor list prices (OpenAI, Anthropic, Google, xAI, Amazon, Mistral, DeepSeek, Moonshot, Zhipu pricing pages)",
+  "source_url": "https://openai.com/api/pricing/",
+  "license": "Public price lists; transcribed from memory, not fetched",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "ef242577379337253bb61580103fd3801ade72fe91fbf7f92e55aa7277abc748",
+  "transformations": [
+    "frontier_lag_quarters, releases_per_year: E per contracts §11 build notes",
+    "price_frontier_usd_per_mtok = (3 x input + output) / 4 of the vendor list price named in price_note",
+    "avail_<region>: rule per actor (availability_rule column) in aiwsim.data.actors.availability"
+  ],
+  "status": "partial (public facts; E lags/availability; prices S verify at ingest)",
+  "notes": "Prices were transcribed from memory (no web access); each carries its date and 'verify at ingest'. Actors with null price: ['meta', 'microsoft', 'nvidia', 'aleph_alpha', 'asml', 'alibaba', 'bytedance', 'baidu', 'tencent', 'samsung', 'softbank', 'naver', 'sakana', 'tsmc']. Microsoft and Amazon are labs with a cloud note; NVIDIA is compute; TSMC and ASML are chokepoints with export-control availability in CN (E). Replaced by ingest/epoch_models.py (https://epoch.ai/data/notable-ai-models).",
+  "built_at": "2026-09-02T00:52:30+00:00",
+  "output": "data/processed/regions/actors.csv",
+  "extra": {
+    "null_price_actors": [
+      "meta",
+      "microsoft",
+      "nvidia",
+      "aleph_alpha",
+      "asml",
+      "alibaba",
+      "bytedance",
+      "baidu",
+      "tencent",
+      "samsung",
+      "softbank",
+      "naver",
+      "sakana",
+      "tsmc"
+    ],
+    "extra_urls": [
+      "https://www.anthropic.com/pricing",
+      "https://ai.google.dev/pricing",
+      "https://api-docs.deepseek.com/quick_start/pricing",
+      "https://mistral.ai/pricing"
+    ]
+  }
+}

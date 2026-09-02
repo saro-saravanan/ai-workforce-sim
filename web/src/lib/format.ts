@@ -63,3 +63,34 @@ export function fmtBand(
   if (lo == null || hi == null) return ''
   return `[${fmt(lo)}, ${fmt(hi)}]`
 }
+
+/** Billions of dollars: 1455 -> "$1.46tn", 60.3 -> "$60bn", 4.2 -> "$4.2bn" */
+export function fmtBn(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  const a = Math.abs(v)
+  const sign = v < 0 ? '\u2212' : ''
+  if (a >= 1000) return `${sign}$${(a / 1000).toFixed(2)}tn`
+  if (a >= 100) return `${sign}$${a.toFixed(0)}bn`
+  if (a >= 10) return `${sign}$${a.toFixed(1)}bn`
+  return `${sign}$${a.toFixed(2)}bn`
+}
+
+/** Task horizon in hours -> "12 min", "1.5 h", "3 days", "2 weeks", "4 months" */
+export function fmtHorizon(hours: number | null | undefined): string {
+  if (hours == null || !Number.isFinite(hours)) return '—'
+  if (hours < 1 / 60) return `${Math.max(1, Math.round(hours * 3600))} s`
+  if (hours < 1) return `${(hours * 60).toFixed(hours * 60 < 10 ? 1 : 0)} min`
+  if (hours < 24) return `${hours.toFixed(hours < 10 ? 1 : 0)} h`
+  if (hours < 168) return `${(hours / 24).toFixed(1)} days`
+  if (hours < 720) return `${(hours / 168).toFixed(1)} weeks`
+  if (hours < 8760) return `${(hours / 720).toFixed(1)} months`
+  return `${(hours / 8760).toFixed(1)} years`
+}
+
+/** "$/M tokens": 15 -> "$15.00", 0.0043 -> "$0.0043" */
+export function fmtUsdPerMtok(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '—'
+  if (v >= 1) return `$${v.toFixed(2)}`
+  if (v >= 0.01) return `$${v.toFixed(3)}`
+  return `$${v.toPrecision(2)}`
+}

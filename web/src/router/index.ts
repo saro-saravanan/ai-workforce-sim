@@ -24,12 +24,7 @@ const router = createRouter({
     { path: '/flows', name: 'flows', component: () => import('@/views/FlowsView.vue') },
     { path: '/cohorts', name: 'cohorts', component: () => import('@/views/CohortView.vue') },
     { path: '/compare', name: 'compare', component: () => import('@/views/CompareView.vue') },
-    ...(['supply'] as const).map((name) => ({
-      path: `/${name}`,
-      name,
-      component: () => import('@/views/PlaceholderView.vue'),
-      props: { view: name },
-    })),
+    { path: '/supply', name: 'supply', component: () => import('@/views/SupplyView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/map' },
   ],
 })
