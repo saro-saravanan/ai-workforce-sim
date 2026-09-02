@@ -2,7 +2,7 @@
 
 An interactive, multi-region simulation of how AI models reshape the workforce and, through it, the economy, 2024–2040. The U.S., the EU, and Asia are first-class regions. Every parameter has a source, a central value, and a range; every output is a band relative to a world in which frontier AI froze in 2023, never a line.
 
-**Status:** eight build phases complete; `main` carries the shipped model (specification v0.2 plus the **v0.3 amendment**, [docs/model-spec-v0.3-applications.md](docs/model-spec-v0.3-applications.md), which adds embodied automation, output substitution and traded-services channels, policy wiring, and a Seba/RethinkX preset). Phase 8 adds the **Story** view: one reconciled set of numbers, seven findings in plain language, named futures, policy runs, a personal outlook by occupation and age, an executive brief with charts, and a scoreboard that tests named forecasts (Seba, Acemoglu, Goldman, IMF) against the model on every run; see [docs/findings-phase8.md](docs/findings-phase8.md). Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/`; the workflow in `.github/workflows/pages.yml` builds it on every push to `main`.
+**Status:** eight build phases complete; `main` carries the shipped model (specification v0.2 plus the **v0.3 amendment**, [docs/model-spec-v0.3-applications.md](docs/model-spec-v0.3-applications.md), which adds embodied automation, output substitution and traded-services channels, policy wiring, and a Seba/RethinkX preset). Phase 8 adds the **Story** view: one reconciled set of numbers, seven findings in plain language, named futures, policy runs, a personal outlook by occupation and age, an executive brief with charts, and a scoreboard that tests named forecasts (Seba/RethinkX 2017–2026, Acemoglu, Goldman, IMF) against the model on every run; see [docs/findings-phase8.md](docs/findings-phase8.md). Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/`; the workflow in `.github/workflows/pages.yml` builds it on every push to `main`.
 
 ![Economy view with the Ask panel](docs/screenshots/phase4-ask-insights-light.png)
 
@@ -77,6 +77,6 @@ The build sandbox could reach only GitHub, so occupation tasks, exposure, employ
 5. Polish, public demo, methodology write-up
 6. v0.3: embodied automation (robotaxis, robots), self-employed and platform workers
 7. v0.3: output substitution (AI-made content), traded services, full application catalogue
-8. Story layer: one reconciled set of numbers, seven findings in plain language, named futures (including a Seba/RethinkX preset), policy runs, a personal outlook, an executive brief, and a scoreboard of named forecasts
+8. Story layer: one reconciled set of numbers, seven findings in plain language, named futures (including two Seba/RethinkX presets: the 2017 transport claims and the 2024–2026 humanoid and TaaS claims), policy runs, a personal outlook, an executive brief, and a scoreboard of named forecasts
 
 Each phase ended with a "findings so far" note.

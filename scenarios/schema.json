@@ -445,6 +445,12 @@
                   "minimum": 6,
                   "maximum": 48
                 },
+                "manipulation_automatable_share": {
+                  "type": "number",
+                  "minimum": 0.3,
+                  "maximum": 0.85,
+                  "description": "Share of mobile-manipulation task-hours that can ever be automated (P.101 central 0.6); the RethinkX humanoid claims need the top of the range."
+                },
                 "coupling_to_software": {
                   "type": "number",
                   "minimum": 0,

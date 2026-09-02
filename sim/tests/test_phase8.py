@@ -100,3 +100,21 @@ def test_forecast_scoreboard(ctx):
     d2 = _doc(ctx, "preset-seba-rethinkx")
     s0 = next(f for f in fs if f["metric"] == "autonomous_share_of_ride_hail"); s1 = next(f for f in d2["forecasts"] if f["metric"] == "autonomous_share_of_ride_hail")
     assert s1["model_central"] > s0["model_central"]
+
+
+def test_seba_2026_preset_and_rethinkx_rows(ctx):
+    """The humanoid-era preset pushes manipulation past the transport preset, and the RethinkX rows score against the manipulation cost."""
+    d1 = _doc(ctx, "preset-seba-rethinkx"); d2 = _doc(ctx, "preset-seba-2026")
+    q = d2["meta"]["quarters"]; t35 = q.index("2035Q4")
+    e1 = d1["series"]["US"]["embodied_displacement_share"]["central"]; e2 = d2["series"]["US"]["embodied_displacement_share"]["central"]
+    assert e2[t35] > e1[t35] and e2[-1] > e1[-1]
+    rows = {(f["short"], f["metric"], f["year"]): f for f in d2["forecasts"]}
+    cost10 = rows[("RethinkX 2025", "humanoid_cost_per_hour_usd", 2025)]; cost1 = rows[("RethinkX 2025", "humanoid_cost_per_hour_usd", 2034)]
+    assert cost10["model_central"] is not None and cost1["model_central"] is not None and cost1["model_central"] < cost10["model_central"]
+    assert cost10["verdict"] in ("within band", "model lower", "model higher")
+    half = rows[("RethinkX 2026", "physical_work_share", 2039)]; assert half["claimed"] == 50.0 and half["preset_id"] == "preset-seba-2026"
+    assert half["model_central"] is not None and half["model_central"] > d2["series"]["US"]["embodied_displacement_share"]["central"][q.index("2039Q4")]
+    taas = rows[("Seba 2026", "autonomous_share_of_ride_hail", 2035)]; assert taas["model_central"] is not None
+    assert all(f["source_tag"] for f in d2["forecasts"])
+    lv = ctx.resolve(__import__("aiwsim.pipeline", fromlist=["load_scenario_by_path_or_id"]).load_scenario_by_path_or_id(ctx, "preset-seba-2026"))
+    assert lv["levers"]["applications"]["embodiment"]["manipulation_automatable_share"] == 0.85

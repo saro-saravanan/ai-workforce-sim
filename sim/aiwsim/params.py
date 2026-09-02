@@ -227,6 +227,8 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
         q.set("P.108", tau)
     if "coupling_to_software" in emb:
         q.set("P.107", float(emb["coupling_to_software"]))
+    if "manipulation_automatable_share" in emb:
+        q.set("P.101", float(emb["manipulation_automatable_share"]))
     hw = app.get("hardware", {})
     if "learning_rate" in hw:
         q.set("P.113", float(hw["learning_rate"]))

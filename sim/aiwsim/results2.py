@@ -409,6 +409,13 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
         elif m == "ride_hail_driver_displacement":
             idx = [i for i, c in enumerate(inp.occ_codes) if c in ("53-3054", "53-3053")]
             arr = 100 * (ro.D_emb[0][idx, t] * ro.N0[idx, t]).sum() / max(ro.N0[idx, t].sum(), 1.0) * np.ones(1) if ro.D_emb.size and idx else None; note = "central draw only"
+        elif m == "physical_work_share":
+            phys = sum(v for k, v in (o.trace.get("channels_task_hours") or {}).items() if k.startswith("emb_"))
+            arr = 100 * ro.emb_share[:, t] / max(phys, 1e-6) if ro.emb_share.size and phys > 0 else None
+            note = f"model quantity: robots' and vehicles' share of physical task-hours (embodied channels are {100*phys:.0f}% of all task-hours; the rest is office and analytical work done by software)"
+        elif m == "humanoid_cost_per_hour_usd":
+            arr = o.kappa_emb["manip"][:, t] if getattr(o, "kappa_emb", None) and "manip" in o.kappa_emb else None
+            note = "model quantity: mobile-manipulation hardware cost per worker-hour equivalent (annualized unit price over utilized hours; integration excluded)"
         elif m == "exposed_share":
             arr = 100 * (o.automatable[:, :] * ro.N0[None, :, 0]).sum(axis=1) / max(ro.N0[:, 0].sum(), 1.0); note = "model quantity: ever-automatable task-hour share of employment (software + embodied)"
         elif m == "young_exposed_employment_pct":

@@ -183,11 +183,32 @@ FORECASTS: list[dict] = [
     {"source": "Brynjolfsson, Chandar, Chen (2025), 'Canaries in the Coal Mine'", "short": "Canaries 2025", "region": "US", "year": 2025,
      "metric": "young_exposed_employment_pct", "proxy": 1, "claimed": -13.0, "unit": "% employment of 22–25-year-olds in the most exposed occupations vs late 2022",
      "note": "compared with the model's 16–24 employment effect in the most exposed occupations at 2025Q4"},
+    # ---- RethinkX labour series (2024–2026) and the 2026 convergence report; the preset-seba-2026 scenario carries their assumptions ----
+    {"source": "RethinkX, 'Near-zero cost labor: the disruptive economics of humanoid robots' (2025) and 'This time, we are the horses' (2024, updated Dec 2025)",
+     "short": "RethinkX 2025", "region": "US", "year": 2025, "metric": "humanoid_cost_per_hour_usd", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 10.0,
+     "unit": "$ per robot labour-hour at market entry", "note": "humanoid robots enter the market at a cost-capability under $10/hour; compared with the model's mobile-manipulation hardware cost per worker-hour equivalent (integration excluded); for a cost, 'model lower' means the model is the more aggressive of the two",
+     "source_tag": "rethinkx.com/blog/rethinkx/disruptive-economics-of-humanoid-robots and /the-disruption-of-labour-by-humanoid-robots (V: page summaries 2026-09-02; full text not fetched)"},
+    {"source": "RethinkX, 'Near-zero cost labor' (2025); '15 RethinkX Robotics Insights' (2026)", "short": "RethinkX 2025", "region": "US", "year": 2034,
+     "metric": "humanoid_cost_per_hour_usd", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 1.0, "unit": "$ per robot labour-hour",
+     "note": "under $1/hour before 2035 (and under $0.10 before 2045, outside the horizon); compared with the model's mobile-manipulation hardware cost per worker-hour equivalent at 2034Q4; for a cost, 'model lower' means the model is the more aggressive of the two",
+     "source_tag": "rethinkx.com/labor/in-depth/insights-into-humanoid-robotics (V: page summary 2026-09-02; full text not fetched)"},
+    {"source": "RethinkX, 'This time, we are the horses' (updated Dec 2025); 'The Painful Truth about AI & Robotics' (2026)", "short": "RethinkX 2026", "region": "US", "year": 2039,
+     "metric": "physical_work_share", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 50.0, "unit": "% of physical task-hours",
+     "note": "'by the end of the 2030s robots are likely to be performing as much total labor as human beings'; read as half of physical task-hours done by robots and vehicles at 2039Q4 (office and analytical work is the software channel, not this claim)",
+     "source_tag": "rethinkx.com/blog/rethinkx/the-painful-truth-about-ai-and-robotics (V: page summary 2026-09-02; full text not fetched)"},
+    {"source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap", "short": "Seba 2026", "region": "US", "year": 2035,
+     "metric": "autonomous_share_of_ride_hail", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 80.0, "unit": "% of urban passenger miles by autonomous TaaS",
+     "note": "roadmap phase 3 (~2035): 'TaaS provides over 80% of urban passenger miles'; compared with robotaxi deployment coverage of profitable ride-hail hours",
+     "source_tag": "user-supplied summary of the 2026 report (V: summary only; report not fetched)"},
+    {"source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap", "short": "Seba 2026", "region": "US", "year": 2032,
+     "metric": "autonomous_share_of_ride_hail", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 50.0, "unit": "% of urban passenger miles by autonomous TaaS",
+     "note": "roadmap phase 2 (2029–2032): 'autonomous TaaS networks gain widespread regulatory approval'; read as half of urban passenger miles by 2032 on the way to 80% in 2035",
+     "source_tag": "user-supplied summary of the 2026 report (V: summary only; the 50% midpoint is our interpolation)"},
 ]
 
 
 def forecasts_frame() -> pl.DataFrame:
-    return pl.DataFrame([{**f, "source_tag": "transcribed from recollection (V?); fetch and cite before use"} for f in FORECASTS])
+    return pl.DataFrame([{"source_tag": "transcribed from recollection (V?); fetch and cite before use", **f} for f in FORECASTS])
 
 
 # ---- self-employed and platform workforce (spec §A.5.1; FIXTURE until the CPS / Nonemployer ingest runs) ------------------

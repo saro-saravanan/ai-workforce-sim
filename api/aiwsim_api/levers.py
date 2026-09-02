@@ -43,6 +43,7 @@ LEVER_LABELS: dict[str, tuple[str, str, str, str]] = {
     "levers.applications.embodiment.driving_doubling_months": ("Driving autonomy doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
     "levers.applications.embodiment.manipulation_doubling_months": ("Mobile manipulation doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
     "levers.applications.embodiment.fixed_doubling_months": ("Fixed automation doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.embodiment.manipulation_automatable_share": ("Manipulation: ever-automatable share", "share", "P.101", "embodied feasibility ceiling (spec v0.3 §A.3.1, §A.16)"),
     "levers.applications.embodiment.aerial_doubling_months": ("Aerial autonomy doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
     "levers.applications.embodiment.coupling_to_software": ("Coupling of embodiment clocks to the software clock", "", "P.107", "embodiment clock (spec v0.3 §A.3.1)"),
     "levers.applications.hardware.learning_rate": ("Hardware learning rate", "per doubling", "P.113", "Wright's law unit cost (spec v0.3 §A.3.2)"),

@@ -1,5 +1,5 @@
 {
- "scenario_hash": "sha256:8b2f8a2d573c20690c691441",
+ "scenario_hash": "sha256:3a3e34132a810bfd5711cf56",
  "scenario_id": "baseline",
  "scenario_name": "Baseline: central assumptions",
  "region": "US",
@@ -985,7 +985,7 @@
   {
    "id": "futures",
    "title": "Two futures, and the difference is partly a choice",
-   "sentence": "Gains spent back: If productivity gains are spent back into the economy, employment in 2040 is +13% versus no AI (about 22.4 million more jobs). Gains pocketed: If the gains are saved or paid out as rents, employment is -6% (about 9.9 million fewer jobs). Preset: Seba / RethinkX disruption: With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030.",
+   "sentence": "Gains spent back: If productivity gains are spent back into the economy, employment in 2040 is +13% versus no AI (about 22.4 million more jobs). Gains pocketed: If the gains are saved or paid out as rents, employment is -6% (about 9.9 million fewer jobs). Preset: Seba / RethinkX disruption: With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030. Preset: Seba / RethinkX 2026 (humanoids and TaaS): With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030.",
    "range": "The model's biggest uncertainty is whether the gains are spent back into the economy or pocketed; that is partly policy, partly corporate behaviour, and partly what people choose to pay for.",
    "sureness": {
     "level": "low",
@@ -1020,6 +1020,15 @@
       "jobs": 12255892,
       "source": "scenario run",
       "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030."
+     },
+     {
+      "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
+      "scenario_id": "preset-seba-2026",
+      "employment_pct": -8.4003,
+      "gdp_pct": 10.9199,
+      "jobs": 14205924,
+      "source": "scenario run",
+      "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030."
      }
     ]
    }
@@ -1050,6 +1059,15 @@
    "jobs": 12255892,
    "source": "scenario run",
    "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030."
+  },
+  {
+   "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
+   "scenario_id": "preset-seba-2026",
+   "employment_pct": -8.4003,
+   "gdp_pct": 10.9199,
+   "jobs": 14205924,
+   "source": "scenario run",
+   "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030."
   }
  ],
  "policies": [
@@ -1119,6 +1137,7 @@
  ],
  "forecasts": [
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "RethinkX / Tony Seba, Rethinking Transportation 2020\u20132030 (2017)",
    "short": "Seba 2017",
    "region": "US",
@@ -1129,7 +1148,6 @@
    "claimed": 95.0,
    "unit": "% of passenger miles served by autonomous fleets",
    "note": "the report's headline: 95% of U.S. passenger miles by on-demand autonomous EV fleets within ten years of approval; the model's nearest quantity is robotaxi deployment coverage of profitable ride-hail hours; model quantity: robotaxi deployment coverage of profitable ride-hail hours",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2030Q4",
    "model_central": 1.6,
    "model_p10": 1.38,
@@ -1137,6 +1155,7 @@
    "verdict": "model lower"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "RethinkX / Tony Seba, Rethinking Transportation (2017)",
    "short": "Seba 2017",
    "region": "US",
@@ -1147,7 +1166,6 @@
    "claimed": 90.0,
    "unit": "% of ride-hail driver task-hours",
    "note": "implied by the passenger-mile claim; compared with the model's robotaxi displacement share; central draw only",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2030Q4",
    "model_central": 1.01,
    "model_p10": 1.01,
@@ -1155,6 +1173,7 @@
    "verdict": "model lower"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "RethinkX, Rethinking Humanity (2020)",
    "short": "RethinkX 2020",
    "region": "US",
@@ -1165,7 +1184,6 @@
    "claimed": 20.0,
    "unit": "% of task-hours",
    "note": "the report argues that labour, transport, food, energy and materials are disrupted in the 2020s\u20132030s; 20% of physical task-hours by 2035 is our reading of its labour chapter (V?, low confidence transcription)",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2035Q4",
    "model_central": 0.56,
    "model_p10": 0.42,
@@ -1173,6 +1191,7 @@
    "verdict": "model lower"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "Acemoglu (2024), 'The Simple Macroeconomics of AI'",
    "short": "Acemoglu 2024",
    "region": "US",
@@ -1183,7 +1202,6 @@
    "claimed": 0.66,
    "unit": "% TFP over ten years (upper bound)",
    "note": "replication preset exists",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2034Q4",
    "model_central": 4.82,
    "model_p10": 2.87,
@@ -1191,6 +1209,7 @@
    "verdict": "model higher"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "Goldman Sachs (2023), 'The Potentially Large Effects of AI on Economic Growth'",
    "short": "Goldman 2023",
    "region": "US",
@@ -1201,7 +1220,6 @@
    "claimed": 7.0,
    "unit": "% GDP over ten years",
    "note": "replication preset exists",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2033Q4",
    "model_central": 6.33,
    "model_p10": 4.0,
@@ -1209,6 +1227,7 @@
    "verdict": "within band"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "IMF (2024), 'Gen-AI: Artificial Intelligence and the Future of Work'",
    "short": "IMF 2024",
    "region": "US",
@@ -1219,7 +1238,6 @@
    "claimed": 60.0,
    "unit": "% of jobs exposed (advanced economies)",
    "note": "compared with the model's ever-automatable mass share of employment; model quantity: ever-automatable task-hour share of employment (software + embodied)",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2034Q4",
    "model_central": 30.07,
    "model_p10": 25.21,
@@ -1227,6 +1245,7 @@
    "verdict": "model lower"
   },
   {
+   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "Brynjolfsson, Chandar, Chen (2025), 'Canaries in the Coal Mine'",
    "short": "Canaries 2025",
    "region": "US",
@@ -1237,12 +1256,101 @@
    "claimed": -13.0,
    "unit": "% employment of 22\u201325-year-olds in the most exposed occupations vs late 2022",
    "note": "compared with the model's 16\u201324 employment effect in the most exposed occupations at 2025Q4; model quantity: 16\u201324 employment effect (all occupations); the model does not split young workers by occupation exposure",
-   "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "quarter": "2025Q4",
    "model_central": -0.64,
    "model_p10": -0.71,
    "model_p90": -0.36,
    "verdict": "model higher"
+  },
+  {
+   "source_tag": "rethinkx.com/blog/rethinkx/disruptive-economics-of-humanoid-robots and /the-disruption-of-labour-by-humanoid-robots (V: page summaries 2026-09-02; full text not fetched)",
+   "source": "RethinkX, 'Near-zero cost labor: the disruptive economics of humanoid robots' (2025) and 'This time, we are the horses' (2024, updated Dec 2025)",
+   "short": "RethinkX 2025",
+   "region": "US",
+   "year": 2025,
+   "metric": "humanoid_cost_per_hour_usd",
+   "proxy": 1,
+   "preset_id": "preset-seba-2026",
+   "claimed": 10.0,
+   "unit": "$ per robot labour-hour at market entry",
+   "note": "humanoid robots enter the market at a cost-capability under $10/hour; compared with the model's mobile-manipulation hardware cost per worker-hour equivalent (integration excluded); for a cost, 'model lower' means the model is the more aggressive of the two; model quantity: mobile-manipulation hardware cost per worker-hour equivalent (annualized unit price over utilized hours; integration excluded)",
+   "quarter": "2025Q4",
+   "model_central": 4.27,
+   "model_p10": 3.54,
+   "model_p90": 4.48,
+   "verdict": "model lower"
+  },
+  {
+   "source_tag": "rethinkx.com/labor/in-depth/insights-into-humanoid-robotics (V: page summary 2026-09-02; full text not fetched)",
+   "source": "RethinkX, 'Near-zero cost labor' (2025); '15 RethinkX Robotics Insights' (2026)",
+   "short": "RethinkX 2025",
+   "region": "US",
+   "year": 2034,
+   "metric": "humanoid_cost_per_hour_usd",
+   "proxy": 1,
+   "preset_id": "preset-seba-2026",
+   "claimed": 1.0,
+   "unit": "$ per robot labour-hour",
+   "note": "under $1/hour before 2035 (and under $0.10 before 2045, outside the horizon); compared with the model's mobile-manipulation hardware cost per worker-hour equivalent at 2034Q4; for a cost, 'model lower' means the model is the more aggressive of the two; model quantity: mobile-manipulation hardware cost per worker-hour equivalent (annualized unit price over utilized hours; integration excluded)",
+   "quarter": "2034Q4",
+   "model_central": 2.03,
+   "model_p10": 0.44,
+   "model_p90": 2.72,
+   "verdict": "within band"
+  },
+  {
+   "source_tag": "rethinkx.com/blog/rethinkx/the-painful-truth-about-ai-and-robotics (V: page summary 2026-09-02; full text not fetched)",
+   "source": "RethinkX, 'This time, we are the horses' (updated Dec 2025); 'The Painful Truth about AI & Robotics' (2026)",
+   "short": "RethinkX 2026",
+   "region": "US",
+   "year": 2039,
+   "metric": "physical_work_share",
+   "proxy": 1,
+   "preset_id": "preset-seba-2026",
+   "claimed": 50.0,
+   "unit": "% of physical task-hours",
+   "note": "'by the end of the 2030s robots are likely to be performing as much total labor as human beings'; read as half of physical task-hours done by robots and vehicles at 2039Q4 (office and analytical work is the software channel, not this claim); model quantity: robots' and vehicles' share of physical task-hours (embodied channels are 24% of all task-hours; the rest is office and analytical work done by software)",
+   "quarter": "2039Q4",
+   "model_central": 8.83,
+   "model_p10": 6.5,
+   "model_p90": 36.87,
+   "verdict": "model lower"
+  },
+  {
+   "source_tag": "user-supplied summary of the 2026 report (V: summary only; report not fetched)",
+   "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
+   "short": "Seba 2026",
+   "region": "US",
+   "year": 2035,
+   "metric": "autonomous_share_of_ride_hail",
+   "proxy": 1,
+   "preset_id": "preset-seba-2026",
+   "claimed": 80.0,
+   "unit": "% of urban passenger miles by autonomous TaaS",
+   "note": "roadmap phase 3 (~2035): 'TaaS provides over 80% of urban passenger miles'; compared with robotaxi deployment coverage of profitable ride-hail hours; model quantity: robotaxi deployment coverage of profitable ride-hail hours",
+   "quarter": "2035Q4",
+   "model_central": 7.6,
+   "model_p10": 6.27,
+   "model_p90": 68.6,
+   "verdict": "model lower"
+  },
+  {
+   "source_tag": "user-supplied summary of the 2026 report (V: summary only; the 50% midpoint is our interpolation)",
+   "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
+   "short": "Seba 2026",
+   "region": "US",
+   "year": 2032,
+   "metric": "autonomous_share_of_ride_hail",
+   "proxy": 1,
+   "preset_id": "preset-seba-2026",
+   "claimed": 50.0,
+   "unit": "% of urban passenger miles by autonomous TaaS",
+   "note": "roadmap phase 2 (2029\u20132032): 'autonomous TaaS networks gain widespread regulatory approval'; read as half of urban passenger miles by 2032 on the way to 80% in 2035; model quantity: robotaxi deployment coverage of profitable ride-hail hours",
+   "quarter": "2032Q4",
+   "model_central": 2.9,
+   "model_p10": 2.44,
+   "model_p90": 32.13,
+   "verdict": "model lower"
   }
  ],
  "glossary": {

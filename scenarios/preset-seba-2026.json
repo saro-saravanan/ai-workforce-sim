@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.3",
+  "id": "preset-seba-2026",
+  "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
+  "description": "RethinkX's 2024\u20132026 labour claims and the 2026 'Rethinking Energy, Mobility, and Materials' roadmap as levers: humanoid labour under $10/hour at entry and under $1/hour before 2035, robots doing as much work as people by the late 2030s, TaaS carrying 80% of urban passenger miles by 2035. Pushes the manipulation class as hard as the transport preset pushes driving: the fastest clocks, the top of the ever-automatable range, maximum utilization, the lowest unit price, accelerated approval everywhere, and induced demand at twice the catalogue. The forecast scoreboard tests these claims against the model.",
+  "parent": "preset-seba-rethinkx",
+  "levers": {
+    "applications": {
+      "embodiment": {
+        "driving_doubling_months": 6,
+        "manipulation_doubling_months": 6,
+        "fixed_doubling_months": 6,
+        "aerial_doubling_months": 6,
+        "coupling_to_software": 0.7,
+        "manipulation_automatable_share": 0.85
+      },
+      "hardware": {
+        "learning_rate": 0.25,
+        "utilization_scale": 1.6,
+        "unit_price_scale": 0.5,
+        "ramp_max_growth_per_year": 1.5
+      },
+      "approval": {
+        "US": "accelerated",
+        "CN": "accelerated",
+        "UK": "accelerated",
+        "SG": "accelerated",
+        "RoA": "accelerated",
+        "EU": "accelerated",
+        "JP": "accelerated",
+        "KR": "accelerated",
+        "IN": "accelerated",
+        "TW": "accelerated"
+      },
+      "induced_demand_scale": 2.0
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  },
+  "preset": true
+}

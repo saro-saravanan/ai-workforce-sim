@@ -25,7 +25,7 @@ from .insights import top_insights
 from .levers import lever_definitions
 from .story import executive_brief_html, executive_brief_md, story
 
-DEFAULT_SCENARIOS = ["baseline", "eu-delay-deepseek-2027", "preset-acemoglu-2024", "preset-goldman-2023", "preset-imf-2024", "preset-seba-rethinkx",
+DEFAULT_SCENARIOS = ["baseline", "eu-delay-deepseek-2027", "preset-acemoglu-2024", "preset-goldman-2023", "preset-imf-2024", "preset-seba-rethinkx", "preset-seba-2026",
                      "policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36"]
 
 

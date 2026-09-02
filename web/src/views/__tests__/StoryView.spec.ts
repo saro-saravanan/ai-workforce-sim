@@ -102,7 +102,7 @@ describe('StoryView', () => {
     expect(w.find('[data-beat="waves"] .timeline').exists()).toBe(true)
     expect(w.findAll('[data-beat="waves"] .timeline circle').length).toBeGreaterThan(5)
     expect(w.find('[data-beat="money"]').findAll('svg text.name')).toHaveLength(10)
-    expect(w.findAll('[data-beat="futures"] .future')).toHaveLength(3)
+    expect(w.findAll('[data-beat="futures"] .future')).toHaveLength(story.futures.length)
   })
 
   it('offers to open the scenario-run future and selects it in the results store', async () => {
