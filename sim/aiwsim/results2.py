@@ -8,7 +8,7 @@ import numpy as np
 
 from . import SPEC_VERSION
 from .inputs import Inputs
-from .mc import AGE_BANDS, EDU_LEVELS, BatchOutput
+from .mc import AGE_BANDS, EDU_LEVELS, US_GDP_2024_BN, BatchOutput
 
 PCTS = [10, 25, 50, 75, 90]
 HEADLINES = ["employment_pct_vs_baseline", "gdp_pct_vs_baseline", "real_wage_pct_vs_baseline", "wage_share_pp_vs_baseline"]
@@ -177,7 +177,14 @@ def validity(o: BatchOutput) -> dict[str, Any]:
         d = float(share[s] - share[t])
         if d > best:
             best, i_from, i_to = d, t, s
-    return {"warning": bool(best > 0.15), "threshold": 0.15, "max_decade_displacement": round(best, 4), "from": q[i_from], "to": q[i_to]}
+    fiscal = o.us.fiscal_balance_bn[0, -1] if o.us.fiscal_balance_bn.size else 0.0
+    gdp_end = US_GDP_2024_BN * (1.0 + o.us.gdp_pct[0, -1])
+    fiscal_pct = 100.0 * fiscal / max(gdp_end, 1.0)
+    return {"warning": bool(best > 0.15) or bool(fiscal_pct < -3.0), "threshold": 0.15, "max_decade_displacement": round(best, 4), "from": q[i_from], "to": q[i_to],
+            "fiscal_balance_pct_gdp_2040": round(fiscal_pct, 2),
+            "fiscal_warning": bool(fiscal_pct < -3.0),
+            "note": ("deficit-financed transfers above 3% of GDP are outside the model's validity: it has no inflation or interest-rate response, so their demand effect is overstated"
+                     if fiscal_pct < -3.0 else "")}
 
 
 def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str]:
@@ -188,7 +195,7 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
             return f"{x[0, t]:+.1f}% (10–90: {np.percentile(x[1:, t], 10):+.1f} to {np.percentile(x[1:, t], 90):+.1f})"
         return f"{x[0, t]:+.1f}%"
     notes = [
-        f"By {q[i30]}, the capability clock stands at {o.C[0, i30]:.1f} doublings ({_horizon_words(o.C[0, i30])}); employment-weighted adoption is {100*o.adoption_emp[0, i30]:.0f}% of firms.",
+        f"By {q[i30]}, frontier AI systems can complete {_horizon_words(o.C[0, i30])} (capability index {o.C[0, i30]:.1f}); firms employing {100*o.adoption_emp[0, i30]:.0f}% of workers use AI in some tasks.",
         f"Employment vs the no-AI baseline: {band(e, i30)} in {q[i30]}, {band(e, t_end)} in {q[t_end]}; GDP {band(g, t_end)}; real wages {band(rw, t_end)}.",
     ]
     big = inp.emp0 >= 100_000
@@ -295,6 +302,11 @@ def region_series(ro) -> dict[str, Any]:
         "ai_content_revenue_bn": pct(ro.ai_content_revenue, 1.0, 2) if ro.ai_content_revenue.size else {},
         "consumer_surplus_proxy_bn": pct(ro.consumer_surplus, 1.0, 2) if ro.consumer_surplus.size else {},
         "traded_services_displacement_share": pct(ro.trade_share, 100.0, 3) if ro.trade_share.size else {},
+        # ---- Phase 8: policy layer (spec §6.5 minimal, §A.16) ----
+        "transfers_bn": pct(ro.transfers_bn, 1.0, 2) if ro.transfers_bn.size else {},
+        "policy_cost_bn": pct(ro.policy_cost_bn, 1.0, 2) if ro.policy_cost_bn.size else {},
+        "ai_tax_revenue_bn": pct(ro.ai_tax_revenue_bn, 1.0, 2) if ro.ai_tax_revenue_bn.size else {},
+        "fiscal_balance_bn": pct(ro.fiscal_balance_bn, 1.0, 2) if ro.fiscal_balance_bn.size else {},
     }
 
 
@@ -374,6 +386,45 @@ def applications_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[st
     return out
 
 
+def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, Any]]:
+    """Forecaster scoreboard: each named claim against the model's central value and 10–90 band for the same quantity (spec v0.3 §A.16)."""
+    if apps is None or not getattr(apps, "forecasts", None):
+        return []
+    q = o.quarters
+    out = []
+    for f in apps.forecasts:
+        rid = f.get("region") or "US"; ro = o.regions.get(rid) or o.regions["US"]
+        yq = f"{int(f['year'])}Q4"
+        if yq not in q:
+            out.append({**f, "model_central": None, "model_p10": None, "model_p90": None, "verdict": "outside horizon"}); continue
+        t = q.index(yq); m = f["metric"]; arr = None; note = ""
+        if m == "gdp_pct":
+            arr = 100 * ro.gdp_pct[:, t]
+        elif m == "tfp_pct":
+            arr = 100 * ro.tfp_pct[:, t]
+        elif m == "embodied_displacement_share":
+            arr = 100 * ro.emb_share[:, t] if ro.emb_share.size else None
+        elif m == "autonomous_share_of_ride_hail":
+            arr = 100 * ro.coverage["driving"][:, t] if "driving" in ro.coverage else None; note = "model quantity: robotaxi deployment coverage of profitable ride-hail hours"
+        elif m == "ride_hail_driver_displacement":
+            idx = [i for i, c in enumerate(inp.occ_codes) if c in ("53-3054", "53-3053")]
+            arr = 100 * (ro.D_emb[0][idx, t] * ro.N0[idx, t]).sum() / max(ro.N0[idx, t].sum(), 1.0) * np.ones(1) if ro.D_emb.size and idx else None; note = "central draw only"
+        elif m == "exposed_share":
+            arr = 100 * (o.automatable[:, :] * ro.N0[None, :, 0]).sum(axis=1) / max(ro.N0[:, 0].sum(), 1.0); note = "model quantity: ever-automatable task-hour share of employment (software + embodied)"
+        elif m == "young_exposed_employment_pct":
+            top = np.argsort(-inp.occ_exposure_beta)[: max(1, inp.n_occ // 10)]
+            la = ro.lost_by_age[:, 0, t]; base = float(ro.N0_age[0]); arr = -100 * la / max(base, 1.0) * (ro.N0[top, 0].sum() / ro.N0[:, 0].sum()) ** 0 if la.size else None
+            note = "model quantity: 16–24 employment effect (all occupations); the model does not split young workers by occupation exposure"
+        if arr is None:
+            out.append({**f, "model_central": None, "model_p10": None, "model_p90": None, "verdict": "not comparable", "note": (f.get("note", "") + "; " + note).strip("; ")}); continue
+        arr = np.asarray(arr, dtype=float); central = float(arr[0]); lo = float(np.percentile(arr[1:], 10)) if arr.size > 1 else central; hi = float(np.percentile(arr[1:], 90)) if arr.size > 1 else central
+        claimed = float(f["claimed"])
+        verdict = "within band" if lo - 1e-9 <= claimed <= hi + 1e-9 else ("model lower" if claimed > hi else "model higher")
+        out.append({**f, "quarter": yq, "model_central": round(central, 2), "model_p10": round(lo, 2), "model_p90": round(hi, 2), "verdict": verdict,
+                    "note": (f.get("note", "") + ("; " + note if note else "")).strip("; ")})
+    return out
+
+
 def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shash: str, channels: dict[str, Any] | None,
                      torn: dict[str, Any] | None, diff: list[dict[str, Any]] | None, draws: int, ensemble: str,
                      cohort_flag: str, regional: Any = None, apps: Any = None) -> dict[str, Any]:
@@ -389,7 +440,8 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups"), "validity": validity(o),
             "headline_definition": "FTE jobs including self-employed and platform workers (spec v0.3 §A.5.1); payroll-only employment is not separately tracked",
             "channels_task_hours": o.trace.get("channels_task_hours"), "self_employed_fte": o.trace.get("self_employed_fte"),
-            "embodied_on": o.trace.get("embodied_on"), "content_categories": o.trace.get("content_categories"), "export_serving_fte": o.trace.get("export_serving_fte")}
+            "embodied_on": o.trace.get("embodied_on"), "content_categories": o.trace.get("content_categories"), "export_serving_fte": o.trace.get("export_serving_fte"),
+            "policy_on": o.trace.get("policy_on"), "policy": o.trace.get("policy")}
     series = {x: region_series(o.regions[x]) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})
@@ -448,5 +500,5 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
     return {"meta": meta, "series": series, "occupations": occs, "states": states, "regions": regions_meta, "world": world, "supply": supply,
             "channels": channels or {},
             "structural": structural(o, q) if cells else {}, "confidence": conf, "tornado": torn or {},
-            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps),
+            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps), "forecasts": forecasts_section(inp, o, apps),
             "explain": {"notes": explain_notes(inp, o, conf), "trace": trace(o, q), "diff": annotate_diff(diff or [])}}

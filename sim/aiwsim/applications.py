@@ -29,6 +29,8 @@ class EmbodimentClass:
 class Application:
     app_id: str; name: str; family: str; classes: list[str]; platform: bool; occ_codes: list[str]; regions_first: list[str]
     anchor: str = ""; constraints: str = ""; provisional_profitable: str = ""; provisional_deployed50: str = ""
+    eta_app: float | None = None      # own-price elasticity of the application's end product (spec §A.3.5; Seba-style induced demand)
+    whole_job: bool = False           # the machine replaces the role, not only its core task (driving roles; spec §A.16)
 
 
 @dataclass
@@ -50,6 +52,7 @@ class AppInputs:
     self_fte: dict[str, np.ndarray]                                      # region -> [n_occ] self-employed FTE
     platform_share: dict[str, np.ndarray]                                # region -> [n_occ] share of that FTE that is platform-mediated
     categories: list[ContentCategory] = field(default_factory=list)      # spec §A.4
+    forecasts: list[dict] = field(default_factory=list)                   # named forecasts (scoreboard)
     trade: list[ServicesTrade] = field(default_factory=list)             # spec §A.5.3
     data_flags: dict[str, str] = field(default_factory=dict)
 
@@ -113,7 +116,8 @@ def load_applications(root: Path, inp: Inputs, region_ids: list[str] | None = No
                                 platform=bool(int(r["platform"] or 0)), occ_codes=[c for c in str(r["occ_codes"]).split(";") if c],
                                 regions_first=[c for c in str(r["regions_first"]).split(";") if c], anchor=str(r.get("anchor", "")),
                                 constraints=str(r.get("constraints", "")), provisional_profitable=str(r.get("provisional_profitable", "")),
-                                provisional_deployed50=str(r.get("provisional_deployed50", ""))))
+                                provisional_deployed50=str(r.get("provisional_deployed50", "")),
+                                eta_app=(None if r.get("eta_app") in (None, "") else float(r["eta_app"])), whole_job=bool(int(r.get("whole_job") or 0))))
     approval: dict[tuple[str, str], tuple[int, int, float, float]] = {}
     for r in pl.read_csv(d / "approval_paths.csv", schema_overrides={"cls": pl.Utf8, "region_id": pl.Utf8}).iter_rows(named=True):
         approval[(r["cls"], r["region_id"])] = (int(r["start_year"]), int(r["full_year"]), float(r["j0"]), float(r["j_full"]))
@@ -144,5 +148,9 @@ def load_applications(root: Path, inp: Inputs, region_ids: list[str] | None = No
             imp = {kv.split(":")[0]: float(kv.split(":")[1]) for kv in str(r["importers"]).split(";") if ":" in kv}
             trade.append(ServicesTrade(exporter=r["exporter"], category=r["category"], export_bn=float(r["export_bn"]), fte_per_musd=float(r["fte_per_musd"]),
                                        occ_idx=idx, importers=imp, anchor=str(r.get("anchor", ""))))
+    forecasts: list[dict] = []
+    ff = d / "forecasts.csv"
+    if ff.exists():
+        forecasts = pl.read_csv(ff, schema_overrides={"region": pl.Utf8, "metric": pl.Utf8, "unit": pl.Utf8}).fill_null("").to_dicts()
     flags = {k: v for k, v in inp.data_flags.items() if k.startswith("applications/")}
-    return AppInputs(classes=classes, apps=apps, approval=approval, self_fte=self_fte, platform_share=plat, categories=cats, trade=trade, data_flags=flags)
+    return AppInputs(classes=classes, apps=apps, approval=approval, self_fte=self_fte, platform_share=plat, categories=cats, trade=trade, forecasts=forecasts, data_flags=flags)

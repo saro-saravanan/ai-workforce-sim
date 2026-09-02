@@ -2,7 +2,7 @@
 
 An interactive, multi-region simulation of how AI models reshape the workforce and, through it, the economy, 2024–2040. The U.S., the EU, and Asia are first-class regions. Every parameter has a source, a central value, and a range; every output is a band relative to a world in which frontier AI froze in 2023, never a line.
 
-**Status:** all five build phases complete; `main` carries the shipped model (specification v0.2). The **v0.3 amendment** ([docs/model-spec-v0.3-applications.md](docs/model-spec-v0.3-applications.md)) adds embodied automation, output substitution, and traded-services channels; Phase 6 on branch `spec/model-v0.3` implements the embodied channels (robotaxis, autonomous trucking, warehouse and manufacturing robots, and a self-employed and platform workforce stock), see [docs/findings-phase6.md](docs/findings-phase6.md). Output substitution and traded services follow in Phase 7. Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/` once Pages is enabled for the repository (source: GitHub Actions); the workflow in `.github/workflows/pages.yml` builds it on every push.
+**Status:** eight build phases complete; `main` carries the shipped model (specification v0.2 plus the **v0.3 amendment**, [docs/model-spec-v0.3-applications.md](docs/model-spec-v0.3-applications.md), which adds embodied automation, output substitution and traded-services channels, policy wiring, and a Seba/RethinkX preset). Phase 8 adds the **Story** view: one reconciled set of numbers, seven findings in plain language, named futures, policy runs, a personal outlook by occupation and age, an executive brief with charts, and a scoreboard that tests named forecasts (Seba, Acemoglu, Goldman, IMF) against the model on every run; see [docs/findings-phase8.md](docs/findings-phase8.md). Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/`; the workflow in `.github/workflows/pages.yml` builds it on every push to `main`.
 
 ![Economy view with the Ask panel](docs/screenshots/phase4-ask-insights-light.png)
 
@@ -28,7 +28,8 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 - **Uncertainty as a first-class output.** 200 correlated draws re-centred on the scenario; a 2×2×2 structural ensemble over the mechanisms the literature disagrees on; one-at-a-time sensitivity; a confidence classification on every headline.
 - **What-ifs as versioned JSON.** Levers, shocks, overrides, inheritance from a parent, canonical hashes; every run explains what changed, why, and how confident it is; paired comparisons on common draws.
 - **Application layer (v0.3).** Every task group belongs to one channel: software, driving, mobile manipulation, fixed automation, aerial, or none. Embodied classes carry hardware unit cost on a learning curve, a production ramp, approval paths by region, and deployment coverage; ten catalogued applications (robotaxis to humanoids) report their gates. Self-employed and platform workers are in the headline.
-- **Seven views plus About**: drillable world map, labor-flow Sankey, occupation heatmap, cohort view, economy dashboard, AI supply timeline, scenario compare. Light and dark, projector-legible.
+- **Story and outlook (Phase 8).** A landing view that tells the run as seven findings with a chart, a likely range, a sureness label and "what changes it" for each; a jobs ledger and a people ledger kept apart and reconciled; named futures ("gains spent back", "gains pocketed", the Seba/RethinkX preset); policy runs (retraining, wage insurance, a basic income with an AI tax, a 36-hour week) read against the baseline with a fiscal-validity warning; "Your outlook" by occupation and age; an executive brief with inline charts; and a scoreboard of named forecasts with a verdict on every run.
+- **Nine views plus About**: story, your outlook, drillable world map, labor-flow Sankey, occupation heatmap, cohort view, economy dashboard, AI supply timeline, scenario compare. Light and dark, projector-legible.
 - **A chat layer that never computes.** Claude turns a question into a scenario diff, runs only after confirmation, explains from the model's own channel decomposition and trace, and ranks findings from a deterministic candidate list; every number in a reply comes from a tool call into the simulation.
 
 ## Documents
@@ -40,7 +41,7 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 | [docs/contracts.md](docs/contracts.md) | Contracts between packages: input tables, results document, API, CLI, web state, chat, insights, briefs, static export |
 | [docs/data-inventory.md](docs/data-inventory.md) | Every dataset with source, license, coverage, access method, and gaps |
 | [docs/risks.md](docs/risks.md) | Risks and assumptions ranked by how much they could change conclusions, with their status after the build |
-| [docs/findings-phase1.md](docs/findings-phase1.md) … [phase7](docs/findings-phase7.md) | What the model said after each phase, what surprised us, what we do not trust yet |
+| [docs/findings-phase1.md](docs/findings-phase1.md) … [phase8](docs/findings-phase8.md) | What the model said after each phase, what surprised us, what we do not trust yet |
 | [docs/wireframes.md](docs/wireframes.md) | The wireframes the views were built from |
 | [scenarios/](scenarios/) | `schema.json`, `baseline.json`, presets (Acemoglu 2024, Goldman Sachs 2023, IMF 2024), and the example what-if |
 
@@ -48,12 +49,12 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 
 | Metric | Value | Sign confidence |
 |---|---|---|
-| Employment | −2.5% [−6.5, +1.2] | low |
-| GDP | +6.8% [+4.1, +12.6] | high |
-| Real wages | +3.1% [+1.9, +6.5] | high |
-| Wage share | −3.5 pp [−4.8, −2.1] | high |
+| Employment | −5.6% [−10.8, −0.1] (about 9.5 million jobs on a base of 169 million) | medium |
+| GDP | +8.1% [+5.0, +16.4] | high |
+| Real wages | +4.1% [+1.9, +7.6] | high |
+| Wage share | −4.8 pp [−6.4, −3.3] | high |
 
-The employment sign is low confidence because one parameter, the demand multiplier, can flip it, and the mechanism cells disagree. At the central pace the adjustment runs through unfilled vacancies rather than layoffs, so young entrants carry about half of the jobs below baseline. See `docs/findings-phase5.md`.
+Almost none of the shortfall is layoffs: about 10.4 million positions are never offered to new entrants against 0.7 million layoffs, so workers under 25 carry about 42% of it. The employment sign is only medium confidence because the demand multiplier can flip it ("gains spent back": +13%; "gains pocketed": −6%). Robots and vehicles reach 7% of task-hours by 2040 at central assumptions; under the Seba/RethinkX preset robotaxis pass 10% of driver work in 2030 and 75% by 2035, still below Seba's 95% claim because approval paths, the production ramp and the ever-automatable share bind before cost does. See `docs/findings-phase8.md`.
 
 ## Architecture
 
@@ -76,5 +77,6 @@ The build sandbox could reach only GitHub, so occupation tasks, exposure, employ
 5. Polish, public demo, methodology write-up
 6. v0.3: embodied automation (robotaxis, robots), self-employed and platform workers
 7. v0.3: output substitution (AI-made content), traded services, full application catalogue
+8. Story layer: one reconciled set of numbers, seven findings in plain language, named futures (including a Seba/RethinkX preset), policy runs, a personal outlook, an executive brief, and a scoreboard of named forecasts
 
 Each phase ended with a "findings so far" note.

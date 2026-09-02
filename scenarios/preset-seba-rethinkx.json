@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.3",
+  "id": "preset-seba-rethinkx",
+  "name": "Preset: Seba / RethinkX disruption",
+  "description": "Tony Seba's technology-disruption framework as scenario levers: cost curves at electronics-like learning rates, fleets built at the fastest historical ramps, high utilization (transport as a service), approvals accelerated where fleets already operate, embodiment clocks coupled tightly to the software frontier, and an eroding preference for human-made content. Reproduces the shape of his S-curve claims; the forecast scoreboard compares his 2017 and 2020 numbers with the model's.",
+  "parent": "baseline",
+  "levers": {
+    "applications": {
+      "enabled": true,
+      "embodiment": {
+        "driving_doubling_months": 9,
+        "manipulation_doubling_months": 8,
+        "fixed_doubling_months": 12,
+        "aerial_doubling_months": 9,
+        "coupling_to_software": 0.7
+      },
+      "hardware": {
+        "learning_rate": 0.25,
+        "utilization_scale": 1.5,
+        "unit_price_scale": 0.7,
+        "ramp_max_growth_per_year": 1.5
+      },
+      "approval": {
+        "US": "accelerated",
+        "CN": "accelerated",
+        "UK": "accelerated",
+        "SG": "accelerated",
+        "RoA": "accelerated",
+        "EU": "baseline",
+        "JP": "accelerated",
+        "KR": "accelerated",
+        "IN": "baseline",
+        "TW": "accelerated"
+      },
+      "content": {
+        "authenticity": "eroding",
+        "authenticity_level_scale": 0.6,
+        "licensing_regime": "permissive",
+        "price_sensitivity": 3.0
+      },
+      "trade": {
+        "services_exposure_scale": 1.0
+      },
+      "platform_labor": "status_quo"
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  },
+  "preset": true
+}

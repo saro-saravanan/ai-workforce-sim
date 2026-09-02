@@ -55,6 +55,7 @@ LEVER_LABELS: dict[str, tuple[str, str, str, str]] = {
     "levers.applications.content.licensing_regime": ("Content licensing regime", "", "P.128", "AI content price and quality growth (spec v0.3 §A.4)"),
     "levers.applications.content.price_sensitivity": ("Content price sensitivity γ", "", "P.125", "output substitution (spec v0.3 §A.4)"),
     "levers.applications.trade.services_exposure_scale": ("Services-trade exposure (scale)", "×", "P.124", "traded services (spec v0.3 §A.5.3)"),
+    "levers.applications.induced_demand_scale": ("Induced demand from cheaper applications", "×", "", "output demand for robotaxis and drones (spec v0.3 §A.16)"),
     "levers.applications.platform_labor": ("Platform labor classification", "", "P.123", "self-employed margin (spec v0.3 §A.3.6)"),
 }
 POLICY_LABELS = {
@@ -91,7 +92,7 @@ def _walk_schema(node: dict[str, Any], path: str, base: dict[str, Any], out: lis
                     lab = POLICY_LABELS.get(pk, (pk, ""))
                     out.append({"path": f"{p}.US.{pk}", "label": lab[0], "group": "policy", "type": "number", "min": pv.get("minimum", 0),
                                 "max": pv.get("maximum", 1), "step": round((pv.get("maximum", 1) - pv.get("minimum", 0)) / 100, 6),
-                                "default": us.get(pk), "unit": lab[1], "param": "", "mechanism": "transfers and financing (spec §6.5); Phase 3 wiring"})
+                                "default": us.get(pk), "unit": lab[1], "param": "", "mechanism": "transfers, hours and financing (spec v0.3 §A.16)"})
                 elif pv.get("type") == "object" and pk == "financing":
                     for fk, fv in pv.get("properties", {}).items():
                         out.append({"path": f"{p}.US.financing.{fk}", "label": f"Financing: {fk.replace('_', ' ')}", "group": "policy", "type": "enum",

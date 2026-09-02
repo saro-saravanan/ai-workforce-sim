@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.3",
+  "id": "policy-retraining",
+  "name": "Policy: retraining subsidy 50% of wage",
+  "description": "Retraining subsidy at 50% of the wage for enrolled workers, deficit-financed (spec \u00a76.5, minimal wiring \u00a7A.16).",
+  "parent": "baseline",
+  "levers": {
+    "policy": {
+      "US": {
+        "retraining_subsidy_pct_wage": 50,
+        "financing": {
+          "retraining": "deficit",
+          "wage_insurance": "ai_tax",
+          "ubi": "ai_tax",
+          "work_week": "deficit"
+        }
+      }
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

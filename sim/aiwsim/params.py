@@ -236,6 +236,7 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
     q.flags["unit_price_scale"] = float(hw.get("unit_price_scale", 1.0))
     q.flags["approval"] = {k: str(v) for k, v in app.get("approval", {}).items()}
     q.flags["platform_labor"] = app.get("platform_labor", "status_quo")
+    q.flags["induced_demand_scale"] = float(app.get("induced_demand_scale", 1.0))
     content = app.get("content", {})
     q.flags["authenticity"] = content.get("authenticity", "eroding")
     q.flags["authenticity_level_scale"] = float(content.get("authenticity_level_scale", 1.0))

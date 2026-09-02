@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.3",
+  "id": "policy-work-week-36",
+  "name": "Policy: 36-hour standard week",
+  "description": "Standard week shortened to 36 hours; FTE spread over more heads at proportionally lower pay per head (P.72 conversion).",
+  "parent": "baseline",
+  "levers": {
+    "policy": {
+      "US": {
+        "work_week_hours": 36,
+        "financing": {
+          "retraining": "deficit",
+          "wage_insurance": "ai_tax",
+          "ubi": "ai_tax",
+          "work_week": "deficit"
+        }
+      }
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

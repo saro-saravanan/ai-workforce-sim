@@ -168,3 +168,37 @@ def compare(a: str, b: str, region: str = "US") -> dict[str, Any]:
             "diff": annotate_diff(sdiff(sa, sb)) if sa and sb else [], "delta": delta,
             "confidence": {"a": da.get("confidence", {}), "b": db.get("confidence", {})},
             "trace": {"a": da.get("explain", {}).get("trace", {}), "b": db.get("explain", {}).get("trace", {})}}
+
+
+# ---------------------------------------------------------------- Phase 8: companion runs for the story layer
+POLICY_SCENARIOS = ["policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36"]
+FUTURE_SCENARIOS = ["preset-seba-rethinkx"]
+COMPANION_DRAWS = 64
+
+
+def companion_docs(ids: list[str], draws: int | None = COMPANION_DRAWS, regions: list[str] | None = None) -> dict[str, dict[str, Any]]:
+    """Run (or load from cache) the named scenarios at a modest draw count. Missing scenario files are skipped, not errors."""
+    out: dict[str, dict[str, Any]] = {}
+    for sid in ids:
+        try:
+            raw = find_scenario(sid)
+        except NotFound:
+            continue
+        _, d = run_or_load(raw, draws=draws, regions=regions)
+        out[sid] = d
+    return out
+
+
+def story_companions(doc: dict[str, Any], region: str = "US", draws: int | None = COMPANION_DRAWS
+                     ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]], dict[str, Any]]:
+    """Policy runs, named-future runs, and the baseline the policy runs are read against, for a results document.
+
+    Policy scenarios modify the baseline, so their effects are always differences from the baseline run (at the companion
+    draw count when the document itself is not the baseline). The Seba/RethinkX preset is shown as a named future unless
+    the document is that preset.
+    """
+    sid = doc["meta"].get("scenario_id")
+    pol = companion_docs(POLICY_SCENARIOS, draws=draws)
+    base = doc if sid == "baseline" else companion_docs(["baseline"], draws=draws).get("baseline", doc)
+    fut = companion_docs([s for s in FUTURE_SCENARIOS if s != sid], draws=draws)
+    return pol, fut, base

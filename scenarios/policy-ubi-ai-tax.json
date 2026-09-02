@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.3",
+  "id": "policy-ubi-ai-tax",
+  "name": "Policy: $500/month basic income, AI-tax financed",
+  "description": "A $500 monthly payment to every adult, with a 30% tax on AI spend toward its cost; the shortfall falls on the deficit.",
+  "parent": "baseline",
+  "levers": {
+    "policy": {
+      "US": {
+        "ubi_monthly_usd": 500,
+        "ai_tax_pct_of_ai_spend": 30,
+        "financing": {
+          "retraining": "deficit",
+          "wage_insurance": "ai_tax",
+          "ubi": "ai_tax",
+          "work_week": "deficit"
+        }
+      }
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

@@ -42,7 +42,7 @@ TABLES = [
     "regions/region_members", "regions/regions", "regions/occ_region", "regions/trade_weights",
     "regions/actors", "regions/actor_releases", "regions/value_chain", "geo/world",
     "applications/embodiment_classes", "applications/applications", "applications/approval_paths", "applications/self_employed",
-    "applications/content_categories", "applications/services_trade",
+    "applications/content_categories", "applications/services_trade", "applications/forecasts",
 ]
 NE_WORLD_50M = "ne_50m_admin_0_countries.geojson"
 
@@ -479,6 +479,12 @@ def build_applications(root: Path, occ: pl.DataFrame, log) -> dict[str, str]:
                      license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
                      transformations=["one row per exporter × category: 2024 exports $bn, FTE per $m, export-serving occupations, importer weights"],
                      notes="Replace with UNCTAD/WTO BPM6 services trade, NASSCOM, IBPAP and Eurostat ITS (§A.10).")
+    p = _write_csv(ap.forecasts_frame(), out / "forecasts.csv")
+    statuses["applications/forecasts"] = "FIXTURE (transcribed, V?)"
+    write_provenance(root, "applications/forecasts", p, source="named published forecasts (RethinkX/Seba, Acemoglu, Goldman Sachs, IMF, Brynjolfsson et al.) transcribed from recollection",
+                     source_url="https://www.rethinkx.com/", license="cite", status="FIXTURE (transcribed from recollection, V?)",
+                     transformations=["one row per claim: source, region, year, model metric id, claimed value, unit, note"],
+                     notes="Every claimed value is V? until the source document is fetched and quoted; the scoreboard compares each with the model's central value and band.")
     regions_dir = root / PROCESSED / "regions"
     occ_region = pl.read_csv(regions_dir / "occ_region.csv", schema_overrides={"occ_code": pl.Utf8, "region_id": pl.Utf8}) if (regions_dir / "occ_region.csv").exists() else None
     se, notes = ap.self_employed_frame(occ, None, occ_region)

@@ -60,35 +60,35 @@ APPROVAL_PATHS: dict[str, dict[str, tuple[int, int, float, float]]] = {
 
 # ---- applications catalogue (spec §A.8; Phase 6 = embodied rows; software/output/traded rows are labels until Phase 7) ----
 APPLICATIONS: list[dict] = [
-    {"app_id": "robotaxi", "name": "Robotaxis", "family": "embodied", "cls": "driving", "platform": 1,
+    {"app_id": "robotaxi", "whole_job": 1, "eta_app": 1.5, "name": "Robotaxis", "family": "embodied", "cls": "driving", "platform": 1,
      "occ_codes": "53-3054;53-3053", "sectors": "", "regions_first": "US;CN;SG;RoA",
      "anchor": "paid autonomous rides per week and fleet size (public company posts); state and city permits",
      "constraints": "approval by city and state; production ramp; utilization",
      "provisional_profitable": "2026-28", "provisional_deployed50": "2031-35"},
-    {"app_id": "autonomous_trucking", "name": "Autonomous trucking", "family": "embodied", "cls": "driving", "platform": 0,
+    {"app_id": "autonomous_trucking", "whole_job": 1, "eta_app": 0.8, "name": "Autonomous trucking", "family": "embodied", "cls": "driving", "platform": 0,
      "occ_codes": "53-3032", "sectors": "", "regions_first": "US;CN", "anchor": "driverless corridor launches; permits",
      "constraints": "approval by state and corridor; depot network", "provisional_profitable": "2027-29", "provisional_deployed50": "2033-37"},
-    {"app_id": "last_mile_delivery", "name": "Last-mile delivery", "family": "embodied", "cls": "driving;aerial", "platform": 1,
+    {"app_id": "last_mile_delivery", "whole_job": 1, "eta_app": 1.2, "name": "Last-mile delivery", "family": "embodied", "cls": "driving;aerial", "platform": 1,
      "occ_codes": "53-3033;43-5021;53-3031", "sectors": "", "regions_first": "US;CN;KR;SG", "anchor": "permitted operations counts",
      "constraints": "sidewalk and BVLOS approval; density", "provisional_profitable": "2027-30", "provisional_deployed50": "2033-38"},
-    {"app_id": "warehouse_robotics", "name": "Warehouse robotics", "family": "embodied", "cls": "manip", "platform": 0,
+    {"app_id": "warehouse_robotics", "eta_app": 0.5, "name": "Warehouse robotics", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "53-7062;53-7064;53-7065;53-7051", "sectors": "", "regions_first": "US;CN;JP;KR;EU",
      "anchor": "robot installations (IFR aggregates); retailer disclosures", "constraints": "ramp; integration; site conversion",
      "provisional_profitable": "2025-27", "provisional_deployed50": "2030-34"},
-    {"app_id": "manufacturing_flexible", "name": "Flexible manufacturing robots", "family": "embodied", "cls": "manip", "platform": 0,
+    {"app_id": "manufacturing_flexible", "eta_app": 0.6, "name": "Flexible manufacturing robots", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "51-2098;51-2092;51-2028;51-9061;51-9111;51-4121", "sectors": "", "regions_first": "CN;KR;JP;US;EU",
      "anchor": "IFR installations by application; humanoid pilot counts", "constraints": "learning rate; integration",
      "provisional_profitable": "2028-31", "provisional_deployed50": "2034-40"},
-    {"app_id": "humanoid_general", "name": "General-purpose humanoids", "family": "embodied", "cls": "manip", "platform": 0,
+    {"app_id": "humanoid_general", "eta_app": 0.8, "name": "General-purpose humanoids", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "*manip", "sectors": "", "regions_first": "CN;US", "anchor": "unit price disclosures; pilot deployments",
      "constraints": "unit cost; dexterity; safety certification", "provisional_profitable": "2030-34", "provisional_deployed50": "beyond 2040"},
-    {"app_id": "food_service_automation", "name": "Food-service automation", "family": "embodied", "cls": "manip;fixed", "platform": 0,
+    {"app_id": "food_service_automation", "eta_app": 0.8, "name": "Food-service automation", "family": "embodied", "cls": "manip;fixed", "platform": 0,
      "occ_codes": "35-2014;35-2011;35-2021;35-3023;35-2012", "sectors": "", "regions_first": "US;JP;KR", "anchor": "vendor deployments",
      "constraints": "unit cost vs low wages; site conversion", "provisional_profitable": "2028-32", "provisional_deployed50": "2035-40"},
-    {"app_id": "agricultural_robotics", "name": "Agricultural robotics", "family": "embodied", "cls": "manip", "platform": 0,
+    {"app_id": "agricultural_robotics", "eta_app": 0.5, "name": "Agricultural robotics", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "45-2092;45-2091;45-2093", "sectors": "", "regions_first": "US;EU;JP", "anchor": "deployment counts by crop",
      "constraints": "seasonality; crop specificity", "provisional_profitable": "2027-31", "provisional_deployed50": "2035-40"},
-    {"app_id": "construction_robotics", "name": "Construction robotics", "family": "embodied", "cls": "manip", "platform": 0,
+    {"app_id": "construction_robotics", "eta_app": 0.7, "name": "Construction robotics", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "47-2061;47-2021;47-2081;47-2171;47-2031", "sectors": "", "regions_first": "JP;US", "anchor": "pilot counts",
      "constraints": "site variability; codes", "provisional_profitable": "2030-35", "provisional_deployed50": "beyond 2040"},
     # ---- output substitution (Phase 7, spec §A.4) ----
@@ -123,7 +123,7 @@ APPLICATIONS: list[dict] = [
      "provisional_profitable": "2026-29", "provisional_deployed50": "2032-38"},
     {"app_id": "ai_legal_research", "name": "AI legal research", "family": "software", "cls": "", "platform": 0, "occ_codes": "23-2011;23-1011;23-2093", "sectors": "",
      "regions_first": "US;UK", "anchor": "firm adoption surveys", "constraints": "professional rules", "provisional_profitable": "2025-27", "provisional_deployed50": "2029-33"},
-    {"app_id": "retail_checkout_shelf", "name": "Retail checkout and shelf automation", "family": "embodied", "cls": "fixed;manip", "platform": 0,
+    {"app_id": "retail_checkout_shelf", "eta_app": 0.5, "name": "Retail checkout and shelf automation", "family": "embodied", "cls": "fixed;manip", "platform": 0,
      "occ_codes": "41-2011;53-7065;41-2031", "sectors": "", "regions_first": "US;UK;EU;JP", "anchor": "retailer disclosures",
      "constraints": "shrink and customer acceptance", "provisional_profitable": "2025-27", "provisional_deployed50": "2030-34"},
 ]
@@ -160,6 +160,34 @@ SERVICES_TRADE: list[dict] = [
     {"exporter": "EU", "category": "bpo", "export_bn": 15.0, "fte_per_musd": 12.0, "occ_codes": "43-4051;43-9061;43-3021",
      "importers": "US:0.4;UK:0.4;CN:0.05;JP:0.05;RoA:0.1", "anchor": "Eurostat ITS other business services (Poland, Romania, Portugal)"},
 ]
+
+
+# ---- named forecasts (forecaster scoreboard; spec v0.3 §A.16); every value transcribed from recollection, V? until the source is fetched ----
+# metric ids map to model quantities in aiwsim.results2.forecasts_section
+FORECASTS: list[dict] = [
+    {"source": "RethinkX / Tony Seba, Rethinking Transportation 2020–2030 (2017)", "short": "Seba 2017", "region": "US", "year": 2030,
+     "metric": "autonomous_share_of_ride_hail", "proxy": 1, "preset_id": "preset-seba-rethinkx", "claimed": 95.0, "unit": "% of passenger miles served by autonomous fleets",
+     "note": "the report's headline: 95% of U.S. passenger miles by on-demand autonomous EV fleets within ten years of approval; the model's nearest quantity is robotaxi deployment coverage of profitable ride-hail hours"},
+    {"source": "RethinkX / Tony Seba, Rethinking Transportation (2017)", "short": "Seba 2017", "region": "US", "year": 2030,
+     "metric": "ride_hail_driver_displacement", "proxy": 0, "preset_id": "preset-seba-rethinkx", "claimed": 90.0, "unit": "% of ride-hail driver task-hours",
+     "note": "implied by the passenger-mile claim; compared with the model's robotaxi displacement share"},
+    {"source": "RethinkX, Rethinking Humanity (2020)", "short": "RethinkX 2020", "region": "US", "year": 2035,
+     "metric": "embodied_displacement_share", "proxy": 1, "preset_id": "preset-seba-rethinkx", "claimed": 20.0, "unit": "% of task-hours",
+     "note": "the report argues that labour, transport, food, energy and materials are disrupted in the 2020s–2030s; 20% of physical task-hours by 2035 is our reading of its labour chapter (V?, low confidence transcription)"},
+    {"source": "Acemoglu (2024), 'The Simple Macroeconomics of AI'", "short": "Acemoglu 2024", "region": "US", "year": 2034,
+     "metric": "tfp_pct", "proxy": 0, "preset_id": "preset-acemoglu-2024", "claimed": 0.66, "unit": "% TFP over ten years (upper bound)", "note": "replication preset exists"},
+    {"source": "Goldman Sachs (2023), 'The Potentially Large Effects of AI on Economic Growth'", "short": "Goldman 2023", "region": "US", "year": 2033,
+     "metric": "gdp_pct", "proxy": 0, "preset_id": "preset-goldman-2023", "claimed": 7.0, "unit": "% GDP over ten years", "note": "replication preset exists"},
+    {"source": "IMF (2024), 'Gen-AI: Artificial Intelligence and the Future of Work'", "short": "IMF 2024", "region": "US", "year": 2034,
+     "metric": "exposed_share", "proxy": 1, "claimed": 60.0, "unit": "% of jobs exposed (advanced economies)", "note": "compared with the model's ever-automatable mass share of employment"},
+    {"source": "Brynjolfsson, Chandar, Chen (2025), 'Canaries in the Coal Mine'", "short": "Canaries 2025", "region": "US", "year": 2025,
+     "metric": "young_exposed_employment_pct", "proxy": 1, "claimed": -13.0, "unit": "% employment of 22–25-year-olds in the most exposed occupations vs late 2022",
+     "note": "compared with the model's 16–24 employment effect in the most exposed occupations at 2025Q4"},
+]
+
+
+def forecasts_frame() -> pl.DataFrame:
+    return pl.DataFrame([{**f, "source_tag": "transcribed from recollection (V?); fetch and cite before use"} for f in FORECASTS])
 
 
 # ---- self-employed and platform workforce (spec §A.5.1; FIXTURE until the CPS / Nonemployer ingest runs) ------------------

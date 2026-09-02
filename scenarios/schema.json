@@ -564,6 +564,12 @@
                 }
               }
             },
+            "induced_demand_scale": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2,
+              "description": "Scales each application's own induced-demand elasticity (eta_app, the Seba 'transport as a service' effect) beyond the sector elasticity; 0 = none, 1 = as catalogued."
+            },
             "platform_labor": {
               "enum": [
                 "status_quo",

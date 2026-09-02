@@ -1,4 +1,4 @@
-"""FastAPI service over aiwsim (docs/contracts.md §3, §9, §13, §15–16)."""
+"""FastAPI service over aiwsim (docs/contracts.md §3, §9, §13, §15–16, §26–28)."""
 from __future__ import annotations
 
 import json
@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse
 
 from . import chat as chat_mod
 from . import service
+from . import story as story_mod
 from .brief import build_brief_html, build_brief_md
 from .insights import top_insights
 from .levers import lever_definitions
@@ -119,6 +120,14 @@ def run(body: dict[str, Any]):
     return {"scenario_hash": shash, "meta": doc["meta"]}
 
 
+def _companions(doc: dict[str, Any], region: str):
+    """Policy runs, the Seba/RethinkX future and the baseline, for the story layer (run or loaded from cache)."""
+    try:
+        return service.story_companions(doc, region)
+    except service.Invalid as e:
+        raise HTTPException(422, f"companion scenario invalid: {e}") from e
+
+
 def _load(shash: str) -> dict[str, Any]:
     try:
         return service.load_results(shash)
@@ -183,12 +192,42 @@ def brief(shash: str, format: str = "md", region: str = "US", compare: str | Non
             cmp = service.compare(compare, shash)
         except service.NotFound as e:
             raise HTTPException(404, str(e)) from e
+    if format in ("exec", "exec-html", "exec-json"):
+        st = story_mod.story(doc, region, *_companions(doc, region))
+        if format == "exec-html":
+            return HTMLResponse(story_mod.executive_brief_html(st))
+        if format == "exec-json":
+            return {"scenario_hash": shash, "markdown": story_mod.executive_brief_md(st), "html": story_mod.executive_brief_html(st)}
+        return PlainTextResponse(story_mod.executive_brief_md(st), media_type="text/markdown; charset=utf-8")
     md = build_brief_md(doc, service.scenario_of(doc), region, compare=cmp)
     if format == "html":
         return HTMLResponse(build_brief_html(md, f"{doc['meta'].get('scenario_name') or shash} — brief"))
     if format == "json":
         return {"scenario_hash": shash, "markdown": md}
     return PlainTextResponse(md, media_type="text/markdown; charset=utf-8")
+
+
+# ---------------------------------------------------------------- Phase 8: story, outlook
+
+@app.get("/api/story/{shash}")
+def story(shash: str, region: str = "US", companions: bool = True):
+    """Seven beats, reconciled numbers, named futures, policy runs and the forecast scoreboard for one run (contracts §26).
+
+    With `companions` (default), the policy scenarios and the Seba/RethinkX preset are run (or loaded from cache) at the
+    companion draw count so the futures and policy sections can be filled; pass `companions=false` for the beats alone.
+    """
+    doc = _load(shash)
+    pol, fut, base = _companions(doc, region) if companions else ({}, {}, None)
+    return story_mod.story(doc, region, pol, fut, base)
+
+
+@app.get("/api/outlook/{shash}")
+def outlook(shash: str, occ: str | None = None, age: str | None = None, region: str = "US"):
+    """Personal lens: one occupation and/or one age band read from the run (contracts §27)."""
+    doc = _load(shash)
+    if occ and not any(o["occ_code"] == occ for o in doc.get("occupations", [])):
+        raise HTTPException(404, f"unknown occupation {occ}")
+    return story_mod.outlook(doc, occ, age, region)
 
 
 @app.post("/api/brief/{shash}")

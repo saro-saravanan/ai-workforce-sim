@@ -176,3 +176,5 @@ Provenance rule for ingestion: every dataset pulled by `data/ingest/*` writes a 
 - Two independent estimates of AI-generated share for music and for images.
 - BPM6 services export matrix for IN, RoA, EU.
 - A survey basis for the authenticity premium.
+- RethinkX, *Rethinking Transportation 2020–2030* (2017) and *Rethinking Humanity* (2020): fetch, cite and replace the recollected numbers in `forecasts.csv` (95% of passenger miles autonomous within ten years of approval; driver displacement; the 2030 disruption share).
+- Waymo and Apollo Go paid-ride series to anchor the driving embodiment clock (the Seba preset's clocks are levers, not fitted).

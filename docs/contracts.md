@@ -336,3 +336,47 @@ The catalogue gains `output` rows (`cls` = category id, `occ_codes` = `*cat`), `
 ## 25. Levers and shocks
 
 `levers.applications.content.{authenticity: persistent|eroding, authenticity_level_scale: 0.2–3, licensing_regime: permissive|licensed|restrictive, price_sensitivity: 1–4}`, `levers.applications.trade.services_exposure_scale: 0–2`; shock `content_licensing_ruling` {at, regime} (recorded; applied in a later phase).
+
+# Phase 8 additions (contracts v0.9): policy wiring, the Seba/RethinkX preset, the forecast scoreboard, the story layer
+
+## 26. Story document (`GET /api/story/{hash}?region=US&companions=true`)
+
+One reconciled reading of a run in plain language. Every number comes from the results document; nothing is computed by a model call.
+
+```
+{scenario_hash, scenario_id, scenario_name, region, horizon: [q0, qN],
+ numbers: {jobs_base, jobs_gap, jobs_gap_low, jobs_gap_high, employment_pct: {p10,p50,p90}, displaced_cum, reemployed, unemployed_extra, exited,
+           unfilled, laid_off, hours_cut_self, jobs_removed_by_channel: {channel: jobs}, jobs_added_by_channel: {channel: jobs},
+           unemployment_peak: {quarter, extra}, gdp_pct, real_wage_pct: {p10,p50,p90}, price_index_pct, wage_share_pp, reconciliation},
+ beats: [{id, title, sentence, range, sureness: {level, label, dots}, what_changes_it, chart, occupations?}],
+ futures: [{name, scenario_id?, employment_pct, gdp_pct, jobs, source, description}],
+ policies: [{scenario_id, name, description, jobs_delta, employment_delta_pp, unemployed_delta, real_wage_delta_pp, cost_bn_per_year, ai_tax_revenue_bn, fiscal_balance_bn, validity_note, sentence}],
+ policies_against, caveats: [str], forecasts: [scoreboard rows, §28], glossary: {term: meaning}}
+```
+
+- `jobs_base` is the region's 2024 employment plus the self-employed full-time equivalents (the headline definition, §20); `jobs_gap = −employment_pct.p50 / 100 × jobs_base`, in heads. Medians are used throughout; the personal outlook and the policy deltas use the central run.
+- `beats` are, in order: `jobs`, `hiring`, `young`, `pay`, `waves`, `money`, `futures`. `sureness.level` is the confidence level of the beat's metric (`high` → "we would bet on it", `medium` → "leaning this way", `low` → "a coin flip"; `dots` 3/2/1). `chart.type` ∈ {`fan` (series with p10/p50/p90 over `quarters`), `bars` (`items: [[label, value]]`, optional `reference` and `unit`), `timeline` (`items: [{app, family, first_year, share_2030, share_2040, target_jobs}]`, `start`, `end`), `regions` (`items: [[region, employment_pct, gdp_pct, rents_bn]]`), `futures`}.
+- `futures`: "Gains spent back" and "Gains pocketed" are the tornado extremes of the demand multiplier (P.87); every further entry is a scenario run passed as a companion (the static export and the API pass the Seba/RethinkX preset).
+- `policies`: differences of each policy scenario's central run from the baseline central run (`policies_against`), so a policy is always read against the world it modifies, whichever run the story is for. Empty when no companion runs are available. `validity_note` carries the fiscal warning (§28) when the run is outside the model's range.
+- `companions=false` returns the beats without running or loading the policy scenarios and the Seba preset. With companions (the default) the service runs them at 64 draws on first use and caches them by hash.
+
+`GET /api/brief/{hash}?format=exec|exec-html|exec-json` renders the story as the executive brief (markdown, or a self-contained HTML page with inline SVG charts). The executive brief carries no parameter codes, percentiles or section references; the technical brief (`format=md|html`) keeps them.
+
+## 27. Personal outlook (`GET /api/outlook/{hash}?occ=&age=&region=US`)
+
+```
+{region, note, beats: [jobs, hiring, pay beats of §26], sureness_legend,
+ occupation?: {occ_code, title, employment_2024, employment_pct_2030, employment_pct_2040, range_2040: [p10, p90], task_hours_automated_2040: {software, machines},
+               real_wage_pct_2040, rank_percentile, verdict, how, growing_nearby: [[title, pct]], sentence},
+ age?: {band, share_of_jobs_lost, employment_pct_2040, sentence}}
+```
+
+`verdict` is by rank among all occupations by 2040 employment effect (bottom 10% "among the hardest hit", 10–30% "harder hit than most", 30–70% "about average", 70–90% "less affected than most", top 10% "among the most protected"); `how` says whether the automated task-hours are mostly software, mostly machines and vehicles, or a mix. Occupation and age detail are U.S. figures; `note` says so for other regions. Static mode computes the outlook client-side from the run document with the same rules.
+
+## 28. Policy, Seba/RethinkX preset, forecast scoreboard, levers
+
+- **Policy wiring** (`levers.policy.<region>`, spec v0.3 §A.16): `retraining_subsidy_pct_wage` raises retraining entry and success; `wage_insurance_replacement` × `wage_insurance_years` pays displaced re-employed workers; `ubi_monthly_usd` is a transfer to every adult; `ai_tax_pct_of_ai_spend` raises AI prices by the tax and yields revenue; `work_week_hours` < 40 converts hours into heads (employment in heads rises by 40/h, pay per head falls in step); `immigration_scale` scales entrants; `financing` rules {deficit, ai_tax, payroll} decide who pays. Results: `series[region].{transfers_bn, policy_cost_bn, ai_tax_revenue_bn, fiscal_balance_bn}`, `meta.policy_on`, `meta.policy`. `meta.validity` gains `fiscal_balance_pct_gdp_2040`, `fiscal_warning` (deficit beyond 3% of GDP) and `note`; the model has no inflation or interest-rate response, so a flagged run's jobs effect is overstated.
+- **Induced demand per application**: `applications.csv` gains `eta_app` (own-price elasticity of the application's output beyond the sector elasticity; Seba's "transport as a service" effect) and `whole_job` (1 when the application replaces whole jobs rather than tasks: driving roles). Lever `levers.applications.induced_demand_scale` (0–2, default 1) scales `eta_app`.
+- **Seba/RethinkX preset** (`scenarios/preset-seba-rethinkx.json`): learning rate 0.25, ramp cap 1.5/yr, utilization ×1.5, unit price ×0.7, fast embodiment clocks coupled 0.7 to software, accelerated approvals where fleets already operate, eroding authenticity. Shown as a named future in the story and openable as a scenario.
+- **Forecast scoreboard** (`forecasts.csv` → results `forecasts[]`): `{source, short, region, year, metric, proxy, preset_id, claimed, unit, note, source_tag, quarter, model_central, model_p10, model_p90, verdict}` with `verdict` ∈ {`within band`, `model lower`, `model higher`} from the run's p10–p90 band at the claim's quarter. `metric` ∈ {gdp_pct, tfp_pct, embodied_displacement_share, autonomous_share_of_ride_hail (robotaxi coverage), ride_hail_driver_displacement, exposed_share, young_exposed_employment_pct}. `proxy = 1` marks a claim compared with the nearest model quantity rather than the same quantity.
+- **Static export** adds the policy scenarios and the Seba preset to the default run list, `story/<id>.json` (§26, policies against the exported baseline, the Seba preset as a future), `briefs/<id>.exec.md|html`, and manifest keys `story`, `exec_briefs`, `policy_scenarios`, `future_scenarios`.

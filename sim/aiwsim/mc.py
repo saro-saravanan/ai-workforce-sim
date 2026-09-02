@@ -180,6 +180,10 @@ class RegionOut:
     consumer_surplus: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] $bn/yr proxy (not welfare)
     D_trade: np.ndarray = field(default_factory=lambda: np.zeros(0))       # [1, n_occ, n_q] traded-services displacement, central (spec §A.5.3)
     trade_share: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] employment-weighted traded-services displacement
+    transfers_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))  # [D, n_q] policy transfers paid, $bn/yr
+    policy_cost_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    ai_tax_revenue_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))
+    fiscal_balance_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))
 
     @property
     def displaced_cum(self) -> np.ndarray:
@@ -229,7 +233,8 @@ class BatchOutput:
                     "unemployed_stock", "retraining_stock", "wage_share_pp", "mu", "q_ratio", "dlnc", "nu_mean", "lost_by_age", "lost_by_edu",
                     "lost_by_dec", "lost_by_mg", "N0_age", "N0_edu", "N0_dec", "displaced_cum", "employment_pct", "real_wage_pct", "nominal_wage_pct",
                     "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "self_fte0", "underemp_self", "cut_cum",
-                    "content_share", "content_q", "ai_content_revenue", "consumer_surplus", "D_trade", "trade_share"):
+                    "content_share", "content_q", "ai_content_revenue", "consumer_surplus", "D_trade", "trade_share",
+                    "transfers_bn", "policy_cost_bn", "ai_tax_revenue_bn", "fiscal_balance_bn"):
             return getattr(self.regions["US"], name)
         raise AttributeError(name)
 
@@ -340,6 +345,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     # ---- embodied channels setup (spec v0.3 §A.3) ----
     apps_enabled = bool(p.flags.get("applications_enabled", True))       # lever applications.enabled (presets switch the v0.3 layer off)
     emb_on = apps is not None and ch.embodied and apps_enabled
+    wj_occ = np.zeros(n_occ, dtype=bool)                                          # occupations whose role a deployed vehicle removes (spec §A.16)
+    if apps is not None and apps_enabled:
+        for ap_ in apps.apps:
+            if ap_.whole_job and ap_.family == "embodied":
+                wj_occ |= apps.occ_mask(ap_, inp)
+
     emb: dict[str, dict[str, Any]] = {}
     C_emb: dict[str, np.ndarray] = {}
     lam_emb = bp.col("P.106", 0.5)
@@ -359,6 +370,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             C_emb[c] = clock
             a_c = bp.vec(a_emb_id[c], ec.a_emb) * (trend_scale if c == "fixed" else 1.0)
             a_k = (a_c[:, None] * (1.0 - tg.presence[None, ik]) ** lam_emb).astype(TDTYPE)                          # [D, nk]
+            if c == "driving" and wj_occ.any():                                                                          # whole-job driving roles (spec §A.16): the
+                a_k = np.where(wj_occ[tg.occ[ik]][None, :], a_c[:, None].astype(TDTYPE), a_k)                          # vehicle carries the passenger without a person present
             theta_k = (ec.theta_lo + (ec.theta_hi - ec.theta_lo) * tg.hash_u[None, ik] + 0.5 * tg.consequence[None, ik]).astype(TDTYPE)
             L_c = float(p.by("P.111", c)) if p.get("P.111") is not None else ec.lifetime_years
             crf = i_rate / (1.0 - (1.0 + i_rate) ** (-L_c))
@@ -415,6 +428,16 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     W_cons = inp.consumption_share / inp.consumption_share.sum()
     compl = inp.emp0 * (1.0 - inp.occ_exposure_beta); compl = compl / compl.sum()
     retr_entry = float(p.get("P.68", 0.06)); retr_success = float(p.get("P.70", 0.55)); retr_dur = int(p.get("P.71", 4))
+    # ---- policy levers (spec §6.5, minimal wiring in v0.3 §A.16; U.S. only, applied to every region's own economy when set) ----
+    pol = p.get("policy") or {}
+    subsidy = float(pol.get("retraining_subsidy_pct_wage", 0) or 0) / 100.0
+    wi_repl = float(pol.get("wage_insurance_replacement", 0) or 0); wi_years = float(pol.get("wage_insurance_years", 0) or 0)
+    ubi_month = float(pol.get("ubi_monthly_usd", 0) or 0); ai_tax = float(pol.get("ai_tax_pct_of_ai_spend", 0) or 0) / 100.0
+    week_hours = float(pol.get("work_week_hours", 40) or 40); immig = float(pol.get("immigration_scale", 1.0) or 1.0)
+    fin = dict(pol.get("financing") or {})
+    retr_entry = retr_entry * (1.0 + 2.0 * subsidy); retr_success = min(0.95, retr_success + 0.1 * subsidy)      # E: subsidy raises entry and completion
+    policy_on = any([subsidy > 0, wi_repl > 0, ubi_month > 0, ai_tax > 0, week_hours < 40, abs(immig - 1.0) > 1e-9])
+    scarring = float(p.get("P.69", 0.15))
     reemp_rate = 0.35; exit_rate = 0.05
     age_sh = cohorts["age"] if cohorts else np.tile(np.array([0.125, 0.44, 0.20, 0.235]), (n_occ, 1))
     edu_sh = cohorts["education"] if cohorts else np.full((n_occ, 4), 0.25)
@@ -481,7 +504,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         e["prod_share_vec"] = np.array([e["prod_share"].get(x, 0.0) for x in order])
     # ---- output substitution setup (spec v0.3 §A.4) ----
     cats = list(apps.categories) if (apps is not None and ch.output_substitution and apps_enabled) else []
-    gamma_s = bp.vec("P.125", 2.0); q0_s = bp.vec("P.126.q0", -2.0); q1_s = bp.vec("P.126.q1", 3.0)
+    gamma_s = bp.vec("P.125", 2.0); q1_s = bp.vec("P.126.q1", 3.0)       # q0 is solved at the 2024 anchor (§A.15)
     alpha_lvl = bp.vec("P.127.level", 1.5); half_life = bp.vec("P.127.half_life_years", 8.0)
     if p.flags.get("authenticity", "eroding") == "persistent":
         half_life = np.full(D, 1e6)
@@ -514,6 +537,24 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         for x, v in w_imp.items():
             imp_w[k_, ridx_[x]] += v / tot_w * n_exp
     exp_share = np.clip(exp_share, 0.0, 0.9)
+    # whole-job substitution (spec §A.16): for driving roles, the deployed vehicle removes the role; displacement of the occupation follows the
+    # profitable-feasible share of its *driving* tasks scaled up by 1/(driving weight), so a fully covered fleet removes the whole job
+    whole_job = np.zeros(n_occ); w_drv = np.zeros(n_occ); wj_diag: dict[str, dict[str, float]] = {}
+    if apps is not None and apps_enabled and "driving" in emb:
+        np.add.at(w_drv, emb["driving"]["occ"], emb["driving"]["w"].astype(np.float64))
+        whole_job[wj_occ] = 1.0
+    wj_scale = np.where((whole_job > 0) & (w_drv > 0.05), 1.0 / np.maximum(w_drv, 0.05), 1.0)   # [n_occ]
+    if "driving" in emb and whole_job.any():                                          # the automatable embodied mass of a whole-job role is the role
+        e_ = emb["driving"]; drv_auto = agg_sub(e_["occ"], e_["w"][None, :] * e_["a"], n_occ)
+        automatable_emb = np.minimum(automatable_emb + drv_auto * (wj_scale - 1.0)[None, :], 1.0)
+    app_eta_extra = None
+    if apps is not None and apps_enabled and any(ap_.eta_app for ap_ in apps.apps):
+        app_eta_extra = np.zeros(n_occ); eta_sec = float(inp.demand_elasticity.mean())
+        for ap_ in apps.apps:                                                   # (do not shadow the task mass array `a`)
+            if ap_.eta_app and ap_.family == "embodied" and ap_.occ_codes != ["*manip"]:
+                m_ = apps.occ_mask(ap_, inp)
+                app_eta_extra[m_] = np.maximum(app_eta_extra[m_], max(ap_.eta_app - eta_sec, 0.0))
+        app_eta_extra = app_eta_extra * float(p.flags.get("induced_demand_scale", 1.0))
     imp_w = np.where(imp_w.sum(axis=1, keepdims=True) > 0, imp_w / np.maximum(imp_w.sum(axis=1, keepdims=True), 1e-9), 0.0)   # [R exporter, R importer]
     Y0 = np.stack([r.gdp_bn * (1.0 + BASELINE_GDP_GROWTH.get(r.region_id, BASELINE_REAL_GROWTH)) ** (np.arange(n_q) / 4.0) for r in reg_list])    # [R, n_q]
     wage_r = np.stack([r.wage_mean for r in reg_list])                                                                          # [R, n_occ]
@@ -591,7 +632,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw",
                                               "emb_share", "adj_jobs", "hw_capex", "underemp")}
     cum["cut"] = np.zeros((D, R)); hours_cut = np.zeros((D, R, n_occ))
-    rec.update({k: np.zeros((D, R, n_q)) for k in ("ai_content_rev", "cs", "trade_share")})
+    rec.update({k: np.zeros((D, R, n_q)) for k in ("ai_content_rev", "cs", "trade_share", "transfers", "policy_cost", "tax_rev", "fiscal")})
+    wi_stock = np.zeros((D, R))                                                          # workers receiving wage insurance
     cat_share_rec = np.zeros((D, R, len(cats), n_q)); cat_q_rec = np.zeros((D, R, len(cats), n_q))
     DT = np.zeros((R, n_occ, n_q), dtype=np.float32)
     rec_cum = {k: np.zeros((D, R, n_q)) for k in cum}
@@ -644,7 +686,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             K = float(np.sum((cap.annual_bn[: t + 1] / 4.0) * cap.tokens_per_bn[: t + 1] * surv))
             with np.errstate(divide="ignore", invalid="ignore"):
                 mult = np.where((K > 0) & (tokens_prev > 0), np.maximum(1.0, (tokens_prev / max(K, 1e-9)) ** xi), 1.0)
-        price_mult[:, t] = mult
+        price_mult[:, t] = mult * (1.0 + ai_tax)                                        # AI tax on AI spend raises the effective price of inputs
         # task layer per region at its access lag and wage tier -> [D, R, n_occ]
         lays = [task_layer(max(0, t - int(lags[k])), price_mult[:, max(0, t - int(lags[k]))], tiers_r[k]) for k in range(R)]
         S = np.stack([l_.S for l_ in lays], axis=1); G = np.stack([l_.G for l_ in lays], axis=1); Z = np.stack([l_.Z for l_ in lays], axis=1)
@@ -687,8 +729,14 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             Rk = np.maximum(Rk - retire + repl_alloc + gap_alloc, 0.0)
             e["R"] = Rk; e["cum"] = e["cum"] + production; e["prod_prev"] = np.maximum(production, 0.5 * e["prod_prev"])
             cov = np.where(H > 1.0, np.minimum(1.0, Rk * e["cap_unit"][:, None] / np.maximum(H, 1.0)), 0.0) * e["recall"][t]   # no addressable hours, no coverage
+            scale_c = wj_scale[None, :] if c == "driving" else 1.0
             for k in range(R):
-                D_emb[:, k] += occPi_r[k] * cov[:, k][:, None]; zeta_emb[:, k] += occZ_r[k] * cov[:, k][:, None]
+                D_emb[:, k] += np.minimum(occPi_r[k] * scale_c, 1.0) * cov[:, k][:, None]; zeta_emb[:, k] += occZ_r[k] * cov[:, k][:, None]
+            if c == "driving" and t == n_q - 1 and whole_job.any():                    # diagnostic for the whole-job rule (central draw, first region)
+                F_w = agg_sub(e["occ"], e["w"][None, :] * F_c, n_occ)[0]
+                wj_diag = {inp.occ_codes[i]: {"driving_weight": float(w_drv[i]), "feasible_share_of_driving": float(F_w[i] / max(w_drv[i], 1e-9)),
+                                              "profitable_feasible_share": float(min(occPi_r[0][0, i] * wj_scale[i], 1.0)), "coverage": float(cov[0, 0])}
+                           for i in np.flatnonzero(whole_job)}
             adj_jobs += e["beta_adj"] * Rk
             hw_val += (production * price_t / 1e9)[:, None] * e["prod_share_vec"][None, :] * 4.0                          # $bn/yr produced in the region
             fleet_rec[c][:, :, t] = Rk; cov_rec[c][:, :, t] = cov
@@ -748,7 +796,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         if trade_rows:
             D_imp = np.einsum("ki,dio->dko", imp_w, D_sw)                                 # importer-weighted software displacement, [D, R, n_occ]
             D_trade = exp_share[None] * np.maximum(D_imp - D_sw, 0.0)
-        D_use = np.minimum(D_sw + D_emb + D_trade, 1.0)
+        D_use = np.minimum(D_sw * (1.0 - np.minimum(D_emb, 1.0)) + D_emb + D_trade, 1.0)   # whole-job removal leaves less for the software channel
         # ---- output substitution (spec v0.3 §A.4): AI-produced share of each content category ----
         ai_rev = np.zeros((D, R)); cs_proxy = np.zeros((D, R)); dlnP_cat = np.zeros((D, R)); q_out = np.ones((D, R, n_occ)); Y_cat = np.zeros((D, R))
         if cats:
@@ -777,6 +825,10 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             dlnP_cat = (cons * dlnp_avg).sum(axis=2) / (0.68 * Y0[None, :, t])
             cat_share_rec[:, :, :, t] = sAI; cat_q_rec[:, :, :, t] = Qr
         DT[:, :, t] = D_trade[0]
+        # ---- application-level induced demand (spec §A.3.5; Seba-style: a service that gets much cheaper is used much more) ----
+        if app_eta_extra is not None:
+            dlnc_app = -float(inp.labor_cost_share.mean()) * zeta_emb                       # cost change of the application's own service
+            q_out = q_out * np.exp(-app_eta_extra[None, None, :] * pi_p[:, 0][:, None, None] * dlnc_app)
         N_star = N0t * q_occ * q_out * (1.0 - D_use) / (1.0 + psi[:, None, :] * U_use) * (1.0 + nu)
 
         # ---- hiring channel, layoffs, transitions (spec §5.3–5.4); self-employed margin (spec v0.3 §A.3.6) ----
@@ -791,6 +843,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         exits_self = hours_cut * hazard_self[:, None, :]
         hours_cut = hours_cut + cut - exits_self
         hires = np.maximum(-gap, 0.0)
+        if immig != 1.0:
+            searching = searching + (immig - 1.0) * 0.003 / 4.0 * N0t * (inp.emp0 / inp.emp0.sum())[None, None, :] * n_occ / n_occ   # E: net migration 0.3%/yr of employment, scaled
         total_search = searching.sum(axis=2) + unhired.sum(axis=2)                   # [D, R]
         reemployed = np.minimum(reemp_rate * total_search, hires.sum(axis=2))
         exits = exit_rate * total_search
@@ -851,7 +905,26 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         Y = Y_task + net
         Wt = (N * wage_r[None] * np.exp(ln_w)).sum(axis=2) / 1e9 + jobs * AI_PRODUCTION_WAGE / 1e9 + (adj_jobs + hw_jobs) * ADJACENT_WAGE / 1e9
         dW = Wt - W0_bill[None, :, t]; dPi = (Y - Y0[None, :, t]) - dW
-        dC_prev = (0.7 * dW + 0.4 * dPi) / (0.68 * Y0[None, :, t])
+        # ---- policy transfers and financing (spec §6.5, minimal) ----
+        transfers = np.zeros((D, R)); cost = np.zeros((D, R))
+        mean_wage_r = wage_r[None] @ (N0t[0] / np.maximum(N0t[0].sum(axis=1, keepdims=True), 1.0)).T if False else (wage_r * N0t[0]).sum(axis=1) / np.maximum(N0t[0].sum(axis=1), 1.0)   # [R]
+        if wi_repl > 0 and wi_years > 0:
+            wi_stock = wi_stock * (1.0 - 1.0 / max(4.0 * wi_years, 1.0)) + reemployed                 # newly re-employed enter; leave after wi_years
+            transfers += wi_repl * scarring * mean_wage_r[None, :] * wi_stock / 1e9
+        if ubi_month > 0:
+            transfers += ubi_month * 12.0 * (N0t[0].sum(axis=1) / 0.6)[None, :] / 1e9                 # adults ≈ employment / 0.6 (E)
+        if subsidy > 0:
+            cost += subsidy * mean_wage_r[None, :] * retraining.sum(axis=2) / 1e9
+        cost += transfers
+        tax_rev = ai_tax * spend
+        # financing: ai_tax-funded items are covered by the tax revenue (shortfall falls on the deficit); income-tax surcharge reduces consumption
+        surcharge = np.zeros((D, R))
+        for item, base_ in (("ubi", ubi_month > 0), ("wage_insurance", wi_repl > 0), ("retraining", subsidy > 0)):
+            if base_ and fin.get(item) == "income_tax_surcharge":
+                surcharge += cost if item != "retraining" else subsidy * mean_wage_r[None, :] * retraining.sum(axis=2) / 1e9
+        fiscal = tax_rev - cost
+        dC_prev = (0.7 * dW + 0.4 * dPi + 0.9 * transfers - 0.7 * surcharge - 0.4 * tax_rev) / (0.68 * Y0[None, :, t])   # transfers spent at MPC 0.9; tax falls on profits
+        rec["transfers"][:, :, t] = transfers; rec["policy_cost"][:, :, t] = cost; rec["tax_rev"][:, :, t] = tax_rev; rec["fiscal"][:, :, t] = fiscal
 
         # ---- record ----
         for k_, v_ in (("laid", layoffs.sum(axis=2)), ("unhired", via_attr.sum(axis=2)), ("reemp", reemployed), ("retr_in", to_retrain), ("retr_done", retrained_ok), ("exit", exits), ("retired", retired),
@@ -863,7 +936,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         rec["ai_content_rev"][:, :, t] = ai_rev; rec["cs"][:, :, t] = cs_proxy
         rec["trade_share"][:, :, t] = (D_trade * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
         LNP[:, :, t] = ln_P
-        rec["emp"][:, :, t] = N.sum(axis=2); rec["mlnw"][:, :, t] = (N * ln_w).sum(axis=2) / np.maximum(N.sum(axis=2), 1.0)
+        rec["emp"][:, :, t] = N.sum(axis=2) * (40.0 / week_hours if week_hours < 40 else 1.0)     # shorter week: FTE spread over more heads (P.72 conversion)
+        rec["mlnw"][:, :, t] = (N * ln_w).sum(axis=2) / np.maximum(N.sum(axis=2), 1.0) + (np.log(week_hours / 40.0) if week_hours < 40 else 0.0)
         for k in range(R):
             Nt[k][:, :, t] = N[: Dk[k], k]; LNW[k][:, :, t] = ln_w[: Dk[k], k]; DD[k][:, :, t] = Dr[: Dk[k], k]; UU[k][:, :, t] = Ur[: Dk[k], k]
         rec["gdp"][:, :, t] = Y / Y0[None, :, t] - 1.0; rec["tfp"][:, :, t] = tfp
@@ -896,6 +970,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         o.content_share = {c.cat_id: cat_share_rec[:, k, i] for i, c in enumerate(cats)}; o.content_q = {c.cat_id: cat_q_rec[:, k, i] for i, c in enumerate(cats)}
         o.ai_content_revenue = rec["ai_content_rev"][:, k]; o.consumer_surplus = rec["cs"][:, k]
         o.D_trade = DT[k][None].astype(np.float64); o.trade_share = rec["trade_share"][:, k]
+        o.transfers_bn = rec["transfers"][:, k]; o.policy_cost_bn = rec["policy_cost"][:, k]; o.ai_tax_revenue_bn = rec["tax_rev"][:, k]; o.fiscal_balance_bn = rec["fiscal"][:, k]
     return BatchOutput(quarters=quarters, cell_ids=list(draws.cell_ids) if draws else ["central"], C=C, regions=outs, order=order,
                        automatable=automatable, price_mult=price_mult, price_frontier=price_frontier, price_fixed=price_fixed,
                        market_share=market_share, availability=availability, major_groups=mg,
@@ -904,7 +979,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
                               "channels_task_hours": {c: float((tg.weight[tg.channel == i] * inp.emp0[tg.occ[tg.channel == i]]).sum() / (tg.weight * inp.emp0[tg.occ]).sum())
                                                       for i, c in enumerate(["software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none"])},
                               "self_employed_fte": {x: float(self0[k].sum()) for k, x in enumerate(order)}, "embodied_on": bool(emb_on),
-                              "content_categories": [c.cat_id for c in cats], "export_serving_fte": {x: float((exp_share[k] * emp_base[k]).sum()) for k, x in enumerate(order)},
+                              "content_categories": [c.cat_id for c in cats], "policy_on": bool(policy_on), "policy": dict(pol), "whole_job": wj_diag, "export_serving_fte": {x: float((exp_share[k] * emp_base[k]).sum()) for k, x in enumerate(order)},
                               "capex_annual_bn": cap.annual_bn, "access_lag": {x: int(lags[k]) for k, x in enumerate(order)},
                               "wage_tier": {x: tiers_r[k] for k, x in enumerate(order)}})
 
