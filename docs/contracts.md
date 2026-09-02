@@ -205,3 +205,58 @@ Region ids: `US`, `EU` (EU-27), `UK`, `CN`, `JP`, `KR`, `IN`, `TW`, `SG`, `RoA` 
 ## 14. Web state additions
 
 `region=` in the URL (`world` default, or a region id) selects the region every view reads; the map drills `World › EU › Germany` and `World › US › Ohio`.
+
+# Phase 4 additions (contracts v0.5): chat, insights, briefs
+
+## 15. Chat layer (`POST /api/chat`)
+
+The chat layer is a thin, stateless agent over the same results documents the UI reads. It never computes numbers: every figure in a reply comes from a tool result, and the reply carries the tool log so the UI can show what grounded it.
+
+**Request**
+
+```json
+{
+  "messages": [{"role": "user" | "assistant", "content": "text"}],
+  "context": {"scenario_hash": "sha256:…", "scenario_id": "baseline", "compare_hash": "sha256:…", "compare_id": "…", "region": "US", "quarter": "2035Q4", "view": "economy"},
+  "confirmed_proposals": ["prop-…"],
+  "mode": "chat" | "explain" | "insights"
+}
+```
+
+`messages` is the visible transcript (text only; the last turn must be the user's). `context` is the current UI state and becomes the default for every tool call. `confirmed_proposals` lists proposal ids the user has confirmed; `run_scenario` on any other proposal returns `needs_confirmation` to the model, which must then ask. `mode` adds a hint: `explain` (call `explain` for the context metric and quarter first), `insights` (call `candidate_insights` first, report the top three with mechanism and confidence).
+
+**Response**
+
+```json
+{
+  "reply": "markdown text",
+  "tool_calls": [{"name": "propose_scenario", "input": {...}, "ok": true, "seconds": 0.1, "summary": "2 lever change(s) validated; proposal prop-…"}],
+  "proposed_scenario": {"proposal_id": "prop-…", "scenario": {…scenario document…}, "diff": [{"path", "from", "to", "mechanism"}], "parent": "baseline", "rationale": "…"} | null,
+  "proposals": [...],
+  "runs": [{"scenario_hash": "sha256:…", "scenario_id": "…", "scenario_name": "…"}],
+  "usage": {"input_tokens": n, "output_tokens": n},
+  "model": "claude-opus-5",
+  "stop_reason": "end_turn"
+}
+```
+
+`proposed_scenario.scenario` is a valid schema-0.2 child scenario the UI can run through `POST /api/run` (the Run button) or edit in the levers drawer; `proposed_scenario.diff` is the annotated diff vs its parent. `GET /api/proposals/{proposal_id}` returns a proposal again. `GET /api/chat/status` → `{available, model, reason}`; `POST /api/chat` returns 503 with the reason when `ANTHROPIC_API_KEY` is not set on the API server, 502 on backend errors.
+
+**Tools available to the model** (strict schemas; all read-only except `propose_scenario`, which validates without running, and `run_scenario`):
+`list_scenarios`, `list_levers(group)`, `get_scenario(id)`, `propose_scenario(parent, name, levers, shocks, remove_shocks, rationale)`, `run_scenario(scenario_id | proposal_id, draws)`, `get_summary(hash, region)`, `explain(hash, metric, quarter, region)`, `compare_runs(hash_a, hash_b)`, `sensitivity(hash, metric)`, `top_occupations(hash, quarter, by, n, min_employment)`, `cohorts(hash, quarter)`, `regions(hash, quarter)`, `candidate_insights(hash, region)`.
+
+Model: `claude-opus-5` by default (`AIWSIM_CHAT_MODEL` overrides), adaptive thinking, server-side refusal fallback (`fallbacks: "default"`). The client is injectable (`aiwsim_api.chat.set_client`) so tests run a scripted fake without credentials.
+
+## 16. Insights and briefs
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/api/insights/{hash}?region=US&n=3` | `{scenario_hash, region, top: [insight…], candidates: [insight…], method}` — deterministic, no model call. An insight is `{key, title, statement, mechanism, confidence, surprise (0–1), evidence, metric, quarter, region}`; `candidates` is every candidate sorted by surprise |
+| GET | `/api/brief/{hash}?format=md|html|json&region=US&compare=HASH_A` | Shareable brief: headline table with bands and sign confidence at 2030Q4 and 2040Q4, lever diff vs parent, optional paired comparison against `compare`, top-3 findings with mechanism and confidence, model notes, sensitivity table, regional table, method and provenance (data flags, hash for reproduction), scenario JSON appendix. `md` returns `text/markdown`, `html` a self-contained page (light/dark, print), `json` `{scenario_hash, markdown}` |
+| POST | `/api/brief/{hash}` | body `{narrative, region, format}`: the same brief with a model-written narrative (the chat reply the user chose to include) appended under a heading that labels it as such |
+
+Insight candidates (`api/aiwsim_api/insights.py`): output up while employment down; displacement through hiring rather than layoffs; the dominant sensitivity parameter and sign flips; structural vs parametric spread; age and decile incidence; the price channel behind real wages; leading occupations; regional rent concentration and divergence; sign confidence; adoption breadth vs labor effect. Each candidate states its mechanism (spec section and parameter) and inherits the run's confidence classification.
+
+## 17. Web state additions
+
+The chat panel is a third mode of the right-hand panel (`Explain · Ask`). It sends the current `scenario_hash`, `compare_hash`, `region`, and `quarter` as context. A proposed scenario renders as a diff card with **Run** (runs through the results store, sets it as the current or compare scenario) and **Edit** (opens the levers drawer pre-filled). `Export brief` on the top bar downloads the Markdown or opens the HTML brief for the current run (with the compare run when one is selected). In mock mode the panel answers with canned replies and the deterministic insights of the mock document.

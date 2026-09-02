@@ -15,7 +15,13 @@ An interactive, multi-region simulation of how AI models reshape the workforce a
 | [scenarios/schema.json](scenarios/schema.json) | JSON schema for versioned, diffable scenarios |
 | [scenarios/baseline.json](scenarios/baseline.json) | The "consensus central" scenario |
 
-## Phase 3 (in progress)
+## Phase 4
+
+Chat layer, insight ranking, and shareable briefs. `POST /api/chat` runs a Claude tool loop whose only source of numbers is the simulation (thirteen strict tools: levers, propose, run, summary, explain, compare, sensitivity, occupations, cohorts, regions, insights); proposals are validated and shown as a diff, and a run needs the user's confirmation, enforced server-side. `GET /api/insights/{hash}` ranks deterministic findings (statement, mechanism, confidence, surprise) and `GET /api/brief/{hash}?format=md|html` exports a reproducible brief. The web app gains an `Ask` tab, proposal cards, insight cards, and `Export brief`. Findings: [docs/findings-phase4.md](docs/findings-phase4.md); contract: [docs/contracts.md](docs/contracts.md) §15–17.
+
+Set `ANTHROPIC_API_KEY` in the API server's environment to enable chat (`AIWSIM_CHAT_MODEL` overrides the default `claude-opus-5`); without it the UI still shows insights and briefs. Terminal: `cd api && uv run python -m aiwsim_api.chat "What if capability doubles every 4 months?" --hash sha256:…`.
+
+## Phase 3
 
 EU-27, UK, China, Japan, South Korea, India, Taiwan, Singapore, and rest of Asia run jointly with the U.S. through a shared capability clock, regional access lags, wage tiers, adoption spillover, trade-linked demand, and AI rents by value-chain stage; 23 supply-side actors with market shares and availability; world map with drill-down, region selector, AI supply timeline. Ten regions at 200 draws run in about 18 s. Findings: `docs/findings-phase3.md`. Non-U.S. occupation structures are fixtures until the ILOSTAT/Eurostat ingest runs.
 
@@ -46,7 +52,7 @@ make setup && make data && make run   # then: make demo
 1. U.S. only, static scenario, three core views, headless CLI runs
 2. What-if levers, scenario compare, uncertainty bands
 3. EU and Asia, AI supply-side actors, cross-region spillover
-4. Chat interface, insight generation, shareable briefs
+4. Chat interface, insight generation, shareable briefs — done
 5. Polish, public demo, methodology write-up
 
 Each phase ends with a "findings so far" note.

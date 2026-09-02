@@ -3,7 +3,12 @@ name = "aiwsim-api"
 version = "0.1.0"
 description = "FastAPI service over the AI workforce simulation"
 requires-python = ">=3.12"
-dependencies = ["fastapi>=0.115", "uvicorn[standard]>=0.30", "aiwsim"]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "aiwsim",
+    "anthropic>=1",
+]
 
 [build-system]
 requires = ["hatchling"]
