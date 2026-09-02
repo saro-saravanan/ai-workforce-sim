@@ -9,7 +9,7 @@ from typing import Any
 
 import jsonschema
 
-SCHEMA_VERSION = "0.2"
+SCHEMA_VERSION = "0.3"
 
 
 def _deep_merge(base: dict, child: dict) -> dict:
@@ -64,7 +64,7 @@ def resolve(scenario: dict[str, Any], scen_dir: Path, _depth: int = 0) -> dict[s
     merged.setdefault("shocks", [])
     merged.setdefault("ensemble", {"mechanisms": "all", "shapley": False})
     merged.setdefault("seed", 42)
-    merged.setdefault("draws", 200)
+    merged.setdefault("draws", 256)
     merged.setdefault("horizon", {"start": "2024Q1", "end": "2040Q4"})
     return merged
 

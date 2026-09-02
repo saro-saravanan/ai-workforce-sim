@@ -212,6 +212,29 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
     q.set("policy", dict(pol))
     base = levers.get("baseline", {})
     q.flags["bls_ai_adjustment"] = base.get("bls_ai_adjustment", "restore_trend")
+    if "automation_trend" in base:
+        q.set("P.104", float(base["automation_trend"]))
+
+    # ---- v0.3 application layer (spec §A.9) ----
+    app = levers.get("applications", {})
+    emb = app.get("embodiment", {})
+    tau = dict(q.get("P.108") or {})
+    for cls, key in (("driving", "driving_doubling_months"), ("manip", "manipulation_doubling_months"), ("fixed", "fixed_doubling_months"), ("aerial", "aerial_doubling_months")):
+        if key in emb:
+            tau[cls] = float(emb[key])
+    if tau:
+        q.set("P.108", tau)
+    if "coupling_to_software" in emb:
+        q.set("P.107", float(emb["coupling_to_software"]))
+    hw = app.get("hardware", {})
+    if "learning_rate" in hw:
+        q.set("P.113", float(hw["learning_rate"]))
+    if "ramp_max_growth_per_year" in hw:
+        q.set("P.117", float(hw["ramp_max_growth_per_year"]))
+    q.flags["utilization_scale"] = float(hw.get("utilization_scale", 1.0))
+    q.flags["unit_price_scale"] = float(hw.get("unit_price_scale", 1.0))
+    q.flags["approval"] = {k: str(v) for k, v in app.get("approval", {}).items()}
+    q.flags["platform_labor"] = app.get("platform_labor", "status_quo")
     return q
 
 

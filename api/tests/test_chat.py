@@ -135,6 +135,8 @@ def test_tools_ground_numbers(client):
     assert len(coh["age"]) == 4 and abs(sum(r["share_of_jobs_lost_p50"] for r in coh["age"]) - 1) < 0.05
     rg = chat_mod.execute_tool("regions", {"scenario_hash": h, "quarter": "2040Q4"}, set())
     assert {r["region"] for r in rg["regions"]} >= {"US", "EU", "CN"}
+    ap = chat_mod.execute_tool("applications", {"scenario_hash": h, "quarter": "2040Q4", "region": None}, set())
+    assert {r["app_id"] for r in ap["applications"]} >= {"robotaxi", "warehouse_robotics"} and "driving" in ap["embodiment_classes"]
     ins = chat_mod.execute_tool("candidate_insights", {"scenario_hash": h, "region": None, "compare_hash": None}, set())
     assert len(ins["top"]) == 3 and all(k in ins["top"][0] for k in ("statement", "mechanism", "confidence", "surprise", "evidence"))
     assert ins["candidates"] == sorted(ins["candidates"], key=lambda d: -d["surprise"])

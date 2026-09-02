@@ -19,6 +19,7 @@ Model specification: `docs/model-spec.md` (v0.2). Contracts between packages: `d
 - Every dataset has a provenance record; fixtures are labelled FIXTURE and surfaced in `meta.data_flags`.
 - Outputs are always relative to the frozen-AI baseline; stochastic series carry p10/p25/p50/p75/p90 plus `central` (draw 0, the scenario as specified). Draws are re-centred on the scenario's lever values.
 - Spec §16 records every place the implementation sharpens or departs from the spec text. Update it when you change an equation.
+- v0.3 application layer (spec amendment `docs/model-spec-v0.3-applications.md`): every task group has one channel (`tasks.csv.channel`); embodied classes live in `sim/aiwsim/applications.py` (inputs) and the `emb` block of `mc.py` (clocks, Wright's-law cost, ramp, approval, coverage); tables under `data/processed/applications/`; keep the exclusivity, deployment-bound, frozen-baseline, ordering and monotonicity tests in `sim/tests/test_applications.py` green.
 - The chat layer never computes; every number comes from a tool result, and `run_scenario` refuses proposals the user has not confirmed. Keep that property when adding tools.
 - Fitted parameters (P.42 today) are set on `Params` in `Context.params_for` so Monte Carlo draws re-centre on them; draw 0 must equal a single central run (`test_central_draw_matches_single_run`).
 - Reading order for a new contributor: `docs/methodology.md`, then the spec, then `docs/contracts.md`.

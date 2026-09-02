@@ -12,6 +12,7 @@ import polars as pl
 LABELS = {"E0": 0, "E1": 1, "E2": 2}
 MODALITIES = ["software", "other_cognitive", "interpersonal", "physical"]
 USE_CASES = ["unregulated", "transparency", "high_risk"]
+CHANNELS = ["software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none"]   # spec v0.3 §A.2
 
 
 @dataclass
@@ -36,6 +37,7 @@ class Inputs:
     task_presence: np.ndarray
     task_use_case: np.ndarray   # int index into USE_CASES
     task_consequence: np.ndarray
+    task_channel: np.ndarray    # int index into CHANNELS (spec v0.3 §A.2)
     # sectors
     sector_codes: list[str]
     labor_cost_share: np.ndarray
@@ -146,6 +148,8 @@ def load_inputs(root: Path) -> Inputs:
         task_presence=tasks["presence"].cast(pl.Float64).to_numpy(),
         task_use_case=np.array([USE_CASES.index(x) for x in tasks["use_case"].to_list()], dtype=np.int64),
         task_consequence=tasks["consequence_high"].cast(pl.Float64).to_numpy(),
+        task_channel=(np.array([CHANNELS.index(x) for x in tasks["channel"].to_list()], dtype=np.int64) if "channel" in tasks.columns
+                      else np.zeros(tasks.height, dtype=np.int64)),
         sector_codes=sectors["sector_code"].to_list(),
         labor_cost_share=sectors["labor_cost_share"].cast(pl.Float64).to_numpy(),
         demand_elasticity=sectors["demand_elasticity"].cast(pl.Float64).to_numpy(),

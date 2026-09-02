@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 
+from .applications import CHANNEL_OF_CLASS, CLASSES, AppInputs, approval_path
 from .clock import ANCHOR_INDEX, ANCHOR_QUARTER, capex_path, open_weights_lag
 from .inputs import Inputs
 from .labor import Channels
@@ -43,6 +44,9 @@ TDTYPE = np.float32
 REGIME = {"state_patchwork": (0.3, 1.0), "eu_ai_act": (1.0, 1.0), "licensing": (0.5, 0.9), "light": (0.1, 1.0), "federal_strict": (1.0, 1.0), "none": (0.0, 1.0)}
 HARDWARE_SHARE_OF_CAPEX = 0.5   # E: accelerators and equipment (imported), rest domestic construction and fit-out
 CAPEX_HARDWARE_VA = {"US": 0.55, "TW": 0.20, "KR": 0.15, "EU": 0.10}   # E: value-added split of the hardware half (design, fabrication, memory, equipment)
+HOURS_PER_UNIT_YEAR = 8760.0     # hours in a year for hardware utilization (spec v0.3 §A.3.2)
+HW_JOBS_PER_BN = 1500.0          # E: manufacturing jobs per $bn of hardware production (spec v0.3 §A.3.3)
+ADJACENT_WAGE = 65_000.0         # E: fleet operations, remote assistance, depot jobs
 
 
 def logistic(x: np.ndarray) -> np.ndarray:
@@ -56,6 +60,7 @@ def logistic(x: np.ndarray) -> np.ndarray:
 class TaskGroups:
     occ: np.ndarray; weight: np.ndarray; label: np.ndarray; modality: np.ndarray; presence: np.ndarray
     use_case: np.ndarray; consequence: np.ndarray; hash_u: np.ndarray; seg_starts: np.ndarray; seg_occ: np.ndarray; n_occ: int
+    channel: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.int64))   # spec v0.3 §A.2
 
     @property
     def n(self) -> int:
@@ -74,7 +79,8 @@ def _hash_unit(keys: list[str]) -> np.ndarray:
 
 def build_task_groups(inp: Inputs) -> TaskGroups:
     pres = np.round(inp.task_presence / 0.05) * 0.05
-    key = np.stack([inp.task_occ, inp.task_label, inp.task_modality, inp.task_use_case, inp.task_consequence.astype(int), np.round(pres * 20).astype(int)], axis=1)
+    key = np.stack([inp.task_occ, inp.task_label, inp.task_modality, inp.task_use_case, inp.task_consequence.astype(int), np.round(pres * 20).astype(int),
+                    inp.task_channel], axis=1)
     uniq, inv = np.unique(key, axis=0, return_inverse=True)
     inv = inv.ravel()
     weight = np.zeros(len(uniq)); np.add.at(weight, inv, inp.task_weight)
@@ -82,16 +88,23 @@ def build_task_groups(inp: Inputs) -> TaskGroups:
     uniq = uniq[order]; weight = weight[order]
     occ = uniq[:, 0].astype(np.int64)
     starts = np.flatnonzero(np.r_[True, occ[1:] != occ[:-1]])
-    keys = [f"{r[0]}|{r[1]}|{r[2]}|{r[3]}|{r[4]}|{r[5]}" for r in uniq]
+    keys = [f"{r[0]}|{r[1]}|{r[2]}|{r[3]}|{r[4]}|{r[5]}|{r[6]}" for r in uniq]
     return TaskGroups(occ=occ, weight=weight, label=uniq[:, 1].astype(np.int64), modality=uniq[:, 2].astype(np.int64), presence=uniq[:, 5] / 20.0,
                       use_case=uniq[:, 3].astype(np.int64), consequence=uniq[:, 4].astype(DTYPE), hash_u=_hash_unit(keys), seg_starts=starts,
-                      seg_occ=occ[starts], n_occ=inp.n_occ)
+                      seg_occ=occ[starts], n_occ=inp.n_occ, channel=uniq[:, 6].astype(np.int64))
 
 
 def agg(tg: TaskGroups, X: np.ndarray) -> np.ndarray:
     seg = np.add.reduceat(X, tg.seg_starts, axis=1, dtype=np.float64)
     out = np.zeros((X.shape[0], tg.n_occ), dtype=np.float64)
     out[:, tg.seg_occ] = seg
+    return out
+
+
+def agg_sub(occ_idx: np.ndarray, X: np.ndarray, n_occ: int) -> np.ndarray:
+    """Sum X [D, nk] into occupations for a subset of task groups (embodied classes are small subsets)."""
+    out = np.zeros((X.shape[0], n_occ), dtype=np.float64)
+    np.add.at(out.T, occ_idx, X.T)
     return out
 
 
@@ -150,10 +163,21 @@ class RegionOut:
     wage_mean: np.ndarray
     emp_total: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] heads (all draws)
     mean_ln_w: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] employment-weighted log wage (all draws)
+    # ---- v0.3 application layer (spec §A.3, §A.5) ----
+    D_emb: np.ndarray = field(default_factory=lambda: np.zeros(0))         # [1, n_occ, n_q] embodied displacement, central draw
+    emb_share: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] employment-weighted embodied displacement
+    fleet: dict[str, np.ndarray] = field(default_factory=dict)             # class -> [D, n_q] deployed units
+    coverage: dict[str, np.ndarray] = field(default_factory=dict)          # class -> [D, n_q]
+    approval: dict[str, np.ndarray] = field(default_factory=dict)          # class -> [n_q]
+    adjacent_jobs: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q]
+    hw_capex_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] hardware produced in the region, $bn/yr
+    self_fte0: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [n_occ] self-employed FTE 2024Q1 (in N0)
+    underemp_self: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q] self-employed FTE with hours cut, still attached
+    cut_cum: np.ndarray = field(default_factory=lambda: np.zeros(0))       # [D, n_q] cumulative FTE lost through the self-employed margin
 
     @property
     def displaced_cum(self) -> np.ndarray:
-        return self.laid_off_cum + self.unhired_cum
+        return self.laid_off_cum + self.unhired_cum + (self.cut_cum if self.cut_cum.size else 0.0)
 
     @property
     def employment_pct(self) -> np.ndarray:
@@ -183,6 +207,10 @@ class BatchOutput:
     availability: dict[str, dict[str, np.ndarray]]   # region -> actor -> [n_q] 0/1
     major_groups: list[str]
     trace: dict[str, Any] = field(default_factory=dict)
+    C_emb: dict[str, np.ndarray] = field(default_factory=dict)       # class -> [D, n_q] embodiment clock
+    price_emb: dict[str, np.ndarray] = field(default_factory=dict)   # class -> [D, n_q] unit price, USD
+    kappa_emb: dict[str, np.ndarray] = field(default_factory=dict)   # class -> [D, n_q] cost per worker-hour equivalent, USD
+    automatable_emb: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_occ] embodied ever-automatable mass
 
     # U.S. views kept for Phase 1–2 consumers
     @property
@@ -193,7 +221,8 @@ class BatchOutput:
         if name in ("N0", "N", "ln_w", "ln_P", "D_", "U", "gdp_pct", "tfp_pct", "adoption_emp", "adoption_firm", "ai_spend", "ai_jobs",
                     "laid_off_cum", "unhired_cum", "reemployed_cum", "retraining_cum", "retrained_cum", "exited_cum", "retired_cum",
                     "unemployed_stock", "retraining_stock", "wage_share_pp", "mu", "q_ratio", "dlnc", "nu_mean", "lost_by_age", "lost_by_edu",
-                    "lost_by_dec", "lost_by_mg", "N0_age", "N0_edu", "N0_dec", "displaced_cum", "employment_pct", "real_wage_pct", "nominal_wage_pct"):
+                    "lost_by_dec", "lost_by_mg", "N0_age", "N0_edu", "N0_dec", "displaced_cum", "employment_pct", "real_wage_pct", "nominal_wage_pct",
+                    "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "self_fte0", "underemp_self", "cut_cum"):
             return getattr(self.regions["US"], name)
         raise AttributeError(name)
 
@@ -208,7 +237,7 @@ def _us_region(inp: Inputs) -> Region:
 
 def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet | None = None, channels: Channels | None = None,
               fitted: dict[str, Any] | None = None, cohorts: dict[str, np.ndarray] | None = None,
-              regional: RegionalInputs | None = None, regions: list[str] | None = None) -> BatchOutput:
+              regional: RegionalInputs | None = None, regions: list[str] | None = None, apps: AppInputs | None = None) -> BatchOutput:
     ch = channels or Channels()
     D = draws.n if draws is not None else 1
     bp = BP(p, draws, D)
@@ -256,33 +285,32 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             C[:, quarters.index(s["at"]):] += float(s.get("delta_doublings", 2.0))
     C = np.minimum(C, cmax[:, None])
     C0 = C[:, :1]
-    C_phys = np.array([3.0 * t / float(p.get("P.19", 24.0)) for t in range(n_q)])[None, :].repeat(D, 0)
 
     # ---- task attributes (spec §2.2) ----
     a_base = np.stack([bp.vec("P.22"), bp.vec("P.20"), bp.vec("P.21")], axis=1)
     lam = bp.col("P.23", 1.5)
     a = (a_base[:, tg.label] * (1.0 - tg.presence[None, :]) ** lam).astype(TDTYPE)
-    phys = tg.modality == 3
-    a[:, phys] = bp.col("P.59", 0.3).astype(TDTYPE)
+    sw = tg.channel == 0                       # software channel; embodied and 'none' task groups never enter the software layer (spec v0.3 §A.2)
+    nonsw = ~sw
+    a[:, nonsw] = 0.0
     g_mod = np.stack([np.ones(D), bp.vec("P.34.other_cognitive", 0.7), bp.vec("P.34.interpersonal", 0.5), np.ones(D)], axis=1)
     g = g_mod[:, tg.modality].astype(TDTYPE)
     i_ref = min(9, n_q - 1); C_ref = C[:, i_ref:i_ref + 1]
     delta = np.stack([bp.vec("P.27"), bp.vec("P.25"), bp.vec("P.26")], axis=1)[:, tg.label]
     theta = np.where(tg.label[None, :] == 1, C0 + delta * 2.0 * tg.hash_u[None, :], C_ref + delta)
     theta = theta + tg.consequence[None, :] * bp.col("P.28", 1.0)
-    theta[:, phys] = 4.0 + delta[:, phys]
+    theta[:, nonsw] = 1e6
     theta32 = theta.astype(TDTYPE)
-    target_C = np.where(phys[None, :], np.inf, C0 + (theta - C0) / np.maximum(g, 1e-6))
+    target_C = np.where(nonsw[None, :], np.inf, C0 + (theta - C0) / np.maximum(g, 1e-6))
     cross_q = np.empty((D, tg.n), dtype=np.int64)
     for d in range(D):
         cross_q[d] = np.searchsorted(C[d], target_C[d], side="left")
-        cross_q[d, phys] = np.searchsorted(C_phys[d], theta[d, phys], side="left")
     s_soft = bp.col("P.15", 1.0).astype(TDTYPE)
     n0 = np.stack([bp.vec("P.08.software", 50_000), bp.vec("P.08.other_cognitive", 40_000), bp.vec("P.08.interpersonal", 30_000), bp.vec("P.08.physical", 20_000)], axis=1)[:, tg.modality]
     n_tok = (n0 * 2.0 ** (bp.col("P.29", 0.7) * np.clip(theta - C_ref, -3, 12))).astype(TDTYPE)
     sig0 = bp.col("P.16"); drift = bp.col("P.17", 0.0)
     wgt = tg.weight.astype(TDTYPE)[None, :]
-    automatable = agg(tg, (tg.weight[None, :] * a).astype(np.float64))
+    automatable_sw = agg(tg, (tg.weight[None, :] * a).astype(np.float64))
 
     # ---- prices and costs (spec §3.3–3.4) ----
     rho = bp.col("P.04"); p_front = float(p["P.11"]); ow_mult = bp.col("P.06", 0.25)
@@ -301,6 +329,46 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     wage_h_tier = {m: (wage_h_us * m).astype(TDTYPE) for m in tiers}
     price_frontier = np.full(n_q, p_front)
     price_fixed = np.maximum(p_front * float(p["P.04"]) ** (-(np.arange(n_q) / 4.0)), floor)
+
+    # ---- embodied channels setup (spec v0.3 §A.3) ----
+    emb_on = apps is not None and ch.embodied
+    emb: dict[str, dict[str, Any]] = {}
+    C_emb: dict[str, np.ndarray] = {}
+    lam_emb = bp.col("P.106", 0.5)
+    g_emb = bp.vec("P.107", 0.3)
+    i_rate = float(p.get("P.112", 0.06)); LR = bp.vec("P.113", 0.12); b_learn = -np.log2(np.clip(1.0 - LR, 1e-6, 0.999))
+    g_max = bp.vec("P.117", 0.7); price_scale = float(p.flags.get("unit_price_scale", 1.0)); util_scale = float(p.flags.get("utilization_scale", 1.0))
+    trend_scale = 1.5 - 0.5 * float(p.get("P.104", 1.0))              # baseline automation trend (spec §A.6.2): larger trend, smaller increment
+    a_emb_id = {"driving": "P.100", "manip": "P.101", "fixed": "P.102", "aerial": "P.103"}
+    if apps is not None:
+        for c in CLASSES:
+            ec = apps.classes.get(c)
+            if ec is None:
+                continue
+            ik = np.flatnonzero(tg.channel == CHANNEL_OF_CLASS[c])
+            tau_c = bp.vec(f"P.108.{c}", ec.tau_months); sat_c = float(p.by("P.109", c)) if p.get("P.109") is not None else ec.saturation
+            clock = np.minimum(np.arange(n_q)[None, :] * 3.0 / tau_c[:, None] + g_emb[:, None] * (C - C0), sat_c)
+            C_emb[c] = clock
+            a_c = bp.vec(a_emb_id[c], ec.a_emb) * (trend_scale if c == "fixed" else 1.0)
+            a_k = (a_c[:, None] * (1.0 - tg.presence[None, ik]) ** lam_emb).astype(TDTYPE)                          # [D, nk]
+            theta_k = (ec.theta_lo + (ec.theta_hi - ec.theta_lo) * tg.hash_u[None, ik] + 0.5 * tg.consequence[None, ik]).astype(TDTYPE)
+            L_c = float(p.by("P.111", c)) if p.get("P.111") is not None else ec.lifetime_years
+            crf = i_rate / (1.0 - (1.0 + i_rate) ** (-L_c))
+            price0 = bp.vec(f"P.110.{c}", ec.unit_price_2025) * price_scale
+            u_c = np.clip(bp.vec(f"P.115.{c}", ec.utilization) * util_scale, 0.02, 0.98); tu_c = bp.vec(f"P.116.{c}", ec.task_units_per_hour)
+            o_c = bp.vec(f"P.114.{c}", ec.opex_ratio)
+            occ_wage = inp.wage_mean[tg.occ[ik]]
+            integ_unit = (bp.vec("P.09", 15.0) / 100.0)[:, None] * occ_wage[None, :] / L_c                               # per unit-year, [D, nk]
+            beta_adj = float(p.by("P.120", c)) if p.get("P.120") is not None else ec.adjacent_jobs_per_unit
+            q0 = max(ec.cum_production_2025 * 0.15, 1.0)                                                                 # E: 2024Q1 quarterly production
+            emb[c] = {"ik": ik, "occ": tg.occ[ik], "w": tg.weight[ik].astype(TDTYPE), "a": a_k, "theta": theta_k, "crf": crf, "price0": price0,
+                      "u": u_c, "tu": tu_c, "o": o_c, "integ": integ_unit, "beta_adj": beta_adj, "L": L_c, "q0": q0,
+                      "cum": np.full(D, ec.cum_production_2025 * 0.5), "prod_prev": np.full(D, q0),
+                      "R": None, "J": None, "prod_share": ec.prod_share, "cap_unit": u_c * HOURS_PER_UNIT_YEAR * tu_c}
+    automatable_emb = np.zeros((D, n_occ))
+    for c, e in emb.items():
+        automatable_emb += agg_sub(e["occ"], e["w"][None, :] * e["a"], n_occ)
+    automatable = automatable_sw + automatable_emb
 
     # ---- adoption setup (spec §4) ----
     n_sec = inp.n_sec; n_size = len(SIZE_CLASSES)
@@ -331,6 +399,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         eta = np.zeros_like(eta)
     pi_p = bp.col("P.53", 0.7); s_L = inp.labor_cost_share[None, :]
     attr = bp.col("P.63", 2.5) / 100.0; lay = bp.col("P.64", 0.25)
+    hazard_self = bp.col("P.121", 0.3) / 4.0; lay_conv = bp.col("P.122", 0.6)
     eps_w = bp.col("P.73", 0.3); beta_w = bp.col("P.74", 0.3)
     rho_new = bp.vec("P.61", 0.4); lag_new = int(p.get("P.62", 8))
     m_mult = bp.vec("P.87", 0.6); co = bp.vec("P.56", 0.3); jlag = int(p.get("P.84", 4))
@@ -385,7 +454,22 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     R = len(reg_list)
     lags = np.array([access_lag(r) for r in reg_list]); tiers_r = [wage_tier(r.wage_level) for r in reg_list]
     g10_r = np.stack([r.growth10 if r.growth10 is not None else np.full(n_occ, r.emp_growth10) for r in reg_list])           # [R, n_occ]
-    N0 = np.stack([r.emp0 for r in reg_list])[:, :, None] * (1.0 + ((1.0 + g10_r) ** (1.0 / 40.0) - 1.0))[:, :, None] ** np.arange(n_q)[None, None, :]  # [R, n_occ, n_q]
+    self0 = np.stack([(apps.self_fte.get(r.region_id, np.zeros(n_occ)) if apps is not None else np.zeros(n_occ)) for r in reg_list])    # [R, n_occ] FTE (spec §A.5.1)
+    emp_base = np.stack([r.emp0 for r in reg_list]) + self0
+    self_share = np.where(emp_base > 0, self0 / np.maximum(emp_base, 1e-9), 0.0)[None]                                       # [1, R, n_occ]
+    N0 = emp_base[:, :, None] * (1.0 + ((1.0 + g10_r) ** (1.0 / 40.0) - 1.0))[:, :, None] ** np.arange(n_q)[None, None, :]  # [R, n_occ, n_q]
+    approval_state = p.flags.get("approval", {}) if isinstance(p.flags.get("approval", {}), dict) else {}
+    for c, e in emb.items():
+        e["R"] = np.stack([np.full(D, float(apps.classes[c].stock_2024.get(x, 0.0))) for x in order], axis=1)               # [D, R]
+        e["J"] = np.stack([approval_path(apps.approval.get((c, x), (2024, 2030, 1.0, 1.0)), quarters, approval_state.get(x, "baseline"), shocks, c, x)
+                           for x in order])                                                                                  # [R, n_q]
+        e["recall"] = np.ones(n_q); e["cap_mult"] = np.ones(n_q)
+        for s_ in shocks:
+            if s_.get("type") == "hardware_recall" and s_.get("cls") == c and s_.get("at") in quarters:
+                t0 = quarters.index(s_["at"]); e["recall"][t0: t0 + int(s_.get("duration_quarters", 4))] = 0.0
+            if s_.get("type") == "production_shock" and s_.get("cls") == c and s_.get("at") in quarters:
+                t0 = quarters.index(s_["at"]); e["cap_mult"][t0: t0 + int(s_.get("duration_quarters", 4))] = float(s_.get("cap_multiplier", 0.5))
+        e["prod_share_vec"] = np.array([e["prod_share"].get(x, 0.0) for x in order])
     Y0 = np.stack([r.gdp_bn * (1.0 + BASELINE_GDP_GROWTH.get(r.region_id, BASELINE_REAL_GROWTH)) ** (np.arange(n_q) / 4.0) for r in reg_list])    # [R, n_q]
     wage_r = np.stack([r.wage_mean for r in reg_list])                                                                          # [R, n_occ]
     W0_bill = (N0 * wage_r[:, :, None]).sum(axis=1) / 1e9                                                                       # [R, n_q]
@@ -450,7 +534,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
                          exited_cum=_z(D, n_q), retired_cum=_z(D, n_q), unemployed_stock=_z(D, n_q), retraining_stock=_z(D, n_q), wage_share_pp=_z(D, n_q),
                          mu=_z(D, n_q), q_ratio=_z(D, n_q), dlnc=_z(D, n_q), nu_mean=_z(D, n_q), lost_by_age=_z(D, 4, n_q), lost_by_edu=_z(D, 4, n_q),
                          lost_by_dec=_z(D, 10, n_q), lost_by_mg=_z(D, len(mg), n_q), rents={}, net_ai_trade=_z(D, n_q), C_region=_z(D, n_q),
-                         N0_age=reg_list[k].emp0 @ age_sh, N0_edu=reg_list[k].emp0 @ edu_sh, N0_dec=reg_list[k].emp0 @ dec_sh, wage_mean=reg_list[k].wage_mean)
+                         N0_age=emp_base[k] @ age_sh, N0_edu=emp_base[k] @ edu_sh, N0_dec=emp_base[k] @ dec_sh, wage_mean=reg_list[k].wage_mean,
+                         self_fte0=self0[k])
             for k, x in enumerate(order)}
     # per-occupation histories: all draws for the U.S. (states, occupation bands), central draw only elsewhere (memory)
     Dk = [D if x == "US" else 1 for x in order]
@@ -458,8 +543,14 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     Nt = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]; LNW = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]
     DD = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]; UU = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]
     LNP = np.zeros((D, R, n_q))
-    rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw")}
+    rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw",
+                                              "emb_share", "adj_jobs", "hw_capex", "underemp")}
+    cum["cut"] = np.zeros((D, R)); hours_cut = np.zeros((D, R, n_occ))
     rec_cum = {k: np.zeros((D, R, n_q)) for k in cum}
+    DE = np.zeros((R, n_occ, n_q), dtype=np.float32)                                     # central-draw embodied displacement per region
+    fleet_rec = {c: np.zeros((D, R, n_q)) for c in emb}; cov_rec = {c: np.zeros((D, R, n_q)) for c in emb}
+    price_rec = {c: np.zeros((D, n_q)) for c in emb}; kappa_rec = {c: np.zeros((D, n_q)) for c in emb}
+    occPi_cache: dict[tuple[str, float], tuple[np.ndarray, np.ndarray]] = {}
     LA = np.zeros((D, R, 4, n_q)); LE = np.zeros((D, R, 4, n_q)); LD = np.zeros((D, R, 10, n_q)); LM = np.zeros((D, R, len(mg), n_q))
 
     layer_cache: dict[tuple[int, float], OccLayer] = {}
@@ -470,7 +561,6 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         if t in base_cache:
             return base_cache[t]
         C_eff = (C0 + g * (C[:, t:t + 1] - C0)).astype(TDTYPE)
-        C_eff[:, phys] = C_phys[:, t:t + 1].astype(TDTYPE)
         F = a * logistic((C_eff - theta32) / s_soft)
         age_q = np.maximum(0, t - cross_q)
         price = price_by_age[row_idx, age_q]
@@ -513,6 +603,53 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         kb = np.stack([l_.kappa_bar for l_ in lays], axis=1); tb = np.stack([l_.tok_bar for l_ in lays], axis=1); Aug = np.stack([l_.aug for l_ in lays], axis=1)
         rec["C"][:, :, t] = np.stack([C[:, max(0, t - int(lags[k]))] for k in range(R)], axis=1)
 
+        # ---- embodied channels (spec v0.3 §A.3): feasibility, hardware cost, ramp, approval, coverage ----
+        D_emb = np.zeros((D, R, n_occ)); zeta_emb = np.zeros((D, R, n_occ)); adj_jobs = np.zeros((D, R)); hw_val = np.zeros((D, R))
+        N0t_ = N0[:, :, t]                                                            # [R, n_occ]
+        occPi_cache.clear()
+        for c, e in emb.items():
+            F_c = e["a"] * logistic((C_emb[c][:, t:t + 1].astype(TDTYPE) - e["theta"]) / s_soft)                        # [D, nk]
+            price_t = e["price0"] * (e["cum"] / max(apps.classes[c].cum_production_2025, 1.0)) ** (-b_learn)               # [D]
+            price_rec[c][:, t] = price_t
+            annual = price_t[:, None] * e["crf"] * (1.0 + e["o"][:, None]) + e["integ"]                                   # [D, nk] $/unit-year
+            kappa_h = annual / e["cap_unit"][:, None]                                                                      # $ per worker-hour equivalent
+            kappa_rec[c][:, t] = (price_t * e["crf"] * (1.0 + e["o"])) / e["cap_unit"]
+            H = np.zeros((D, R)); Rstar = np.zeros((D, R)); occPi_r = []; occZ_r = []
+            for k in range(R):
+                m = tiers_r[k]
+                if (c, m) not in occPi_cache:
+                    ln_l = np.log(wage_h_us[0, e["ik"]] * m)[None, :].astype(TDTYPE)
+                    prof = logistic((ln_l - np.log(np.maximum(kappa_h, 1e-6)).astype(TDTYPE)) / b_kappa)
+                    wPi = e["w"][None, :] * F_c * prof
+                    occPi_cache[(c, m)] = (agg_sub(e["occ"], wPi, n_occ), agg_sub(e["occ"], wPi * np.clip(1.0 - kappa_h / np.exp(ln_l), 0.0, 1.0), n_occ))
+                oP, oZ = occPi_cache[(c, m)]
+                occPi_r.append(oP); occZ_r.append(oZ)
+                H[:, k] = (oP * N0t_[k][None, :]).sum(axis=1) * HOURS_PER_YEAR                                             # addressable profitable-feasible hours/yr
+                Rstar[:, k] = e["J"][k, t] * H[:, k] / e["cap_unit"]
+            Rk = e["R"]
+            retire = Rk / (4.0 * e["L"])
+            gap = np.maximum(Rstar - Rk, 0.0)
+            capacity = np.maximum(e["prod_prev"], e["q0"]) * (1.0 + g_max) ** 0.25 * e["cap_mult"][t]
+            demand = retire.sum(axis=1) + gap.sum(axis=1)
+            production = np.minimum(capacity, demand) * e["recall"][t]
+            repl = np.minimum(production, retire.sum(axis=1))
+            growth = production - repl
+            repl_alloc = np.where(retire.sum(axis=1, keepdims=True) > 0, retire * (repl / np.maximum(retire.sum(axis=1), 1e-9))[:, None], 0.0)
+            gap_alloc = np.where(gap.sum(axis=1, keepdims=True) > 0, gap * (growth / np.maximum(gap.sum(axis=1), 1e-9))[:, None], 0.0)
+            Rk = np.maximum(Rk - retire + repl_alloc + gap_alloc, 0.0)
+            e["R"] = Rk; e["cum"] = e["cum"] + production; e["prod_prev"] = np.maximum(production, 0.5 * e["prod_prev"])
+            cov = np.where(H > 1.0, np.minimum(1.0, Rk * e["cap_unit"][:, None] / np.maximum(H, 1.0)), 0.0) * e["recall"][t]   # no addressable hours, no coverage
+            for k in range(R):
+                D_emb[:, k] += occPi_r[k] * cov[:, k][:, None]; zeta_emb[:, k] += occZ_r[k] * cov[:, k][:, None]
+            adj_jobs += e["beta_adj"] * Rk
+            hw_val += (production * price_t / 1e9)[:, None] * e["prod_share_vec"][None, :] * 4.0                          # $bn/yr produced in the region
+            fleet_rec[c][:, :, t] = Rk; cov_rec[c][:, :, t] = cov
+        if not emb_on:
+            D_emb[:] = 0.0; zeta_emb[:] = 0.0
+        if not ch.adjacent:
+            adj_jobs[:] = 0.0; hw_val[:] = 0.0
+        DE[:, :, t] = D_emb[0]
+
         # ---- adoption (spec §4.2), [D, R, n_sec, n_size] ----
         wage_q = wage_r[None, :, :] / 4.0
         B = np.einsum("dro,so->drs", (Z + psi[:, None, :] * G) * wage_q, W) - HOURS_PER_QUARTER * np.einsum("dro,so->drs", Aug, W)
@@ -530,7 +667,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         A = A_new
         eff = (A * iota) @ pi_size                                                   # [D, R, n_sec]
         occ_eff = eff @ inp.occ_sector.T                                             # [D, R, n_occ]
-        Dr = occ_eff * S; Ur = occ_eff * G; zetaR = occ_eff * Z
+        Dr = occ_eff * S; Ur = occ_eff * G; zetaR = occ_eff * Z + zeta_emb
         zeta_hist.append(zetaR); U_hist.append(Ur)
         if len(zeta_hist) > jlag + 1:
             zeta_hist.pop(0); U_hist.pop(0)
@@ -557,14 +694,21 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         else:
             nu = np.zeros((D, R, n_occ))
         rec["nu"][:, :, t] = (nu * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
-        D_use = Dr if ch.automation else 0.0; U_use = Ur if ch.augmentation else 0.0
+        D_sw = Dr if ch.automation else np.zeros_like(Dr); U_use = Ur if ch.augmentation else 0.0
+        D_use = np.minimum(D_sw + D_emb, 1.0)
         N_star = N0t * q_occ * (1.0 - D_use) / (1.0 + psi[:, None, :] * U_use) * (1.0 + nu)
 
-        # ---- hiring channel, layoffs, transitions (spec §5.3–5.4) ----
+        # ---- hiring channel, layoffs, transitions (spec §5.3–5.4); self-employed margin (spec v0.3 §A.3.6) ----
         gap = N - N_star
         shed = np.maximum(gap, 0.0)
-        via_attr = np.minimum(shed, attr[:, None, :] * N)
-        layoffs = lay[:, None, :] * epl * (shed - via_attr)
+        via_attr = np.minimum(shed, attr[:, None, :] * N * (1.0 - self_share))
+        rest = shed - via_attr
+        frac_emb = np.where(D_use > 1e-9, D_emb / np.maximum(D_use, 1e-9), 0.0)
+        lay_eff = (lay[:, None, :] * (1.0 - frac_emb) + lay_conv[:, None, :] * frac_emb) * epl
+        layoffs = lay_eff * rest * (1.0 - self_share)
+        cut = rest * self_share                                                       # self-employed hours fall at once, no attrition buffer
+        exits_self = hours_cut * hazard_self[:, None, :]
+        hours_cut = hours_cut + cut - exits_self
         hires = np.maximum(-gap, 0.0)
         total_search = searching.sum(axis=2) + unhired.sum(axis=2)                   # [D, R]
         reemployed = np.minimum(reemp_rate * total_search, hires.sum(axis=2))
@@ -575,8 +719,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         retrained_ok = retr_success * completed; retrained_fail = completed - retrained_ok
         with np.errstate(divide="ignore", invalid="ignore"):
             keep = np.where(total_search > 0, np.maximum(0.0, 1.0 - (reemployed + exits + to_retrain) / np.maximum(total_search, 1e-9)), 0.0)
-        N = N - via_attr - layoffs + hires
-        searching = searching * keep[:, :, None] + layoffs + retrained_fail[:, :, None] * compl[None, None, :]
+        N = N - via_attr - layoffs - cut + hires
+        searching = searching * keep[:, :, None] + layoffs + exits_self + retrained_fail[:, :, None] * compl[None, None, :]
         unhired = unhired * keep[:, :, None] + via_attr
         XS = (searching + unhired) / np.maximum(N, 1.0)
         target = -0.1 * np.log1p(XS / 0.04) + beta_w[:, None, :] * psi[:, None, :] * Ur
@@ -584,9 +728,9 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         ln_P = pi_p[:, 0][:, None] * (dlnc @ W_cons)                                 # [D, R]
 
         # ---- cohorts (U.S. occupation-cohort structure applied to every region; flagged) ----
-        lost_age += via_attr.sum(axis=2)[:, :, None] * ENTRANT_AGE[None, None, :] + layoffs @ lay_age_w
-        lost_edu += (via_attr + layoffs) @ edu_sh
-        lost_dec += via_attr @ entry_dec + layoffs @ dec_sh
+        lost_age += via_attr.sum(axis=2)[:, :, None] * ENTRANT_AGE[None, None, :] + (layoffs + cut) @ lay_age_w
+        lost_edu += (via_attr + layoffs + cut) @ edu_sh
+        lost_dec += via_attr @ entry_dec + (layoffs + cut) @ dec_sh
         back = reemployed + retrained_ok
         age_w = lost_age * REEMP_AGE_HAZARD[None, None, :]; age_w = age_w / np.maximum(age_w.sum(axis=2, keepdims=True), 1e-9)
         lost_age -= back[:, :, None] * age_w
@@ -596,7 +740,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         moved = lost_age * AGING_RATE[None, None, :]; lost_age = lost_age - moved; lost_age[:, :, 1:] += moved[:, :, :-1]
         ex_w = lost_age * EXIT_AGE_HAZARD[None, None, :]; ex_w = ex_w / np.maximum(ex_w.sum(axis=2, keepdims=True), 1e-9)
         retired = exits * ex_w[:, :, 3]
-        lost_mg += (via_attr + layoffs) @ MG
+        lost_mg += (via_attr + layoffs + cut) @ MG
 
         # ---- macro (spec §6): investment by data-center location, spend, rents, net AI trade ----
         inc = max(cap.annual_bn[t] - cap.trend_bn[t], 0.0)
@@ -604,8 +748,10 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         d_inv = dc_inc * (1.0 - HARDWARE_SHARE_OF_CAPEX) * (1.0 - co[:, None]) if ch.ai_investment else np.zeros((D, R))
         capex_dom[:, :, t] = (dc_inc * (1.0 - HARDWARE_SHARE_OF_CAPEX) / 4.0) if ch.ai_investment else 0.0
         jobs = 1000.0 * capex_dom[:, :, t] + 50.0 * capex_dom[:, :, : t + 1].sum(axis=2)
+        hw_jobs = HW_JOBS_PER_BN * hw_val
         y_ratio = Q_ratio @ wY
-        Y_task = Y0[None, :, t] * y_ratio + d_inv + jobs * AI_PRODUCTION_WAGE / 1e9
+        Y_task = (Y0[None, :, t] * y_ratio + d_inv + jobs * AI_PRODUCTION_WAGE / 1e9 + hw_val * (1.0 - co[:, None])
+                  + adj_jobs * ADJACENT_WAGE / 1e9)
         tfp = -(dlnc @ wY)
         D_sp = Dr if ch.automation else np.zeros_like(Dr); U_sp = Ur if ch.augmentation else np.zeros_like(Ur)
         spend = ((N0t * HOURS_PER_YEAR * D_sp * kb).sum(axis=2) + (N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9))).sum(axis=2)) / 1e9   # [D, R]
@@ -617,21 +763,24 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         hw_export = (inc * HARDWARE_SHARE_OF_CAPEX * hw_va[None, :]) if (ch.ai_investment and regional is not None) else 0.0
         net = received_total - spend + hw_export
         Y = Y_task + net
-        Wt = (N * wage_r[None] * np.exp(ln_w)).sum(axis=2) / 1e9 + jobs * AI_PRODUCTION_WAGE / 1e9
+        Wt = (N * wage_r[None] * np.exp(ln_w)).sum(axis=2) / 1e9 + jobs * AI_PRODUCTION_WAGE / 1e9 + (adj_jobs + hw_jobs) * ADJACENT_WAGE / 1e9
         dW = Wt - W0_bill[None, :, t]; dPi = (Y - Y0[None, :, t]) - dW
         dC_prev = (0.7 * dW + 0.4 * dPi) / (0.68 * Y0[None, :, t])
 
         # ---- record ----
-        for k_, v_ in (("laid", layoffs.sum(axis=2)), ("unhired", via_attr.sum(axis=2)), ("reemp", reemployed), ("retr_in", to_retrain), ("retr_done", retrained_ok), ("exit", exits), ("retired", retired)):
+        for k_, v_ in (("laid", layoffs.sum(axis=2)), ("unhired", via_attr.sum(axis=2)), ("reemp", reemployed), ("retr_in", to_retrain), ("retr_done", retrained_ok), ("exit", exits), ("retired", retired),
+                       ("cut", cut.sum(axis=2))):
             cum[k_] += v_; rec_cum[k_][:, :, t] = cum[k_]
-        disp_hist[:, :, t] = layoffs.sum(axis=2) + via_attr.sum(axis=2)
+        disp_hist[:, :, t] = layoffs.sum(axis=2) + via_attr.sum(axis=2) + cut.sum(axis=2)
+        rec["emb_share"][:, :, t] = (D_emb * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
+        rec["adj_jobs"][:, :, t] = adj_jobs + hw_jobs; rec["hw_capex"][:, :, t] = hw_val; rec["underemp"][:, :, t] = hours_cut.sum(axis=2)
         LNP[:, :, t] = ln_P
         rec["emp"][:, :, t] = N.sum(axis=2); rec["mlnw"][:, :, t] = (N * ln_w).sum(axis=2) / np.maximum(N.sum(axis=2), 1.0)
         for k in range(R):
             Nt[k][:, :, t] = N[: Dk[k], k]; LNW[k][:, :, t] = ln_w[: Dk[k], k]; DD[k][:, :, t] = Dr[: Dk[k], k]; UU[k][:, :, t] = Ur[: Dk[k], k]
         rec["gdp"][:, :, t] = Y / Y0[None, :, t] - 1.0; rec["tfp"][:, :, t] = tfp
         rec["adopt_e"][:, :, t] = ((A @ pi_size) * wY[None, None, :]).sum(axis=2); rec["adopt_f"][:, :, t] = ((A @ firm_size) * wY[None, None, :]).sum(axis=2)
-        rec["spend"][:, :, t] = spend; rec["jobs"][:, :, t] = jobs; rec["net"][:, :, t] = net
+        rec["spend"][:, :, t] = spend; rec["jobs"][:, :, t] = jobs + adj_jobs + hw_jobs; rec["net"][:, :, t] = net
         rec["unemp"][:, :, t] = searching.sum(axis=2) + unhired.sum(axis=2); rec["retr_stock"][:, :, t] = retraining.sum(axis=2)
         rec["wshare"][:, :, t] = 100.0 * (Wt / Y - W0_bill[None, :, t] / Y0[None, :, t])
         LA[:, :, :, t] = lost_age; LE[:, :, :, t] = lost_edu; LD[:, :, :, t] = lost_dec; LM[:, :, :, t] = lost_mg
@@ -653,10 +802,17 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         o.mu = rec["mu"][:, k]; o.q_ratio = rec["q"][:, k]; o.dlnc = rec["dlnc"][:, k]; o.nu_mean = rec["nu"][:, k]
         o.lost_by_age = LA[:, k]; o.lost_by_edu = LE[:, k]; o.lost_by_dec = LD[:, k]; o.lost_by_mg = LM[:, k]
         o.rents = {s: rents_out[s][:, k] for s in stages}
+        o.D_emb = DE[k][None].astype(np.float64); o.emb_share = rec["emb_share"][:, k]; o.adjacent_jobs = rec["adj_jobs"][:, k]; o.hw_capex_bn = rec["hw_capex"][:, k]
+        o.underemp_self = rec["underemp"][:, k]; o.cut_cum = rec_cum["cut"][:, k]
+        o.fleet = {c: fleet_rec[c][:, k] for c in emb}; o.coverage = {c: cov_rec[c][:, k] for c in emb}; o.approval = {c: emb[c]["J"][k] for c in emb}
     return BatchOutput(quarters=quarters, cell_ids=list(draws.cell_ids) if draws else ["central"], C=C, regions=outs, order=order,
                        automatable=automatable, price_mult=price_mult, price_frontier=price_frontier, price_fixed=price_fixed,
                        market_share=market_share, availability=availability, major_groups=mg,
+                       C_emb=C_emb, price_emb=price_rec, kappa_emb=kappa_rec, automatable_emb=automatable_emb,
                        trace={"fitted": fitted, "task_groups": tg.n, "aei_anchoring": "unavailable: class offsets with E1 spread (spec §2.2 fallback)",
+                              "channels_task_hours": {c: float((tg.weight[tg.channel == i] * inp.emp0[tg.occ[tg.channel == i]]).sum() / (tg.weight * inp.emp0[tg.occ]).sum())
+                                                      for i, c in enumerate(["software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none"])},
+                              "self_employed_fte": {x: float(self0[k].sum()) for k, x in enumerate(order)}, "embodied_on": bool(emb_on),
                               "capex_annual_bn": cap.annual_bn, "access_lag": {x: int(lags[k]) for k, x in enumerate(order)},
                               "wage_tier": {x: tiers_r[k] for k, x in enumerate(order)}})
 
@@ -677,8 +833,10 @@ def _concat_region(outs: list[RegionOut]) -> RegionOut:
             merged[name] = v
         elif name in ("N", "ln_w", "D_", "U") and v.shape[0] == 1 and first.region_id != "US":
             merged[name] = v                      # central draw only outside the U.S.; chunk 0 holds it
-        elif name == "rents":
-            merged[name] = {s: np.concatenate([o.rents[s] for o in outs], axis=0) for s in v}
+        elif name in ("D_emb", "self_fte0", "approval"):
+            merged[name] = v                      # central draw only, or draw-independent; chunk 0 holds it
+        elif name in ("rents", "fleet", "coverage"):
+            merged[name] = {s: np.concatenate([getattr(o, name)[s] for o in outs], axis=0) for s in v}
         elif isinstance(v, np.ndarray):
             merged[name] = np.concatenate([getattr(o, name) for o in outs], axis=0)
         else:
@@ -692,20 +850,24 @@ def _concat(outs: list[BatchOutput]) -> BatchOutput:
                        regions={x: _concat_region([o.regions[x] for o in outs]) for x in first.order}, order=first.order,
                        automatable=np.concatenate([o.automatable for o in outs], axis=0), price_mult=np.concatenate([o.price_mult for o in outs], axis=0),
                        price_frontier=first.price_frontier, price_fixed=first.price_fixed, market_share=first.market_share,
-                       availability=first.availability, major_groups=first.major_groups, trace=first.trace)
+                       availability=first.availability, major_groups=first.major_groups, trace=first.trace,
+                       C_emb={c: np.concatenate([o.C_emb[c] for o in outs], axis=0) for c in first.C_emb},
+                       price_emb={c: np.concatenate([o.price_emb[c] for o in outs], axis=0) for c in first.price_emb},
+                       kappa_emb={c: np.concatenate([o.kappa_emb[c] for o in outs], axis=0) for c in first.kappa_emb},
+                       automatable_emb=np.concatenate([o.automatable_emb for o in outs], axis=0))
 
 
 def run_batch_parallel(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet, channels: Channels | None = None,
                        fitted: dict[str, Any] | None = None, cohorts: dict[str, np.ndarray] | None = None, workers: int | None = None,
-                       regional: RegionalInputs | None = None, regions: list[str] | None = None) -> BatchOutput:
+                       regional: RegionalInputs | None = None, regions: list[str] | None = None, apps: AppInputs | None = None) -> BatchOutput:
     import os
     from concurrent.futures import ThreadPoolExecutor
 
     workers = workers or max(1, min(8, os.cpu_count() or 1))
     if draws.n < 2 * workers:
-        return run_batch(inp, p, scenario, draws, channels, fitted, cohorts, regional, regions)
+        return run_batch(inp, p, scenario, draws, channels, fitted, cohorts, regional, regions, apps)
     bounds = np.linspace(0, draws.n, workers + 1).astype(int)
     chunks = [_slice_draws(draws, int(bounds[i]), int(bounds[i + 1])) for i in range(workers)]
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        outs = list(ex.map(lambda c: run_batch(inp, p, scenario, c, channels, fitted, cohorts, regional, regions), chunks))
+        outs = list(ex.map(lambda c: run_batch(inp, p, scenario, c, channels, fitted, cohorts, regional, regions, apps), chunks))
     return _concat(outs)

@@ -280,3 +280,35 @@ A public demo needs no server: the exporter runs the scenarios once and writes e
 | `geo/us-states.geojson`, `geo/world.geojson` | the geo endpoints |
 
 Static mode in the client: scenarios from the manifest; `runScenario(id or hash)` from `runs/`; `compareRuns` from `compare/` when present, else the client-side paired difference; `fetchInsights` from `insights/`; brief links to `briefs/`; explain client-side from the document (as in mock mode); `fetchChatStatus` → `{available: false, reason: "static demo"}`; running a new scenario throws a friendly error and the levers drawer says so. The top bar badge reads `static demo · precomputed runs` and links to the repository. `VITE_BASE` sets the Vite `base` for hosting under a path (GitHub Pages: `/ai-workforce-sim/`).
+
+# Phase 6 additions (contracts v0.7): application layer, embodied channels
+
+## 19. Input tables (`data/processed/applications/`)
+
+| Table | Key | Columns | Status |
+|---|---|---|---|
+| `embodiment_classes.csv` | `cls` ∈ {driving, manip, fixed, aerial} | `a_emb`, `theta_lo`, `theta_hi` (doublings on the class clock), `tau_months`, `saturation`, `unit_price_2025_usd`, `lifetime_years`, `opex_ratio`, `utilization`, `task_units_per_hour`, `g_max_per_year`, `cum_production_2025`, `adjacent_jobs_per_unit`, `stock_2024_<region>`, `prod_share_<region>`, `note`, `source_tag` | FIXTURE (E, V?) |
+| `applications.csv` | `app_id` | `name`, `family`, `cls` (semicolon list), `platform` (0/1), `occ_codes` (semicolon list or `*manip`), `regions_first`, `anchor`, `constraints`, `provisional_profitable`, `provisional_deployed50`, `source_tag` | FIXTURE (E) |
+| `approval_paths.csv` | (`cls`, `region_id`) | `start_year`, `full_year`, `j0`, `j_full`, `source_tag` | FIXTURE (E, V?) |
+| `self_employed.csv` | (`occ_code`, `region_id`) | `heads`, `mean_weekly_hours`, `fte`, `platform_share`, `source_tag` | FIXTURE |
+
+`tasks.csv` gains `channel` ∈ {software, emb_driving, emb_manip, emb_fixed, emb_aerial, none} (spec v0.3 §A.2; `aiwsim.data.classify.classify_channel`, E). The registry gains P.100–P.128.
+
+## 20. Results document additions (schema 0.4)
+
+- `meta.headline_definition`: "FTE jobs including self-employed and platform workers"; `meta.channels_task_hours` (employment-weighted task-hour share by channel); `meta.self_employed_fte` by region; `meta.embodied_on`; `meta.cells` has 16 entries (`…|automotive` or `…|electronics`).
+- `series[region]` gains `embodied_displacement_share` (percent of task-hours, percentiles), `adjacent_jobs`, `hardware_capex_bn` (produced in the region, $bn/yr), `underemployed_self_fte`, `hours_cut_self_cum`, `fleet_stock` {cls: percentiles of deployed units}, `coverage` {cls: percentiles}, `approval_share` {cls: all percentiles equal}; `meta.self_employed_fte` carries the 2024 stock by region.
+- `displaced_workers_cum` now includes the self-employed margin; `flows.destinations` gains `hours_cut_self` (stock) and `self_employed_margin_cum`.
+- `occupations[]` gains `automatable_share_embodied` and `displacement_embodied` {central}; `automatable_share` includes the embodied mass.
+- `supply.embodiment` {cls: {clock, unit_price_usd, cost_per_hour_usd}} (percentiles).
+- `channels.order` is `automation, augmentation, embodied, demand_response, reinstatement, demand_feedback, ai_investment, adjacent`.
+- New section `applications`: one entry per catalogue row with `by_region[region]` = {`target_employment_2024`, `displacement_share` (percent, central, per quarter), `jobs_below_baseline`, `coverage`, `approval` (of the application's primary, first-listed class), `first_quarter` {displacement_1pct, displacement_10pct, coverage_50pct}}.
+- `explain.notes` gains the embodied and self-employed-margin sentences.
+
+## 21. Scenario schema 0.3
+
+`levers.applications.embodiment.{driving,manipulation,fixed,aerial}_doubling_months`, `…coupling_to_software`; `levers.applications.hardware.{learning_rate, utilization_scale, unit_price_scale, ramp_max_growth_per_year}`; `levers.applications.approval.<region>` ∈ {frozen, baseline, accelerated, moratorium}; `levers.applications.platform_labor`; `levers.baseline.automation_trend`. Shocks: `approval_change` (cls, region, at, full_year, j_full), `hardware_recall` (cls, at, duration_quarters), `production_shock` (cls, at, cap_multiplier, duration_quarters). Default draws 256. Schema 0.2 scenarios stay valid.
+
+## 22. API and static export
+
+No new endpoints: `applications` is a section of the results document (`GET /api/results/{hash}/applications`), the levers catalogue lists the new levers with labels, and the static exporter carries the section through. Chat tools read it through `get_summary` and the results document.

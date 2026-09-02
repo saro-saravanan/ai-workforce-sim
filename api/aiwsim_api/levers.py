@@ -39,6 +39,17 @@ LEVER_LABELS: dict[str, tuple[str, str, str, str]] = {
     "levers.labor.occupational_attrition_pct_per_quarter": ("Net occupational attrition", "%/quarter", "P.63", "hiring channel (spec §5.3)"),
     "levers.labor.wage_pass_through": ("Productivity pass-through to wages", "share", "P.74", "wages (spec §5.5)"),
     "levers.baseline.bls_ai_adjustment": ("Baseline: BLS AI adjustment", "", "", "frozen-AI baseline (spec §7.6)"),
+    "levers.baseline.automation_trend": ("Baseline: pre-AI automation trend (scale)", "×", "P.104", "AI-enabled increment over the trend (spec v0.3 §A.6.2)"),
+    "levers.applications.embodiment.driving_doubling_months": ("Driving autonomy doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.embodiment.manipulation_doubling_months": ("Mobile manipulation doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.embodiment.fixed_doubling_months": ("Fixed automation doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.embodiment.aerial_doubling_months": ("Aerial autonomy doubling time", "months", "P.108", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.embodiment.coupling_to_software": ("Coupling of embodiment clocks to the software clock", "", "P.107", "embodiment clock (spec v0.3 §A.3.1)"),
+    "levers.applications.hardware.learning_rate": ("Hardware learning rate", "per doubling", "P.113", "Wright's law unit cost (spec v0.3 §A.3.2)"),
+    "levers.applications.hardware.utilization_scale": ("Hardware utilization (scale)", "×", "P.115", "cost per task-unit (spec v0.3 §A.3.2)"),
+    "levers.applications.hardware.unit_price_scale": ("Hardware unit price 2025 (scale)", "×", "P.110", "cost per task-unit (spec v0.3 §A.3.2)"),
+    "levers.applications.hardware.ramp_max_growth_per_year": ("Production ramp cap", "/yr", "P.117", "deployment speed (spec v0.3 §A.3.3)"),
+    "levers.applications.platform_labor": ("Platform labor classification", "", "P.123", "self-employed margin (spec v0.3 §A.3.6)"),
 }
 POLICY_LABELS = {
     "retraining_subsidy_pct_wage": ("Retraining subsidy", "% of wage"), "wage_insurance_replacement": ("Wage insurance replacement", "share"),
@@ -80,6 +91,10 @@ def _walk_schema(node: dict[str, Any], path: str, base: dict[str, Any], out: lis
                         out.append({"path": f"{p}.US.financing.{fk}", "label": f"Financing: {fk.replace('_', ' ')}", "group": "policy", "type": "enum",
                                     "options": fv["enum"], "default": (us.get("financing") or {}).get(fk), "unit": "", "param": "", "mechanism": "financing rule (spec §6.5)"})
 
+
+
+for _r in ("US", "EU", "UK", "CN", "JP", "KR", "IN", "TW", "SG", "RoA"):
+    LEVER_LABELS[f"levers.applications.approval.{_r}"] = (f"Approval regime: {_r}", "", "P.119", "deployment share J (spec v0.3 §A.3.4)")
 
 
 def lever_definitions() -> list[dict[str, Any]]:

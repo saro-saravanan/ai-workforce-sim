@@ -11,7 +11,10 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "0.2"
+      "enum": [
+        "0.2",
+        "0.3"
+      ]
     },
     "id": {
       "type": "string",
@@ -405,6 +408,167 @@
                 "keep_projection"
               ],
               "default": "restore_trend"
+            },
+            "automation_trend": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 1.5,
+              "default": 1.0
+            }
+          }
+        },
+        "applications": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "embodiment": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "driving_doubling_months": {
+                  "type": "number",
+                  "minimum": 6,
+                  "maximum": 48
+                },
+                "manipulation_doubling_months": {
+                  "type": "number",
+                  "minimum": 6,
+                  "maximum": 48
+                },
+                "fixed_doubling_months": {
+                  "type": "number",
+                  "minimum": 6,
+                  "maximum": 60
+                },
+                "aerial_doubling_months": {
+                  "type": "number",
+                  "minimum": 6,
+                  "maximum": 48
+                },
+                "coupling_to_software": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.7
+                }
+              }
+            },
+            "hardware": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "learning_rate": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 0.25
+                },
+                "utilization_scale": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 1.6
+                },
+                "unit_price_scale": {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 2.0
+                },
+                "ramp_max_growth_per_year": {
+                  "type": "number",
+                  "minimum": 0.3,
+                  "maximum": 1.5
+                }
+              }
+            },
+            "approval": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "US": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "EU": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "UK": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "CN": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "JP": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "KR": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "IN": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "TW": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "SG": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                },
+                "RoA": {
+                  "enum": [
+                    "frozen",
+                    "baseline",
+                    "accelerated",
+                    "moratorium"
+                  ]
+                }
+              }
+            },
+            "platform_labor": {
+              "enum": [
+                "status_quo",
+                "employee_reclassification"
+              ]
             }
           }
         }
@@ -422,11 +586,14 @@
         "properties": {
           "type": {
             "enum": [
+              "approval_change",
               "frontier_breakthrough",
+              "hardware_recall",
               "lab_exit",
               "open_weights_release",
-              "supply_chain_cut",
-              "recession"
+              "production_shock",
+              "recession",
+              "supply_chain_cut"
             ]
           },
           "at": {
@@ -467,6 +634,29 @@
           "id": {
             "type": "string",
             "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+          },
+          "cls": {
+            "enum": [
+              "driving",
+              "manip",
+              "fixed",
+              "aerial"
+            ]
+          },
+          "full_year": {
+            "type": "integer",
+            "minimum": 2024,
+            "maximum": 2045
+          },
+          "j_full": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "cap_multiplier": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2
           }
         }
       }
@@ -524,7 +714,7 @@
     "preset": {
       "type": "boolean",
       "default": false,
-      "description": "Report-replication preset (spec §8.4)."
+      "description": "Report-replication preset (spec \u00a78.4)."
     },
     "user": {
       "type": "boolean",

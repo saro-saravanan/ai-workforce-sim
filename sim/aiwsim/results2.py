@@ -149,7 +149,9 @@ def flows_section(o: BatchOutput) -> dict[str, Any]:
     return {"origins": origins, "destinations": {
         "reemployed": pct(o.reemployed_cum + o.retrained_cum, 1.0, 0), "retraining": pct(o.retraining_stock, 1.0, 0),
         "unemployed": pct(o.unemployed_stock, 1.0, 0), "exited": pct(o.exited_cum - o.retired_cum, 1.0, 0), "retired": pct(o.retired_cum, 1.0, 0),
-        "unfilled_entry": pct(o.unhired_cum, 1.0, 0), "laid_off": pct(o.laid_off_cum, 1.0, 0)}}
+        "unfilled_entry": pct(o.unhired_cum, 1.0, 0), "laid_off": pct(o.laid_off_cum, 1.0, 0),
+        "hours_cut_self": pct(o.underemp_self, 1.0, 0) if o.underemp_self.size else pct(np.zeros_like(o.laid_off_cum), 1.0, 0),
+        "self_employed_margin_cum": pct(o.cut_cum, 1.0, 0) if o.cut_cum.size else pct(np.zeros_like(o.laid_off_cum), 1.0, 0)}}
 
 
 def _horizon_words(c: float) -> str:
@@ -193,8 +195,14 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
     order = np.argsort(-np.where(big, o.D_[0, :, i30], -1.0))[:3]
     notes.append(f"Highest realized displacement by {q[i30]} among occupations with 100k+ jobs: " + "; ".join(
         f"{inp.occ_titles[i]} ({100*o.D_[0, i, i30]:.0f}% of task-hours)" for i in order) + ".")
-    lay = o.laid_off_cum[0, t_end]; unh = o.unhired_cum[0, t_end]
-    notes.append(f"Of {(lay+unh)/1e6:.1f}M jobs below baseline by {q[t_end]}, {100*unh/max(lay+unh,1):.0f}% come through positions not refilled after attrition and {100*lay/max(lay+unh,1):.0f}% through layoffs.")
+    lay = o.laid_off_cum[0, t_end]; unh = o.unhired_cum[0, t_end]; cut = float(o.cut_cum[0, t_end]) if o.cut_cum.size else 0.0
+    tot_lost = max(lay + unh + cut, 1.0)
+    notes.append(f"Of {tot_lost/1e6:.1f}M FTE jobs below baseline by {q[t_end]}, {100*unh/tot_lost:.0f}% come through positions not refilled after attrition, "
+                 f"{100*lay/tot_lost:.0f}% through layoffs, and {100*cut/tot_lost:.0f}% through hours cut for self-employed and platform workers.")
+    if o.emb_share.size and o.emb_share[0, t_end] > 1e-4:
+        fl = {c: float(v[0, t_end]) for c, v in o.fleet.items()}
+        notes.append(f"Embodied AI (spec v0.3) displaces {100*o.emb_share[0, t_end]:.1f}% of U.S. task-hours by {q[t_end]} ({100*o.emb_share[0, i30]:.1f}% by {q[i30]}); "
+                     + "deployed units: " + ", ".join(f"{c} {v/1e3:.0f}k" for c, v in fl.items()) + f"; adjacent and hardware-production jobs {o.adjacent_jobs[0, t_end]/1e3:.0f}k.")
     c = conf.get("employment_pct_vs_baseline", {}).get(q[t_end], {})
     if c:
         notes.append(f"Confidence in the sign of the {q[t_end]} employment effect: {c['level']} (sign holds in {100*c['sign_share']:.0f}% of draws; mechanism cells {'agree' if c['cells_agree'] else 'disagree'}"
@@ -261,6 +269,15 @@ def region_series(ro) -> dict[str, Any]:
         "ai_spend_bn": pct(ro.ai_spend, 1.0, 1), "ai_production_jobs": pct(ro.ai_jobs, 1.0, 0),
         "ai_rents_received_bn": {**{s_: pct(a, 1.0, 1) for s_, a in ro.rents.items()}, "total": pct(sum(ro.rents.values()), 1.0, 1)},
         "net_ai_trade_bn": pct(ro.net_ai_trade, 1.0, 1), "regional_capability_index": pct(ro.C_region, 1.0, 2),
+        # ---- v0.3 application layer (spec §A.6.3) ----
+        "embodied_displacement_share": pct(ro.emb_share, 100.0) if ro.emb_share.size else {},
+        "adjacent_jobs": pct(ro.adjacent_jobs, 1.0, 0) if ro.adjacent_jobs.size else {},
+        "hardware_capex_bn": pct(ro.hw_capex_bn, 1.0, 2) if ro.hw_capex_bn.size else {},
+        "underemployed_self_fte": pct(ro.underemp_self, 1.0, 0) if ro.underemp_self.size else {},
+        "hours_cut_self_cum": pct(ro.cut_cum, 1.0, 0) if ro.cut_cum.size else {},
+        "fleet_stock": {c: pct(v, 1.0, 0) for c, v in ro.fleet.items()},
+        "coverage": {c: pct(v, 1.0, 3) for c, v in ro.coverage.items()},
+        "approval_share": {c: pct(np.repeat(v[None, :], 2, axis=0), 1.0, 3) for c, v in ro.approval.items()},   # draw-independent: all percentiles equal
     }
 
 
@@ -298,9 +315,42 @@ def _reg_events(inp: Inputs, quarters: list[str]) -> list[dict[str, Any]]:
     return out
 
 
+def applications_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, Any]]:
+    """Per application and region (central draw): target employment, realized embodied displacement, coverage, approval, gate quarters (spec §A.6.3)."""
+    if apps is None:
+        return []
+    q = o.quarters
+    out = []
+    for app in apps.apps:
+        mask = apps.occ_mask(app, inp)
+        codes = [inp.occ_codes[i] for i in np.flatnonzero(mask)]
+        by_region: dict[str, Any] = {}
+        for x in o.order:
+            ro = o.regions[x]
+            if not ro.D_emb.size:
+                continue
+            N0m = ro.N0[mask]                                                             # [n_m, n_q]
+            De = ro.D_emb[0][mask]                                                        # [n_m, n_q]
+            tot = np.maximum(N0m.sum(axis=0), 1.0)
+            disp = (De * N0m).sum(axis=0) / tot
+            primary = next((c for c in app.classes if c in ro.coverage), None)          # gates of the primary (first-listed) class
+            cov = ro.coverage[primary][0] if primary else np.zeros(len(q))
+            appr = ro.approval[primary] if primary and primary in ro.approval else np.zeros(len(q))
+            def first(arr: np.ndarray, thr: float) -> str | None:
+                idx = np.flatnonzero(arr >= thr)
+                return q[int(idx[0])] if len(idx) else None
+            by_region[x] = {"target_employment_2024": int(N0m[:, 0].sum()), "displacement_share": rl(disp, 100.0, 2),
+                            "jobs_below_baseline": rl((De * N0m).sum(axis=0), 1.0, 0), "coverage": rl(cov, 1.0, 3), "approval": rl(appr, 1.0, 3),
+                            "first_quarter": {"displacement_1pct": first(disp, 0.01), "displacement_10pct": first(disp, 0.10), "coverage_50pct": first(cov, 0.5)}}
+        out.append({"app_id": app.app_id, "name": app.name, "family": app.family, "classes": app.classes, "platform": app.platform,
+                    "occ_codes": codes, "regions_first": app.regions_first, "anchor": app.anchor, "constraints": app.constraints,
+                    "provisional_profitable": app.provisional_profitable, "provisional_deployed50": app.provisional_deployed50, "by_region": by_region})
+    return out
+
+
 def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shash: str, channels: dict[str, Any] | None,
                      torn: dict[str, Any] | None, diff: list[dict[str, Any]] | None, draws: int, ensemble: str,
-                     cohort_flag: str, regional: Any = None) -> dict[str, Any]:
+                     cohort_flag: str, regional: Any = None, apps: Any = None) -> dict[str, Any]:
     q = o.quarters
     flags = dict(inp.data_flags); flags["aei_anchoring"] = "unavailable"; flags["cohorts"] = cohort_flag
     conf = confidence(o, torn, q)
@@ -310,7 +360,10 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "run_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "draws": draws, "ensemble": ensemble, "cells": cells,
             "percentiles": PCTS, "quarters": q, "regions": ["US"], "baseline": "no_frontier_ai_after_2023", "data_flags": flags,
             "data_version": inp.data_version, "capability_units": "doublings of METR 50% task horizon (minutes = 2^index)",
-            "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups"), "validity": validity(o)}
+            "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups"), "validity": validity(o),
+            "headline_definition": "FTE jobs including self-employed and platform workers (spec v0.3 §A.5.1); payroll-only employment is not separately tracked",
+            "channels_task_hours": o.trace.get("channels_task_hours"), "self_employed_fte": o.trace.get("self_employed_fte"),
+            "embodied_on": o.trace.get("embodied_on")}
     series = {x: region_series(o.regions[x]) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})
@@ -341,6 +394,8 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
         "releases": _releases(regional, q), "regulatory_events": _reg_events(inp, q),
         "availability": {x: {a_: [int(v) for v in arr] for a_, arr in o.availability.get(x, {}).items()} for x in o.order},
         "market_share": {x: {a_: {"central": rl(arr, 1.0, 3)} for a_, arr in o.market_share.get(x, {}).items()} for x in o.order},
+        "embodiment": {c: {"clock": pct(o.C_emb[c], 1.0, 2), "unit_price_usd": pct(o.price_emb[c], 1.0, 0), "cost_per_hour_usd": pct(o.kappa_emb[c], 1.0, 2)}
+                       for c in o.C_emb},
     }
     beta = inp.occ_exposure_beta
     occs = []
@@ -348,6 +403,8 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
         occs.append({"occ_code": inp.occ_codes[i], "title": inp.occ_titles[i], "cluster_id": inp.cluster_id[i], "major_group": inp.major_group[i],
                      "emp0": int(inp.emp0[i]), "wage0": int(inp.wage_mean[i]), "automatable_share": round(float(o.automatable[0, i]), 4),
                      "exposure_beta": round(float(beta[i]), 4), "displacement": slim(o.D_[:, i, :]), "augmentation": {"central": rl(o.U[0, i, :])},
+                     "automatable_share_embodied": round(float(o.automatable_emb[0, i]), 4) if o.automatable_emb.size else 0.0,
+                     "displacement_embodied": {"central": rl(o.us.D_emb[0, i, :])} if o.us.D_emb.size else {"central": []},
                      "employment_pct_vs_baseline": slim(o.N[:, i, :] / np.maximum(o.N0[i], 1.0)[None, :] - 1.0, 100.0),
                      "real_wage_pct_vs_baseline": {"central": rl(np.exp(o.ln_w[0, i, :] - o.ln_P[0]) - 1.0, 100.0)},
                      "by_region": {x: {"displacement": {"central": rl(o.regions[x].D_[0, i, :])}} for x in o.order if x != "US"}})
@@ -365,5 +422,5 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
     return {"meta": meta, "series": series, "occupations": occs, "states": states, "regions": regions_meta, "world": world, "supply": supply,
             "channels": channels or {},
             "structural": structural(o, q) if cells else {}, "confidence": conf, "tornado": torn or {},
-            "cohorts": cohorts_section(o), "flows": flows_section(o),
+            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps),
             "explain": {"notes": explain_notes(inp, o, conf), "trace": trace(o, q), "diff": annotate_diff(diff or [])}}

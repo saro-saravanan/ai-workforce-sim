@@ -48,6 +48,8 @@ import polars as pl
 MODALITIES = ("software", "other_cognitive", "interpersonal", "physical")
 USE_CASES = ("high_risk", "transparency", "unregulated")
 CLASSIFIER_VERSION = "keyword-rules v1 (E)"
+CHANNEL_VERSION = "channel-rules v1 (E, spec v0.3 §A.2)"
+CHANNELS = ("software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none")
 
 _F = re.IGNORECASE
 
@@ -151,6 +153,61 @@ MODALITY_RULES: list[tuple[str, str]] = [
 ]
 
 MODALITY_TIEBREAK = ("physical", "interpersonal", "software")
+
+# ----------------------------------------------------------------------------------------------
+# Channel assignment chi_k (spec v0.3 §A.2): one channel per task group. Checked in this order.
+# Driving and aerial rules apply to every modality (a taxi driver's "transport passengers" task is
+# classified interpersonal by the modality rules); the care/dexterity, fixed, and manipulation rules
+# apply to physical tasks only. Non-physical tasks without a driving/aerial match stay on the
+# software channel (unchanged v0.2 behaviour).
+# ----------------------------------------------------------------------------------------------
+_VEH = (r"(vehicles?|trucks?|tractor[- ]trailers?|semi[- ]?trucks?|buses|bus\b|taxis?|taxicabs?|cabs?|limousines?|shuttles?|vans?|"
+        r"automobiles?|cars?|ambulances?|delivery (vehicles?|trucks?|vans?)|routes?)")
+CHANNEL_DRIVING = [
+    rf"\b(driv(e|es|ing)|operat\w*|steer\w*|maneuver\w*|navigat\w*|park\w*)\b[^.;]{{0,30}}\b{_VEH}",
+    (r"\b(transport\w*|convey\w*|haul\w*|shuttl\w*|chauffeur\w*)\b[^.;]{0,25}\b(passengers?|customers?|clients?|patients?|goods|freight|cargo|merchandise|materials?|"
+    r"products?|shipments?|loads?|mail|packages?|parcels?|equipment)\b"),
+    r"\b(pick(s|ing)? up|drop(s|ping)? off|collect\w*)\b[^.;]{0,20}\b(passengers?|fares?|customers?|riders?)\b",
+    r"\b(deliver\w*)\b[^.;]{0,25}\b(packages?|parcels?|mail|goods|food|meals?|orders?|newspapers?|merchandise|shipments?|products?|groceries)\b",
+    r"\b(follow|plan|maintain)\w*\b[^.;]{0,15}\b(delivery |bus |truck |driving )?routes?\b",
+    r"\b(traffic laws|road conditions|driving records?|mileage|odometer|dispatch\w* (calls|instructions)|taxi ?meters?)\b",
+]
+CHANNEL_AERIAL = [r"\b(drones?|unmanned (aerial|aircraft)|uas\b|uav\b|aerial (delivery|inspection|survey\w*|spraying|application))\b"]
+CHANNEL_NONE = [   # care, dexterity and safety-critical bodily work: outside the embodied horizon at central (spec §A.2 rule 5)
+    r"\b(patients?|residents?|infants?|children|elderly|clients?)\b[^.;]{0,25}\b(bath\w*|feed\w*|dress\w*|lift\w*|turn\w*|groom\w*|toilet\w*|comfort\w*|assist\w*)\b",
+    r"\b(bath\w*|feed\w*|dress\w*|lift\w*|turn\w*|groom\w*|toilet\w*)\b[^.;]{0,25}\b(patients?|residents?|infants?|children|elderly)\b",
+    (r"\b(surg\w*|incisions?|sutur\w*|inject\w*|intravenous|catheter\w*|dental|teeth|hair|nails?|manicur\w*|pedicur\w*|massag\w*|tattoo\w*|"
+    r"pierc\w*|makeup|cosmetolog\w*|barber\w*|embalm\w*|physical therapy|chiropract\w*|acupunctur\w*|midwif\w*)\b"),
+    r"\b(fight\w* fires?|extinguish\w*|rescu(e|es|ing)|apprehend\w*|arrest\w*|restrain\w* (suspects?|offenders?|inmates?|patients?)|combat|firearms?)\b",
+    r"\b(fly|flies|flying|pilot\w*)\b[^.;]{0,20}\b(aircraft|airplanes?|planes?|helicopters?|jets?)\b",
+]
+CHANNEL_FIXED = [   # structured environments: the baseline automation trend already reaches these (spec §A.2 rule 3)
+    (r"\b(production lines?|assembly lines?|conveyors?|presses?|stamping|injection[- ]mold\w*|extrud\w*|cnc\b|lathes?|milling machines?|"
+    r"looms?|spinning|knitting machines?|bottling|canning|packaging (machines?|equipment|lines?)|labeling machines?|sewing machines?|"
+    r"furnaces?|kilns?|ovens?|boilers?|reactors?|distill\w*|smelt\w*|roll(ing)? mills?|paper machines?|printing presses?|"
+    r"automated (equipment|machinery|systems?)|control panels?|gauges?|meters?|dials?)\b"),
+    r"\b(tend\w*|feed\w*|monitor\w*|set up|adjust\w*|calibrat\w*|start\w*|stop\w*|regulat\w*)\b[^.;]{0,25}\b(machines?|machinery|equipment)\b",
+]
+_CH_DRV = [re.compile(p, _F) for p in CHANNEL_DRIVING]
+_CH_AIR = [re.compile(p, _F) for p in CHANNEL_AERIAL]
+_CH_NONE = [re.compile(p, _F) for p in CHANNEL_NONE]
+_CH_FIX = [re.compile(p, _F) for p in CHANNEL_FIXED]
+
+
+def classify_channel(text: str, modality: str) -> str:
+    """Channel assignment chi_k (spec v0.3 §A.2). Deterministic keyword rules, tagged E."""
+    t = text or ""
+    if any(r.search(t) for r in _CH_NONE):
+        return "none" if modality in ("physical", "interpersonal") else "software"
+    if any(r.search(t) for r in _CH_AIR):
+        return "emb_aerial"
+    if any(r.search(t) for r in _CH_DRV):
+        return "emb_driving"
+    if modality != "physical":
+        return "software"
+    if any(r.search(t) for r in _CH_FIX):
+        return "emb_fixed"
+    return "emb_manip"
 
 # ----------------------------------------------------------------------------------------------
 # Presence requirement pi_k
@@ -330,14 +387,15 @@ def classify_text(text: str) -> dict:
         "presence": presence(text, m),
         "use_case": u,
         "consequence_high": consequence_high(text, u),
+        "channel": classify_channel(text, m),
     }
 
 
 def classify_frame(df: pl.DataFrame, text_col: str = "task_text") -> pl.DataFrame:
-    """Append ``modality``, ``presence``, ``use_case``, ``consequence_high`` to ``df``."""
+    """Append ``modality``, ``presence``, ``use_case``, ``consequence_high``, ``channel`` to ``df``."""
     rows = [classify_text(t or "") for t in df[text_col].to_list()]
     cols = pl.DataFrame(rows, schema={"modality": pl.Utf8, "presence": pl.Float64,
-                                       "use_case": pl.Utf8, "consequence_high": pl.Int64})
+                                       "use_case": pl.Utf8, "consequence_high": pl.Int64, "channel": pl.Utf8})
     return df.hstack(cols)
 
 
@@ -345,7 +403,9 @@ def distribution(df: pl.DataFrame, weight_col: str | None = None) -> dict[str, d
     """Class shares (row-weighted, or by ``weight_col``) for the four classifier columns."""
     out: dict[str, dict] = {}
     n = df.height
-    for col in ("modality", "use_case", "consequence_high"):
+    for col in ("modality", "use_case", "consequence_high", "channel"):
+        if col not in df.columns:
+            continue
         if weight_col:
             g = df.group_by(col).agg(pl.col(weight_col).sum().alias("w")).sort(col)
             tot = g["w"].sum()

@@ -102,7 +102,7 @@ Cumulative production and the deployable stock are constrained:
 
 $$\Delta Q^{prod}_{c,t} \le Q^{prod}_{c,t-1}\,(1+g^{max}_c)^{1/4},\qquad Q^{prod}_{c,0} \text{ from 2025 fleet counts}$$
 
-`g^{max}_c` maximum annual production growth (`P.117`, `V?`: EV and industrial-robot production histories give 50–100%/yr at scale-up, with a wide range). Desired production is the profitable-feasible demand from all regions; supply is the constrained path; the shortfall delays deployment rather than raising price (a queue, as with compute capacity in §3.4). Hardware production is booked to the producing region's AI-production sector (§5.7) with a regional production-share table (`P.118`, `D` from vehicle and robot manufacturing locations).
+`g^{max}_c` maximum annual production growth (`P.117`, `V?`: EV production grew about 50%/yr over 2015–2023 from a small base and industrial-robot installations about 10%/yr; central 0.5 with a 0.3–1.5 range). Desired production is the profitable-feasible demand from all regions; supply is the constrained path; the shortfall delays deployment rather than raising price (a queue, as with compute capacity in §3.4). Hardware production is booked to the producing region's AI-production sector (§5.7) with a regional production-share table (`P.118`, `D` from vehicle and robot manufacturing locations).
 
 ### A.3.4 Deployment stock and approval
 
@@ -252,7 +252,7 @@ Software-task rows exist so that the catalogue is the single place where coverag
 | P.114 | Operating cost ratio `o_c` | 0.5 | 0.2–1.0 | × annual capital cost | E | |
 | P.115 | Utilization `u_c` | driving 0.45 of hours; manipulation 0.6; fixed 0.8 | ±50% | share | E, V? | lever |
 | P.116 | Task-units per hour relative to worker `TU_c` | 1.0 | 0.5–2.0 | × | E | |
-| P.117 | Max production growth `g^{max}_c` | 0.7 | 0.3–1.5 | /yr | S, V? | EV and robot ramps |
+| P.117 | Max production growth `g^{max}_c` | 0.5 | 0.3–1.5 | /yr | S, V? | EV production ~50%/yr 2015–2023; changed from 0.7 in the draft after the first run (§A.15) |
 | P.118 | Production location shares | table | | share | D | vehicle and robot manufacturing |
 | P.119 | Approval path `J_{c,r,t}` | table by region | lever states | share | E, V? | baseline path is a verification item |
 | P.120 | Adjacent jobs per deployed unit `β_{c,o'}` | driving 0.1; manipulation 0.05 | 0–0.3 | FTE per unit | E, V? | |
@@ -356,3 +356,23 @@ Each phase ends with a findings note and an update of this amendment's `V?` mark
 4. The deployment-coverage bound makes production capacity the binding constraint for a decade at central values. Is that a feature or an assumption smuggled in through `g^{max}`?
 5. Traded services reverse the trade matrix; should the model also carry re-shoring (importing regions replacing imports with domestic AI-augmented work), which cuts the other way?
 6. Headline employment changes definition (FTE including self-employment). Keep the payroll-only headline as the default and the inclusive one as a toggle, or the reverse?
+
+---
+
+## A.15 Implementation notes and deviations (Phase 6 build)
+
+Where the Phase 6 code departs from or sharpens the text above.
+
+| Topic | Amendment text | Implementation | Why |
+|---|---|---|---|
+| Channel assignment (§A.2) | O*NET Generalized Work Activity and Work Context items | keyword rules on the task statement (`aiwsim.data.classify.classify_channel`, E), driving and aerial rules applied to every modality, care/dexterity rule maps to `none`; employment-weighted task-hour shares: software 74.9%, manipulation 20.1%, driving 1.9%, fixed 1.6%, none 1.6%, aerial ≈ 0 | GWA and Work Context are not in the offline replication data; the O*NET ingest replaces the rules |
+| Embodiment clocks (§A.3.1) | anchored to paid-ride, disengagement, benchmark series | start at 0 in 2024Q1 with class doubling times (P.108) plus coupling to the software clock (P.107); task thresholds `θ_k = θ_lo + (θ_hi − θ_lo)·hash + 0.5·consequence` per class | no anchor series ingested yet; the driving clock fit is the first verification item |
+| Fixed-automation increment (§A.2 rule 3, §A.6.2) | baseline robot stock `R^0` netted out | `a_emb(fixed)` is the increment itself and is scaled by `1.5 − 0.5·trend` (lever `baseline.automation_trend`); no explicit `R^0` series | the increment is small (1.6% of task-hours) and no IFR series is ingested |
+| Production ramp (§A.3.3) | `g^max` 0.7/yr in the draft | central 0.5/yr (range 0.3–1.5); 2024Q1 production = 15% of 2025 cumulative production; capacity never falls below half the previous quarter | 0.7 sustained for sixteen years produced tens of millions of manipulators by 2040; EV history supports ~50%/yr |
+| Deployment (§A.3.4) | per class, region, and use | per class and region; an application aggregates the engine's class-level results over its target occupations, so applications in the same class share a fleet and an approval path | one stock-flow per class keeps the layer cheap; per-use approval arrives with the permit data |
+| Self-employed margin (§A.3.6, §A.5.2) | employee/self-employed split with transitions | self-employed FTE is added to `N0`; the attrition buffer applies only to the payroll share; the self-employed share of a required contraction is cut immediately (hours) and exits to searching at hazard P.121; layoff friction for embodied displacement inside employers is P.122 | transitions between the two statuses (P.123) await the CPS flows ingest |
+| Adjacent and hardware jobs (§A.3.5) | adjacent jobs in named occupations | adjacent jobs `β_c·R` in the deploying region and hardware-production jobs (1,500 per $bn, E) in producing regions, both counted in `ai_production_jobs` and reported separately as `adjacent_jobs`; paid at $65k (E) | occupation-level adjacent mapping needs the fleet-operations staffing data |
+| Ensemble (§A.7) | 16 cells, 256 draws | implemented; the authenticity axis arrives with output substitution in Phase 7 | — |
+| Runtime (§A.7) | ≤ 60 s | 69 s for ten regions at 256 draws with tornado (26 parameters) and channels (8 runs) on 4 cores | the budget is exceeded by the larger tornado and channel sets, not by the embodied layer (a central run takes 2 s); tune in Phase 7 |
+| Headline (§A.5.1) | payroll series kept alongside | headline is FTE including self-employed and platform workers; `meta.headline_definition` says so; a payroll-only series is not tracked | tracking both requires splitting every flow; deferred to Phase 7 |
+| Applications with `*manip` targets | — | `humanoid_general` reports over every occupation with manipulation task-hours | it is the manipulation class reaching breadth, not a separate mechanism |

@@ -12,3 +12,5 @@ class Channels:
     reinstatement: bool = True
     demand_feedback: bool = True
     ai_investment: bool = True
+    embodied: bool = True      # spec v0.3 §A.3 embodied channels
+    adjacent: bool = True      # spec v0.3 §A.3.5 adjacent and hardware-production employment

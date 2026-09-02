@@ -169,6 +169,19 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
                 "Wage tiers change the profitability test (spec §3.3): lower-wage regions automate later at a given price; access lags and spillover shift timing (spec §4.2, §6.3).",
                 "medium", 0.25 + min(0.5, (hi[1] - lo[1]) / 8), {"employment_pct_by_region": {k: round(v, 2) for k, v in emps.items()}}, "employment_pct_vs_baseline")
 
+    # 8b. Embodied automation (spec v0.3): late, then large.
+    es = blk.get("embodied_displacement_share")
+    if es:
+        e30, e40 = _at(es, i30), _at(es, t_end)
+        fleets = {c: _at(v, t_end) for c, v in blk.get("fleet_stock", {}).items()}
+        if e40 > 0.5:
+            add("embodied_timing", "Embodied automation arrives late, then large",
+                f"Robots and autonomous vehicles displace {e30:.1f}% of {region} task-hours by {quarters[i30]} but {e40:.1f}% by {q_end}"
+                + (f"; deployed units by {q_end}: " + ", ".join(f"{c} {v/1e6:.1f}M" for c, v in fleets.items() if v > 0) if fleets else "") + ".",
+                "Embodied channels wait on hardware unit cost (Wright's law), the production ramp cap, and approval paths, not on the software clock; "
+                "coverage binds until fleets catch up with profitable-feasible hours (spec v0.3 §A.3.3–A.3.4).",
+                "medium", 0.35 + min(0.5, (e40 - e30) / 8), {"share_2030": e30, "share_2040": e40, "fleet_2040": fleets}, "employment_pct_vs_baseline")
+
     # 9. Sign confidence.
     conf = doc.get("confidence", {}).get("employment_pct_vs_baseline", {}).get(q_end)
     if conf:

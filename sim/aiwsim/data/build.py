@@ -41,6 +41,7 @@ TABLES = [
     # Phase 3 (contracts §11)
     "regions/region_members", "regions/regions", "regions/occ_region", "regions/trade_weights",
     "regions/actors", "regions/actor_releases", "regions/value_chain", "geo/world",
+    "applications/embodiment_classes", "applications/applications", "applications/approval_paths", "applications/self_employed",
 ]
 NE_WORLD_50M = "ne_50m_admin_0_countries.geojson"
 
@@ -163,7 +164,7 @@ def build_occupations_and_tasks(raw: dict[str, pl.DataFrame], params: cl.Cluster
     tasks = classify.classify_frame(lab, "task_text")
     tasks = tasks.with_columns(pl.lit("real:eloundou_labels+onet_tasks;classifiers:E").alias("source_tag")).select(
         "task_id", "occ_code", "task_text", "weight", "exposure_label", "beta",
-        "modality", "presence", "use_case", "consequence_high", "source_tag",
+        "modality", "presence", "use_case", "consequence_high", "channel", "source_tag",
         "onet_soc_code", "task_type", "label_source",
     ).sort(["occ_code", "task_id"])
     notes["classifier_distribution"] = classify.distribution(tasks)
@@ -301,6 +302,7 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
             f"modality {classify.CLASSIFIER_VERSION}", f"presence {classify.CLASSIFIER_VERSION}",
             f"use_case (EU AI Act Annex III / Art. 50) {classify.CLASSIFIER_VERSION}",
             f"consequence_high {classify.CLASSIFIER_VERSION}",
+            f"channel {classify.CHANNEL_VERSION}",
         ],
         notes="Labels and weights are real (status real); modality, presence, use_case and consequence_high are "
               "E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. "
@@ -434,6 +436,49 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
     statuses.update(build_cohorts(root, raw, occ, commit, log))
     # ---- regions/ + geo/world (contracts §11) -------------------------------------------------
     statuses.update(build_regions(root, occ, log))
+    # ---- applications/ (spec v0.3 §A.3–A.5, §A.8) --------------------------------------------
+    statuses.update(build_applications(root, occ, log))
+    return statuses
+
+
+def build_applications(root: Path, occ: pl.DataFrame, log) -> dict[str, str]:
+    """Write the four ``data/processed/applications/`` tables and provenance (spec v0.3)."""
+    from aiwsim.data import applications as ap
+    out = root / PROCESSED / "applications"
+    out.mkdir(parents=True, exist_ok=True)
+    statuses: dict[str, str] = {}
+    spec_url = "docs/model-spec-v0.3-applications.md"
+    p = _write_csv(ap.embodiment_classes_frame(), out / "embodiment_classes.csv")
+    statuses["applications/embodiment_classes"] = "FIXTURE (E)"
+    write_provenance(root, "applications/embodiment_classes", p, source="spec v0.3 §A.3 class parameters (authors' estimates, V? pending §A.10)",
+                     source_url=spec_url, license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
+                     transformations=[("one row per embodiment class: a_emb, theta range, clock, unit price 2025, lifetime, opex ratio, utilization, task units per hour, "
+                                      "production ramp cap, cumulative production 2025, adjacent jobs per unit, initial stock and production shares by region")],
+                     notes="Every value is an estimate written before the data plan ran; unit prices, utilization, ramps and 2025 production are V? (spec §A.10). "
+                           "Replace through the verification items; the registry rows P.108–P.120 carry the ranges.")
+    p = _write_csv(ap.applications_frame(), out / "applications.csv")
+    statuses["applications/applications"] = "FIXTURE (E)"
+    write_provenance(root, "applications/applications", p, source="spec v0.3 §A.8 application catalogue", source_url=spec_url, license="n/a (catalogue)", status="FIXTURE (E: authors' estimates, spec v0.3)",
+                     transformations=["one row per application: family, embodiment class(es), target occupation codes, platform flag, regions first, anchor series, constraints, provisional timings"],
+                     notes="Phase 6 implements the embodied rows; output-substitution and traded-services rows arrive in Phase 7. Timings are provisional ranges for the reviewer, not results.")
+    p = _write_csv(ap.approval_paths_frame(), out / "approval_paths.csv")
+    statuses["applications/approval_paths"] = "FIXTURE (E)"
+    write_provenance(root, "applications/approval_paths", p, source="spec v0.3 §A.3.4 approval baseline paths (E, V?)", source_url=spec_url, license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
+                     transformations=["J rises linearly from j0 at start_year to j_full at full_year per class and region; lever states frozen/baseline/accelerated/moratorium"],
+                     notes="No dataset of future permits exists; the baseline path is a dated judgement to be replaced by transcribed regulatory timetables (verification item).")
+    regions_dir = root / PROCESSED / "regions"
+    occ_region = pl.read_csv(regions_dir / "occ_region.csv", schema_overrides={"occ_code": pl.Utf8, "region_id": pl.Utf8}) if (regions_dir / "occ_region.csv").exists() else None
+    se, notes = ap.self_employed_frame(occ, None, occ_region)
+    p = _write_csv(se, out / "self_employed.csv")
+    statuses["applications/self_employed"] = "FIXTURE"
+    write_provenance(root, "applications/self_employed", p, source="FIXTURE: CPS-based self-employment shares by SOC major group (E) with platform add-ons (E, V?)",
+                     source_url="https://cps.ipums.org/cps/", license="n/a (fixture)", status="FIXTURE",
+                     transformations=["heads = regional occupation employment × major-group self-employed share × regional multiplier (cap 0.6)",
+                                      "platform add-on heads attached to 53-3054, 43-5021, 53-3033 (U.S.) scaled to other regions by employment ratio and a platform scale",
+                                      "fte = heads × mean weekly hours / 40"],
+                     notes=f"Replaced by ingest/cps_selfemp.py (IPUMS CPS class of worker, hours, multiple job holding) and Census Nonemployer Statistics. FTE by region: {notes['fte_by_region']}.",
+                     extra=notes)
+    log(f"applications/: {len(ap.EMBODIMENT_CLASSES)} classes, {len(ap.APPLICATIONS)} applications, self-employed FTE {notes['fte_by_region']}")
     return statuses
 
 

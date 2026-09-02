@@ -16,6 +16,7 @@ BLOCKS: dict[str, tuple[list[str], float]] = {
     "speed": (["P.01", "P.29"], 0.5),
     "friction": (["P.09", "P.49.small", "P.49.mid", "P.50", "P.51"], 0.6),
     "labor_institutions": (["P.73", "P.74", "P.69", "P.63", "P.64"], 0.4),
+    "hardware_economics": (["P.113", "P.115.driving", "P.117", "P.108.driving", "P.108.manip"], 0.6),   # spec v0.3 §A.7
 }
 NEGATIVE_PAIRS = [("P.01", "P.04")]   # faster capability, faster price decline (spec §7.1)
 
@@ -24,12 +25,14 @@ SAMPLED: list[str] = [
     "P.01", "P.04", "P.06", "P.09", "P.15", "P.16", "P.17", "P.20", "P.21", "P.22", "P.23", "P.25", "P.26", "P.27",
     "P.29", "P.34.other_cognitive", "P.34.interpersonal", "P.35", "P.40", "P.42", "P.49.small", "P.49.mid",
     "P.50", "P.51", "P.53", "P.60_scale", "P.61", "P.62", "P.63", "P.64", "P.69", "P.73", "P.74", "P.83", "P.87", "P.56",
+    "P.100", "P.101", "P.107", "P.108.driving", "P.108.manip", "P.113", "P.115.driving", "P.117", "P.121",
 ]
 
 ENSEMBLE_AXES: dict[str, dict[str, dict[str, float]]] = {
     "demand": {"bessen": {"P.60_scale": 1.0}, "unit_elastic": {"P.60_scale": 1.25}},
     "reinstatement": {"acemoglu_low": {"P.61": 0.15}, "historical": {"P.61": 0.6}},
     "passthrough": {"low": {"P.74": 0.15, "P.53": 0.4}, "mid": {"P.74": 0.4, "P.53": 0.8}},
+    "hardware": {"automotive": {"P.113": 0.08}, "electronics": {"P.113": 0.20}},     # spec v0.3 §A.7 learning-rate axis
 }
 
 
@@ -38,7 +41,8 @@ def cells() -> list[dict[str, Any]]:
     for d, dv in ENSEMBLE_AXES["demand"].items():
         for r, rv in ENSEMBLE_AXES["reinstatement"].items():
             for pth, pv in ENSEMBLE_AXES["passthrough"].items():
-                out.append({"id": f"{d}|{r}|{pth}", "values": {**dv, **rv, **pv}})
+                for hw, hv in ENSEMBLE_AXES["hardware"].items():
+                    out.append({"id": f"{d}|{r}|{pth}|{hw}", "values": {**dv, **rv, **pv, **hv}})
     return out
 
 

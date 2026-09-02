@@ -19,7 +19,7 @@ import yaml
 
 COUNT_NOTE = (
     "Spec §10 says 'Counts: 77 parameters; 18 S, 21 D, 38 E'. The tables as written contain 81 rows "
-    "(including P.32a and P.32b); all rows are transcribed verbatim."
+    "(including P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer)."
 )
 
 
@@ -199,6 +199,45 @@ PARAMETERS: list[dict] = [
        by=_by(feasibility_level=(0.7, 0.5, 0.9), speed=(0.5, 0.3, 0.7), friction=(0.6, 0.4, 0.8),
               labor_institutions=(0.4, 0.2, 0.6), regions=(0.8, 0.6, 1.0)),
        note="Speed block: τ₀, ρ (negative), γ_n — magnitude ±0.5 with ρ entering negatively."),
+    # ---- v0.3 application layer (docs/model-spec-v0.3-applications.md §A.9); all E unless noted; V? = provisional ----
+    _p("P.100", "a_emb(driving)", 0.85, 0.5, 0.95, "share", "E", "spec v0.3 §A.3.1", group="applications"),
+    _p("P.101", "a_emb(mobile manipulation)", 0.6, 0.3, 0.85, "share", "E", "spec v0.3 §A.3.1", group="applications"),
+    _p("P.102", "a_emb(fixed automation) increment", 0.3, 0.1, 0.5, "share", "E", "over the baseline automation trend", group="applications"),
+    _p("P.103", "a_emb(aerial)", 0.5, 0.2, 0.8, "share", "E", "spec v0.3 §A.3.1", group="applications"),
+    _p("P.104", "Baseline automation trend scale", 1.0, 0.5, 1.5, "×", "E", "lever baseline.automation_trend", group="applications"),
+    _p("P.105", "a_phys,none", 0.0, 0.0, 0.1, "share", "E", "care, dexterity, safety-critical bodily work", group="applications"),
+    _p("P.106", "Presence exponent, embodied λ^emb_π", 0.5, 0.0, 1.5, "—", "E", "weaker than software (P.23): a robot can be present", group="applications"),
+    _p("P.107", "Coupling of embodiment clocks to the software clock g^emb", 0.3, 0.0, 0.7, "—", "E", "range includes zero", group="applications"),
+    _p("P.108", "Embodiment clock doubling time τ_c", None, None, None, "months", "E", "V?: driving from paid-ride and disengagement series once ingested",
+       group="applications", by=_by(driving=(18, 9, 36), manip=(15, 8, 36), fixed=(24, 12, 48), aerial=(18, 9, 36))),
+    _p("P.109", "Embodiment clock saturation", None, None, None, "doublings", "E", "", group="applications",
+       by=_by(driving=(8, 5, 12), manip=(10, 6, 14), fixed=(8, 5, 12), aerial=(8, 5, 12))),
+    _p("P.110", "Unit price 2025 p_c,0", None, None, None, "USD", "E", "V?: vendor disclosures pending", group="applications",
+       by=_by(driving=(150_000, 80_000, 300_000), manip=(80_000, 30_000, 200_000), fixed=(60_000, 30_000, 120_000), aerial=(15_000, 5_000, 40_000))),
+    _p("P.111", "Lifetime L_c", None, None, None, "years", "S", "V?", group="applications",
+       by=_by(driving=(5, 3, 7), manip=(8, 5, 11), fixed=(10, 6, 14), aerial=(4, 2, 6))),
+    _p("P.112", "Real rate i", 0.06, 0.03, 0.10, "per year", "S", "", group="applications"),
+    _p("P.113", "Hardware learning rate LR_c", 0.12, 0.05, 0.25, "per doubling of cumulative production", "S", "V?: EV battery and industrial-robot histories; ensemble axis {0.08, 0.20}", group="applications"),
+    _p("P.114", "Operating cost ratio o_c", None, None, None, "× annual capital cost", "E", "", group="applications",
+       by=_by(driving=(0.8, 0.4, 1.5), manip=(0.4, 0.2, 0.8), fixed=(0.3, 0.15, 0.6), aerial=(0.6, 0.3, 1.2))),
+    _p("P.115", "Utilization u_c", None, None, None, "share of hours", "E", "V?: lever for robotaxis", group="applications",
+       by=_by(driving=(0.45, 0.2, 0.7), manip=(0.6, 0.3, 0.85), fixed=(0.8, 0.5, 0.95), aerial=(0.3, 0.1, 0.6))),
+    _p("P.116", "Task-units per hour relative to a worker TU_c", None, None, None, "×", "E", "", group="applications",
+       by=_by(driving=(1.0, 0.5, 2.0), manip=(0.7, 0.3, 1.5), fixed=(1.5, 0.8, 3.0), aerial=(1.0, 0.5, 2.0))),
+    _p("P.117", "Maximum production growth g^max_c", 0.5, 0.3, 1.5, "per year", "S", "V?: EV production grew ~50%/yr 2015–2023 from a small base; industrial robots ~10%/yr; 0.7 in the first draft gave tens of millions of manipulators by 2040", group="applications"),
+    _p("P.118", "Production location shares", None, None, None, "share", "D", "vehicle and robot manufacturing locations (embodiment_classes.csv)", group="applications"),
+    _p("P.119", "Approval path J_c,r,t", None, None, None, "share", "E", "V?: approval_paths.csv baseline; lever states frozen/baseline/accelerated/moratorium", group="applications"),
+    _p("P.120", "Adjacent jobs per deployed unit β_c", None, None, None, "FTE per unit", "E", "V?: remote assistance, depot, fleet maintenance", group="applications",
+       by=_by(driving=(0.10, 0.0, 0.3), manip=(0.05, 0.0, 0.2), fixed=(0.03, 0.0, 0.1), aerial=(0.05, 0.0, 0.2))),
+    _p("P.121", "Self-employed exit hazard per unit earnings loss", 0.3, 0.1, 0.6, "per year per 100% loss", "E", "hours fall first, exits follow (spec §A.3.6)", group="applications"),
+    _p("P.122", "Layoff share for site conversions", 0.6, 0.3, 0.9, "share", "E", "embodied substitution inside an employer", group="applications"),
+    _p("P.123", "Employee ↔ self-employed transition rates", None, None, None, "per quarter", "D", "CPS flows (pending ingest)", group="applications"),
+    _p("P.124", "Export-serving employment per revenue", None, None, None, "FTE per USD m", "D", "services trade (Phase 7)", group="applications"),
+    _p("P.125", "Price sensitivity γ_s (output substitution)", 2.0, 1.0, 4.0, "—", "S", "V?: Armington-type; Phase 7", group="applications"),
+    _p("P.126", "Quality gap q_0, q_1", None, None, None, "logit units", "E", "Phase 7", group="applications", by=_by(q0=(-2.0, -4.0, 0.0), q1=(3.0, 1.0, 6.0))),
+    _p("P.127", "Authenticity premium α_s (2025 level; half-life if eroding)", None, None, None, "logit units; years", "E", "V?: ensemble axis {persistent, eroding}; Phase 7",
+       group="applications", by=_by(level=(1.5, 0.5, 3.0), half_life_years=(8, 4, 20))),
+    _p("P.128", "AI content platform margin", 0.4, 0.2, 0.7, "share of price", "E", "Phase 7", group="applications"),
 ]
 
 
@@ -210,8 +249,8 @@ def registry_document() -> dict:
     for p in PARAMETERS:
         tags[p["tag_primary"]] = tags.get(p["tag_primary"], 0) + 1
     return {
-        "spec_version": "0.2",
-        "source": "docs/model-spec.md §10 (v0.2)",
+        "spec_version": "0.3",
+        "source": "docs/model-spec.md §10 (v0.2) + docs/model-spec-v0.3-applications.md §A.9 (P.100–P.128)",
         "count": len(PARAMETERS),
         "count_by_tag_primary": tags,
         "count_note": COUNT_NOTE,

@@ -105,6 +105,8 @@ TOOLS: list[dict[str, Any]] = [
      "strict": True, "input_schema": _obj({"scenario_hash": {"type": "string"}, "quarter": {"type": "string"}}, ["scenario_hash", "quarter"])},
     {"name": "regions", "description": "Per-region headline effects, AI rents received by value-chain stage, and net AI trade at a quarter.",
      "strict": True, "input_schema": _obj({"scenario_hash": {"type": "string"}, "quarter": {"type": "string"}}, ["scenario_hash", "quarter"])},
+    {"name": "applications", "description": "Application layer (spec v0.3): per application (robotaxis, autonomous trucking, warehouse robotics, …) and region, target employment, realized embodied displacement share at a quarter, deployment coverage, approval share, and the first quarters at which displacement passes 1% and 10% and coverage passes 50%; plus embodiment class clocks, unit prices and cost per hour.",
+     "strict": True, "input_schema": _obj({"scenario_hash": {"type": "string"}, "quarter": {"type": "string"}, "region": {"type": ["string", "null"]}}, ["scenario_hash", "quarter", "region"])},
     {"name": "candidate_insights", "description": "Deterministically ranked candidate findings for a run (statement, mechanism, confidence, surprise score, evidence). Use this for 'what is surprising' questions; pick and rephrase from these, never add numbers not present. Pass compare_hash (the reference run, e.g. the baseline or the compare run in the UI context) to add candidates about what this scenario changed.",
      "strict": True, "input_schema": _obj({"scenario_hash": {"type": "string"}, "region": {"type": ["string", "null"]}, "compare_hash": {"type": ["string", "null"]}},
                                           ["scenario_hash", "region", "compare_hash"])},
@@ -127,12 +129,13 @@ def _summary(doc: dict[str, Any], region: str | None) -> dict[str, Any]:
         return {k: s[k][t] for k in ("p10", "p50", "p90", "central") if k in s}
     heads = {k: {q[i30]: pick(blk[k], i30), q[t_end]: pick(blk[k], t_end)} for k in HEADLINES if k in blk}
     extra = {k: {q[i30]: pick(blk[k], i30), q[t_end]: pick(blk[k], t_end)} for k in
-             ("displaced_workers_cum", "laid_off_cum", "unhired_entrants_cum", "unemployed_stock", "adoption_share", "ai_spend_bn", "price_index_pct_vs_baseline") if k in blk}
+             ("displaced_workers_cum", "laid_off_cum", "unhired_entrants_cum", "hours_cut_self_cum", "unemployed_stock", "adoption_share", "ai_spend_bn",
+              "price_index_pct_vs_baseline", "embodied_displacement_share", "adjacent_jobs") if blk.get(k)}
     return {"scenario_hash": doc["meta"]["scenario_hash"], "scenario_id": doc["meta"].get("scenario_id"), "scenario_name": doc["meta"].get("scenario_name"),
             "region": region, "draws": doc["meta"]["draws"], "ensemble": doc["meta"]["ensemble"], "units": "percent vs frozen-AI baseline; wage share in pp; counts in workers; spend in $bn/yr",
             "headlines": heads, "other": extra, "confidence": {k: doc.get("confidence", {}).get(k, {}) for k in HEADLINES},
             "notes": doc.get("explain", {}).get("notes", []), "diff_vs_parent": doc.get("explain", {}).get("diff", []),
-            "data_flags": doc["meta"].get("data_flags", {})}
+            "data_flags": doc["meta"].get("data_flags", {}), "headline_definition": doc["meta"].get("headline_definition")}
 
 
 def _propose(inp: dict[str, Any]) -> dict[str, Any]:
@@ -238,6 +241,28 @@ def _regions(inp: dict[str, Any]) -> dict[str, Any]:
     return {"quarter": inp["quarter"], "regions": rows, "region_meta": doc.get("regions", []), "access_lags": {r["region_id"]: r.get("access_lag_quarters") for r in doc.get("regions", [])}}
 
 
+def _applications(inp: dict[str, Any]) -> dict[str, Any]:
+    doc = service.load_results(inp["scenario_hash"])
+    q = doc["meta"]["quarters"]
+    if inp["quarter"] not in q:
+        raise ToolError(f"quarter must be one of {q[0]}..{q[-1]}")
+    t = q.index(inp["quarter"]); region = inp.get("region") or "US"
+    rows = []
+    for a in doc.get("applications", []):
+        br = a["by_region"].get(region) or a["by_region"].get("US")
+        if not br:
+            continue
+        rows.append({"app_id": a["app_id"], "name": a["name"], "classes": a["classes"], "platform": a["platform"], "target_employment_2024": br["target_employment_2024"],
+                     "displacement_share_pct": br["displacement_share"][t], "jobs_below_baseline": br["jobs_below_baseline"][t], "coverage": br["coverage"][t],
+                     "approval": br["approval"][t], "first_quarter": br["first_quarter"], "provisional_ranges_E": {"profitable": a["provisional_profitable"], "deployed50": a["provisional_deployed50"]}})
+    emb = {c: {k: v["central"][t] for k, v in blk.items()} for c, blk in doc.get("supply", {}).get("embodiment", {}).items()}
+    blk = doc["series"].get(region) or doc["series"]["US"]
+    return {"quarter": inp["quarter"], "region": region, "applications": rows, "embodiment_classes": emb,
+            "fleet_stock_p50": {c: v["p50"][t] for c, v in blk.get("fleet_stock", {}).items()},
+            "embodied_displacement_share_pct": (blk.get("embodied_displacement_share") or {}).get("p50", [None] * (t + 1))[t],
+            "headline_definition": doc["meta"].get("headline_definition"), "caveat": "class parameters are authors' estimates (E, V?) until the v0.3 data plan runs"}
+
+
 def _compare(inp: dict[str, Any]) -> dict[str, Any]:
     c = service.compare(inp["hash_a"], inp["hash_b"])
     da = service.load_results(inp["hash_a"]); q = da["meta"]["quarters"]; t_end = len(q) - 1; i30 = q.index("2030Q4") if "2030Q4" in q else t_end
@@ -280,6 +305,8 @@ def execute_tool(name: str, inp: dict[str, Any], confirmed: set[str]) -> Any:
         return _cohorts(inp)
     if name == "regions":
         return _regions(inp)
+    if name == "applications":
+        return _applications(inp)
     if name == "candidate_insights":
         cmp = service.compare(inp["compare_hash"], inp["scenario_hash"]) if inp.get("compare_hash") else None
         return top_insights(service.load_results(inp["scenario_hash"]), inp.get("region") or "US", compare=cmp)
