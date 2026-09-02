@@ -1,4 +1,4 @@
-.PHONY: demo setup data sim api web test lint
+.PHONY: demo setup data sim api web test lint static chat
 
 # One command from a clean clone: install, build data, run baseline, start API and web.
 demo: setup data run
@@ -22,3 +22,9 @@ test:
 lint:
 	uv run ruff check sim api
 	cd web && pnpm lint
+
+static:      ## serverless demo bundle (contracts §18); then: cd web && VITE_STATIC=1 pnpm build
+	uv run python -m aiwsim_api.export_static --out web/public/static --draws 200
+
+chat:        ## terminal chat against the last baseline run (needs ANTHROPIC_API_KEY); make chat Q="what is surprising?"
+	cd api && uv run python -m aiwsim_api.chat "$(Q)" --mode insights

@@ -152,6 +152,32 @@ def flows_section(o: BatchOutput) -> dict[str, Any]:
         "unfilled_entry": pct(o.unhired_cum, 1.0, 0), "laid_off": pct(o.laid_off_cum, 1.0, 0)}}
 
 
+def _horizon_words(c: float) -> str:
+    """METR horizon in words; beyond a work-month the clock is past the benchmark's range and the number stops being meaningful."""
+    h = 2.0 ** c / 60.0
+    if h < 1:
+        return f"{60*h:.0f}-minute tasks at 50% reliability"
+    if h < 40:
+        return f"{h:.0f}-hour tasks at 50% reliability"
+    if h < 160:
+        return f"{h/40:.0f}-work-week tasks at 50% reliability"
+    return "tasks longer than a work-month, beyond the measured range of the horizon benchmark"
+
+
+def validity(o: BatchOutput) -> dict[str, Any]:
+    """Spec §12: flag runs where realized displacement exceeds 15% of task-hours within any ten-year window (central draw, U.S.)."""
+    q = o.quarters
+    N0 = np.maximum(o.N0, 1.0)
+    share = (o.D_[0] * N0).sum(axis=0) / N0.sum(axis=0)                                         # [n_q] realized D share of task-hours
+    best, i_from, i_to = 0.0, 0, 0
+    for t in range(len(q)):
+        s = min(t + 40, len(q) - 1)
+        d = float(share[s] - share[t])
+        if d > best:
+            best, i_from, i_to = d, t, s
+    return {"warning": bool(best > 0.15), "threshold": 0.15, "max_decade_displacement": round(best, 4), "from": q[i_from], "to": q[i_to]}
+
+
 def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str]:
     q = o.quarters; t_end = len(q) - 1; i30 = q.index("2030Q4") if "2030Q4" in q else t_end
     e = 100 * o.employment_pct; g = 100 * o.gdp_pct; rw = 100 * o.real_wage_pct
@@ -160,7 +186,7 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
             return f"{x[0, t]:+.1f}% (10–90: {np.percentile(x[1:, t], 10):+.1f} to {np.percentile(x[1:, t], 90):+.1f})"
         return f"{x[0, t]:+.1f}%"
     notes = [
-        f"By {q[i30]}, the capability clock reaches {2**o.C[0, i30]/60:.0f}-hour tasks at 50% reliability; employment-weighted adoption is {100*o.adoption_emp[0, i30]:.0f}% of firms.",
+        f"By {q[i30]}, the capability clock stands at {o.C[0, i30]:.1f} doublings ({_horizon_words(o.C[0, i30])}); employment-weighted adoption is {100*o.adoption_emp[0, i30]:.0f}% of firms.",
         f"Employment vs the no-AI baseline: {band(e, i30)} in {q[i30]}, {band(e, t_end)} in {q[t_end]}; GDP {band(g, t_end)}; real wages {band(rw, t_end)}.",
     ]
     big = inp.emp0 >= 100_000
@@ -186,6 +212,10 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
         if late:
             notes.append("Frontier access lags of two or more quarters: " + ", ".join(f"{x} ({lags[x]}q)" for x in late)
                          + ", which delays adoption and shifts model-stage rents toward domestic labs.")
+    v = validity(o)
+    if v["warning"]:
+        notes.append(f"Validity warning: {100*v['max_decade_displacement']:.0f}% of task-hours displaced within a decade (from {v['from']} to {v['to']}) exceeds the 15% range in which the "
+                     "reduced-form labor and price rules were checked; without market clearing, unemployment persistence and wage effects in this range are overstated (spec §12).")
     la = o.lost_by_age[0, :, t_end]
     if la.sum() > 0:
         notes.append(f"Jobs below baseline by age in {q[t_end]}: 16–24 {100*la[0]/la.sum():.0f}%, 25–44 {100*la[1]/la.sum():.0f}%, 45–54 {100*la[2]/la.sum():.0f}%, 55+ {100*la[3]/la.sum():.0f}%, against employment shares of {100*o.N0_age[0]/o.N0_age.sum():.0f}/{100*o.N0_age[1]/o.N0_age.sum():.0f}/{100*o.N0_age[2]/o.N0_age.sum():.0f}/{100*o.N0_age[3]/o.N0_age.sum():.0f}%.")
@@ -280,7 +310,7 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "run_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "draws": draws, "ensemble": ensemble, "cells": cells,
             "percentiles": PCTS, "quarters": q, "regions": ["US"], "baseline": "no_frontier_ai_after_2023", "data_flags": flags,
             "data_version": inp.data_version, "capability_units": "doublings of METR 50% task horizon (minutes = 2^index)",
-            "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups")}
+            "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups"), "validity": validity(o)}
     series = {x: region_series(o.regions[x]) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})

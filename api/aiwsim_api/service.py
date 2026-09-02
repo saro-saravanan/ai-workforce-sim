@@ -151,14 +151,17 @@ def explain(doc: dict[str, Any], metric: str, quarter: str, region: str = "US") 
             "diff": doc.get("explain", {}).get("diff", [])}
 
 
-def compare(a: str, b: str) -> dict[str, Any]:
+def compare(a: str, b: str, region: str = "US") -> dict[str, Any]:
     c = ctx()
     da, db = load_results(a), load_results(b)
     _, na = paths(a); _, nb = paths(b)
     if not (na.exists() and nb.exists()):
         raise NotFound("per-draw arrays missing for one of the runs; re-run it")
     ra = dict(np.load(na)); rb = dict(np.load(nb))
-    delta = paired_compare(ra, rb, da["meta"]["quarters"], c.inputs.state_fips, c.inputs.occ_codes)
+    try:
+        delta = paired_compare(ra, rb, da["meta"]["quarters"], c.inputs.state_fips, c.inputs.occ_codes, region)
+    except KeyError as e:
+        raise NotFound(str(e)) from e
     sa, sb = scenario_of(da), scenario_of(db)
     return {"a": {"hash": a, "id": da["meta"].get("scenario_id"), "name": da["meta"].get("scenario_name")},
             "b": {"hash": b, "id": db["meta"].get("scenario_id"), "name": db["meta"].get("scenario_name")},

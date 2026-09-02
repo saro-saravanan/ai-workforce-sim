@@ -39,7 +39,12 @@ class Context:
     def params_for(self, scen: dict[str, Any]) -> Params:
         p = central_params(self.registry)
         p = apply_levers(p, scen.get("levers", {}))
-        return apply_overrides(p, scen.get("overrides", {}))
+        p = apply_overrides(p, scen.get("overrides", {}))
+        # The Bass imitation coefficient is fitted to BTOS (spec §7.4); the fitted value is the central value every
+        # run uses, so Monte Carlo draws re-centre on it (spec §7.1) unless the scenario overrides P.42 explicitly.
+        if self.fitted and "q" in self.fitted and "P.42" not in scen.get("overrides", {}):
+            p.set("P.42", float(self.fitted["q"]))
+        return p
 
     def resolve(self, raw: dict[str, Any]) -> dict[str, Any]:
         scen = resolve(raw, self.scen_dir)
@@ -90,6 +95,10 @@ def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, e
            "wage_share_pp": out.wage_share_pp, "cell_ids": np.array(out.cell_ids),
            "state_emp_pct": _state_emp(inp, out),
            "occ_D_p50": (np.median(out.D_[1:], axis=0) if out.D_.shape[0] > 1 else out.D_[0]).astype(np.float32)}
+    for x in out.order:                                                                         # per-region headline draws (paired compare by region)
+        ro = out.regions[x]
+        for k, arr in (("employment_pct", ro.employment_pct), ("gdp_pct", ro.gdp_pct), ("real_wage_pct", ro.real_wage_pct), ("wage_share_pp", ro.wage_share_pp)):
+            raw[f"region_{x}_{k}"] = np.asarray(arr, dtype=np.float32)
     return doc, raw
 
 
@@ -113,8 +122,15 @@ def _state_emp(inp: Inputs, out: BatchOutput) -> np.ndarray:
     return np.einsum("dot,og->dgt", ratio, W) - 1.0
 
 
-def paired_compare(a: dict[str, np.ndarray], b: dict[str, np.ndarray], quarters: list[str], states: list[str], occ_codes: list[str]) -> dict[str, Any]:
-    """Paired (same seed) differences B − A with percentiles (contracts §9)."""
+def paired_compare(a: dict[str, np.ndarray], b: dict[str, np.ndarray], quarters: list[str], states: list[str], occ_codes: list[str],
+                   region: str = "US") -> dict[str, Any]:
+    """Paired (same seed) differences B − A with percentiles (contracts §9); `region` selects the headline series (§13)."""
+    if region != "US":
+        keys = [f"region_{region}_{k}" for k in ("employment_pct", "gdp_pct", "real_wage_pct", "wage_share_pp")]
+        if not all(k in a and k in b for k in keys):
+            raise KeyError(f"per-draw arrays for region {region} missing; re-run both scenarios")
+        a = {**a, **{k.split("_", 2)[2]: a[k] for k in keys}}
+        b = {**b, **{k.split("_", 2)[2]: b[k] for k in keys}}
     def pc(x: np.ndarray, scale: float = 1.0, nd: int = 4) -> dict[str, list[float]]:
         body = x[1:] if x.shape[0] > 1 else x
         qs = np.percentile(body, [10, 50, 90], axis=0)
@@ -129,7 +145,7 @@ def paired_compare(a: dict[str, np.ndarray], b: dict[str, np.ndarray], quarters:
     st = [{"fips": f, "employment_pct_vs_baseline": {"p50": [round(float(v), 4) for v in np.median(ds[:, g, :], axis=0)]}} for g, f in enumerate(states)]
     dD = b["occ_D_p50"] - a["occ_D_p50"]                                                      # [n_occ, n_q], delta of medians
     occ = [{"occ_code": c, "displacement": {"p50": [round(float(v), 4) for v in dD[i]]}} for i, c in enumerate(occ_codes)]
-    return {"series": series, "states": st, "occupations": occ, "paired_draws": int(n)}
+    return {"series": series, "states": st, "occupations": occ, "paired_draws": int(n), "region": region}
 
 
 def load_scenario_by_path_or_id(ctx: Context, ref: str) -> dict[str, Any]:

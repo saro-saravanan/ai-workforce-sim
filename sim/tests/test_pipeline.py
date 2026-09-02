@@ -49,6 +49,23 @@ def test_percentiles_ordered_and_central_present(baseline_doc):
         check(name, s)
 
 
+def test_central_draw_matches_single_run(ctx):
+    """Draw 0 of a Monte Carlo run is the scenario as specified: identical to a single central run."""
+    scen = load_scenario_by_path_or_id(ctx, "baseline")
+    d1, _ = run_scenario(ctx, scen, draws=1, with_tornado=False, with_channels=False, regions=["US"])
+    d4, _ = run_scenario(ctx, scen, draws=4, with_tornado=False, with_channels=False, regions=["US"])
+    for k in ("adoption_share", "employment_pct_vs_baseline", "gdp_pct_vs_baseline"):
+        a, b = d1["series"]["US"][k]["central"], d4["series"]["US"][k]["central"]
+        assert max(abs(x - y) for x, y in zip(a, b, strict=True)) < 1e-3, k
+
+
+def test_validity_flag_present(baseline_doc):
+    doc, _ = baseline_doc
+    v = doc["meta"]["validity"]
+    assert set(v) >= {"warning", "threshold", "max_decade_displacement"} and 0 <= v["max_decade_displacement"] <= 1
+    assert v["warning"] == (v["max_decade_displacement"] > 0.15)
+
+
 def test_ensemble_cells_and_confidence(baseline_doc):
     doc, _ = baseline_doc
     assert len(doc["meta"]["cells"]) == 8 == len(cells())
@@ -79,6 +96,11 @@ def test_paired_compare(ctx, baseline_doc):
     s = delta["series"]["employment_pct_vs_baseline"]
     assert len(s["p50"]) == 68 and all(lo <= hi for lo, hi in zip(s["p10"], s["p90"], strict=True))
     assert doc_b["explain"]["diff"], "child scenario should carry a diff vs parent"
+    eu = paired_compare(raw_a, raw_b, doc_a["meta"]["quarters"], ctx.inputs.state_fips, ctx.inputs.occ_codes, region="EU")
+    assert eu["region"] == "EU" and eu["paired_draws"] == 64
+    assert eu["series"]["gdp_pct_vs_baseline"]["p50"] != s["p50"], "regional compare must read the region's own draws"
+    with pytest.raises(KeyError):
+        paired_compare({k: v for k, v in raw_a.items() if not k.startswith("region_")}, raw_b, doc_a["meta"]["quarters"], ctx.inputs.state_fips, ctx.inputs.occ_codes, region="EU")
 
 
 def test_deterministic_across_runs(ctx):

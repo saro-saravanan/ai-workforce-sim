@@ -153,9 +153,9 @@ def explain(shash: str, metric: str = "employment_pct_vs_baseline", quarter: str
 
 
 @app.get("/api/compare")
-def compare(a: str, b: str):
+def compare(a: str, b: str, region: str = "US"):
     try:
-        return service.compare(a, b)
+        return service.compare(a, b, region)
     except service.NotFound as e:
         raise HTTPException(404, str(e)) from e
 

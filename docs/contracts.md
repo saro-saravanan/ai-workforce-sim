@@ -260,3 +260,21 @@ Insight candidates (`api/aiwsim_api/insights.py`): output up while employment do
 ## 17. Web state additions
 
 The chat panel is a third mode of the right-hand panel (`Explain · Ask`). It sends the current `scenario_hash`, `compare_hash`, `region`, and `quarter` as context. A proposed scenario renders as a diff card with **Run** (runs through the results store, sets it as the current or compare scenario) and **Edit** (opens the levers drawer pre-filled). `Export brief` on the top bar downloads the Markdown or opens the HTML brief for the current run (with the compare run when one is selected). In mock mode the panel answers with canned replies and the deterministic insights of the mock document.
+
+# Phase 5 additions (contracts v0.6): static demo export
+
+## 18. Static export (`python -m aiwsim_api.export_static --out web/public/static`)
+
+A public demo needs no server: the exporter runs the scenarios once and writes every document the web app would otherwise fetch from the API. The web app in static mode (`VITE_STATIC=1`) reads these files under `${BASE_URL}static/` and disables what needs a live engine (running new scenarios, chat).
+
+| File | Content |
+|---|---|
+| `manifest.json` | `{generated_at, spec_version, data_version, draws, runs: [{id, name, parent, description, preset, hash, draws, ensemble, file}], compares: [{a, b, file}], levers: "levers.json", regions: "regions.json", actors: "actors.json", geo: {us_states, world}, insights: {"<id>": file, "<id>__vs__<a>": file}, briefs: {"<id>": {md, html}}}` — `a`, `b`, and insight keys are scenario ids |
+| `runs/<id>.json` | the results document of `GET /api/results/{hash}` with `occupations[].by_region` removed (document size) and `meta.static = true` |
+| `compare/<a>__<b>.json` | `GET /api/compare?a=&b=` for baseline vs every other run |
+| `insights/<id>.json`, `insights/<id>__vs__baseline.json` | `GET /api/insights/{hash}?n=10` without and with `compare=` |
+| `briefs/<id>.md`, `briefs/<id>.html` | `GET /api/brief/{hash}` in both formats |
+| `levers.json`, `regions.json`, `actors.json` | the corresponding API responses |
+| `geo/us-states.geojson`, `geo/world.geojson` | the geo endpoints |
+
+Static mode in the client: scenarios from the manifest; `runScenario(id or hash)` from `runs/`; `compareRuns` from `compare/` when present, else the client-side paired difference; `fetchInsights` from `insights/`; brief links to `briefs/`; explain client-side from the document (as in mock mode); `fetchChatStatus` → `{available: false, reason: "static demo"}`; running a new scenario throws a friendly error and the levers drawer says so. The top bar badge reads `static demo · precomputed runs` and links to the repository. `VITE_BASE` sets the Vite `base` for hosting under a path (GitHub Pages: `/ai-workforce-sim/`).

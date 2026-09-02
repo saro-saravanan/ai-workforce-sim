@@ -45,3 +45,26 @@ Ranking criterion: expected swing in the 2035 U.S. net employment effect (or GDP
 1. A measured feasibility dataset keyed to O*NET tasks would replace `a_k` and `θ_k`; building a partial one is a Phase 5 candidate.
 2. Two more years of BTOS, CPS, and AEI data would let the ceiling, intensity, and hiring-channel parameters be fitted rather than checked.
 3. An observed slowdown in the METR series, or evidence on domain transfer, would collapse or extend the upper tail of every scenario.
+
+## Status after Phase 5
+
+What the build has done about each risk, and what it has observed. Numbers refer to the 200-draw baseline (`docs/findings-phase*.md`).
+
+| # | Status | Observation |
+|---|---|---|
+| 1–3 (feasibility mass, thresholds, domain transfer) | Encoded as levers and sampled in the `feasibility_level` block; AEI anchoring unavailable offline (`meta.data_flags.aei_anchoring`) | The tornado ranks `a_base` third to fifth for employment; the demand multiplier ranks first in every scenario, so feasibility is not the binding uncertainty at the central pace |
+| 4–5 (clock, price) | Anchored to METR 2025Q3; drift and doubling levers; negative pairing with price decline | Saturation at 20 doublings is reached by the early 2030s in the central run; the clock note now reports doublings and words instead of an unreadable hour count |
+| 6–8 (adoption ceiling, intensity, friction) | Ceiling benefit-driven, friction on speed; BTOS grid fit; intensity ceiling 0.7 with the Acemoglu preset at 0.4 | Adoption is broad (64% of employment by 2030) before the labor effect is (−0.7%); the intensity ceiling and the profitability test, not the S-curve, decide the size |
+| 9–11 (demand elasticity, reinstatement, pass-through) | The 2×2×2 structural ensemble | Structural spread (6.1 pp) exceeds the parametric spread (5.7 pp) for 2040 employment; the sign of the employment effect is low confidence for that reason |
+| 12 (integration cost) | Sector- and size-scaled; entrant term | Small at the central price path; matters only in low-wage tiers |
+| 13, 23 (regional task mix) | FIXTURE, hatched on the map, ingest scripts ready | Regional employment effects are composition effects; EU and U.S. differ by 0.3 pp in 2040 |
+| 14 (regulation by use case) | Annex III mapping; AI Act, patchwork, licensing levers | The EU AI Act delay lever moves EU employment by a hundredth of a point; the mapping reaches too few displacement-relevant tasks to matter, which is a finding to test against measured compliance costs |
+| 15–16 (compute constraint, capex) | Implemented; capacity never binds in the central run | Token demand from the automated task-hours is small against the capex path |
+| 17 (attrition 2.5%/q) | Sampled in the `labor_institutions` block | Attrition absorbs the whole contraction in every shipped scenario: layoffs are zero in the baseline and appear only under fast clocks. Cohort incidence follows directly (young entrants carry about half of jobs below baseline) |
+| 18 (demand multiplier `m`) | Sampled 0.3–1.2; channel shown separately | The single largest sensitivity; the one parameter that flips the sign of the baseline employment effect |
+| 19 (robotics) | Separate slow clock | Physical-presence tasks are untouched through 2040 in the central run |
+| 20 (no general equilibrium) | `meta.validity` and a note flag runs where more than 15% of task-hours are displaced within a decade | Not triggered in the baseline or presets; triggered under fast-clock what-ifs |
+| 21–22 (baseline reconstruction, financing) | Levers exist; financing rules static | Not yet exercised in a shipped scenario |
+| 24–25 (access lags, value chain) | Estimates, tagged; export-control and localization levers | Hardware trade dominates regional rents; China's 4-quarter lag shifts model-stage rents to domestic labs |
+
+Phase 5 added no new modelling risk. The two risks it opened are operational: the chat layer's prompt has not been exercised against a live model, and the public demo is a static export that goes stale until the Pages workflow reruns.
