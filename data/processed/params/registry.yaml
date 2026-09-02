@@ -1,12 +1,12 @@
-spec_version: '0.2'
-source: docs/model-spec.md §10 (v0.2)
-count: 81
+spec_version: '0.3'
+source: docs/model-spec.md §10 (v0.2) + docs/model-spec-v0.3-applications.md §A.9 (P.100–P.128)
+count: 110
 count_by_tag_primary:
-  S: 17
-  E: 46
-  D: 18
+  S: 22
+  E: 67
+  D: 21
 count_note: 'Spec §10 says ''Counts: 77 parameters; 18 S, 21 D, 38 E''. The tables as written contain 81 rows (including
-  P.32a and P.32b); all rows are transcribed verbatim.'
+  P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer).'
 tag_legend:
   S: sourced
   D: derived
@@ -1028,3 +1028,448 @@ parameters:
       min: 0.6
       max: 1.0
   note: 'Speed block: τ₀, ρ (negative), γ_n — magnitude ±0.5 with ρ entering negatively.'
+- id: P.100
+  name: a_emb(driving)
+  central: 0.85
+  min: 0.5
+  max: 0.95
+  unit: share
+  tag: E
+  tag_primary: E
+  source: spec v0.3 §A.3.1
+  group: applications
+- id: P.101
+  name: a_emb(mobile manipulation)
+  central: 0.6
+  min: 0.3
+  max: 0.85
+  unit: share
+  tag: E
+  tag_primary: E
+  source: spec v0.3 §A.3.1
+  group: applications
+- id: P.102
+  name: a_emb(fixed automation) increment
+  central: 0.3
+  min: 0.1
+  max: 0.5
+  unit: share
+  tag: E
+  tag_primary: E
+  source: over the baseline automation trend
+  group: applications
+- id: P.103
+  name: a_emb(aerial)
+  central: 0.5
+  min: 0.2
+  max: 0.8
+  unit: share
+  tag: E
+  tag_primary: E
+  source: spec v0.3 §A.3.1
+  group: applications
+- id: P.104
+  name: Baseline automation trend scale
+  central: 1.0
+  min: 0.5
+  max: 1.5
+  unit: ×
+  tag: E
+  tag_primary: E
+  source: lever baseline.automation_trend
+  group: applications
+- id: P.105
+  name: a_phys,none
+  central: 0.0
+  min: 0.0
+  max: 0.1
+  unit: share
+  tag: E
+  tag_primary: E
+  source: care, dexterity, safety-critical bodily work
+  group: applications
+- id: P.106
+  name: Presence exponent, embodied λ^emb_π
+  central: 0.5
+  min: 0.0
+  max: 1.5
+  unit: —
+  tag: E
+  tag_primary: E
+  source: 'weaker than software (P.23): a robot can be present'
+  group: applications
+- id: P.107
+  name: Coupling of embodiment clocks to the software clock g^emb
+  central: 0.3
+  min: 0.0
+  max: 0.7
+  unit: —
+  tag: E
+  tag_primary: E
+  source: range includes zero
+  group: applications
+- id: P.108
+  name: Embodiment clock doubling time τ_c
+  central: null
+  min: null
+  max: null
+  unit: months
+  tag: E
+  tag_primary: E
+  source: 'V?: driving from paid-ride and disengagement series once ingested'
+  group: applications
+  by:
+    driving:
+      central: 18
+      min: 9
+      max: 36
+    manip:
+      central: 15
+      min: 8
+      max: 36
+    fixed:
+      central: 24
+      min: 12
+      max: 48
+    aerial:
+      central: 18
+      min: 9
+      max: 36
+- id: P.109
+  name: Embodiment clock saturation
+  central: null
+  min: null
+  max: null
+  unit: doublings
+  tag: E
+  tag_primary: E
+  source: ''
+  group: applications
+  by:
+    driving:
+      central: 8
+      min: 5
+      max: 12
+    manip:
+      central: 10
+      min: 6
+      max: 14
+    fixed:
+      central: 8
+      min: 5
+      max: 12
+    aerial:
+      central: 8
+      min: 5
+      max: 12
+- id: P.110
+  name: Unit price 2025 p_c,0
+  central: null
+  min: null
+  max: null
+  unit: USD
+  tag: E
+  tag_primary: E
+  source: 'V?: vendor disclosures pending'
+  group: applications
+  by:
+    driving:
+      central: 150000
+      min: 80000
+      max: 300000
+    manip:
+      central: 80000
+      min: 30000
+      max: 200000
+    fixed:
+      central: 60000
+      min: 30000
+      max: 120000
+    aerial:
+      central: 15000
+      min: 5000
+      max: 40000
+- id: P.111
+  name: Lifetime L_c
+  central: null
+  min: null
+  max: null
+  unit: years
+  tag: S
+  tag_primary: S
+  source: V?
+  group: applications
+  by:
+    driving:
+      central: 5
+      min: 3
+      max: 7
+    manip:
+      central: 8
+      min: 5
+      max: 11
+    fixed:
+      central: 10
+      min: 6
+      max: 14
+    aerial:
+      central: 4
+      min: 2
+      max: 6
+- id: P.112
+  name: Real rate i
+  central: 0.06
+  min: 0.03
+  max: 0.1
+  unit: per year
+  tag: S
+  tag_primary: S
+  source: ''
+  group: applications
+- id: P.113
+  name: Hardware learning rate LR_c
+  central: 0.12
+  min: 0.05
+  max: 0.25
+  unit: per doubling of cumulative production
+  tag: S
+  tag_primary: S
+  source: 'V?: EV battery and industrial-robot histories; ensemble axis {0.08, 0.20}'
+  group: applications
+- id: P.114
+  name: Operating cost ratio o_c
+  central: null
+  min: null
+  max: null
+  unit: × annual capital cost
+  tag: E
+  tag_primary: E
+  source: ''
+  group: applications
+  by:
+    driving:
+      central: 0.8
+      min: 0.4
+      max: 1.5
+    manip:
+      central: 0.4
+      min: 0.2
+      max: 0.8
+    fixed:
+      central: 0.3
+      min: 0.15
+      max: 0.6
+    aerial:
+      central: 0.6
+      min: 0.3
+      max: 1.2
+- id: P.115
+  name: Utilization u_c
+  central: null
+  min: null
+  max: null
+  unit: share of hours
+  tag: E
+  tag_primary: E
+  source: 'V?: lever for robotaxis'
+  group: applications
+  by:
+    driving:
+      central: 0.45
+      min: 0.2
+      max: 0.7
+    manip:
+      central: 0.6
+      min: 0.3
+      max: 0.85
+    fixed:
+      central: 0.8
+      min: 0.5
+      max: 0.95
+    aerial:
+      central: 0.3
+      min: 0.1
+      max: 0.6
+- id: P.116
+  name: Task-units per hour relative to a worker TU_c
+  central: null
+  min: null
+  max: null
+  unit: ×
+  tag: E
+  tag_primary: E
+  source: ''
+  group: applications
+  by:
+    driving:
+      central: 1.0
+      min: 0.5
+      max: 2.0
+    manip:
+      central: 0.7
+      min: 0.3
+      max: 1.5
+    fixed:
+      central: 1.5
+      min: 0.8
+      max: 3.0
+    aerial:
+      central: 1.0
+      min: 0.5
+      max: 2.0
+- id: P.117
+  name: Maximum production growth g^max_c
+  central: 0.5
+  min: 0.3
+  max: 1.5
+  unit: per year
+  tag: S
+  tag_primary: S
+  source: 'V?: EV production grew ~50%/yr 2015–2023 from a small base; industrial robots ~10%/yr; 0.7 in the first
+    draft gave tens of millions of manipulators by 2040'
+  group: applications
+- id: P.118
+  name: Production location shares
+  central: null
+  min: null
+  max: null
+  unit: share
+  tag: D
+  tag_primary: D
+  source: vehicle and robot manufacturing locations (embodiment_classes.csv)
+  group: applications
+- id: P.119
+  name: Approval path J_c,r,t
+  central: null
+  min: null
+  max: null
+  unit: share
+  tag: E
+  tag_primary: E
+  source: 'V?: approval_paths.csv baseline; lever states frozen/baseline/accelerated/moratorium'
+  group: applications
+- id: P.120
+  name: Adjacent jobs per deployed unit β_c
+  central: null
+  min: null
+  max: null
+  unit: FTE per unit
+  tag: E
+  tag_primary: E
+  source: 'V?: remote assistance, depot, fleet maintenance'
+  group: applications
+  by:
+    driving:
+      central: 0.1
+      min: 0.0
+      max: 0.3
+    manip:
+      central: 0.05
+      min: 0.0
+      max: 0.2
+    fixed:
+      central: 0.03
+      min: 0.0
+      max: 0.1
+    aerial:
+      central: 0.05
+      min: 0.0
+      max: 0.2
+- id: P.121
+  name: Self-employed exit hazard per unit earnings loss
+  central: 0.3
+  min: 0.1
+  max: 0.6
+  unit: per year per 100% loss
+  tag: E
+  tag_primary: E
+  source: hours fall first, exits follow (spec §A.3.6)
+  group: applications
+- id: P.122
+  name: Layoff share for site conversions
+  central: 0.6
+  min: 0.3
+  max: 0.9
+  unit: share
+  tag: E
+  tag_primary: E
+  source: embodied substitution inside an employer
+  group: applications
+- id: P.123
+  name: Employee ↔ self-employed transition rates
+  central: null
+  min: null
+  max: null
+  unit: per quarter
+  tag: D
+  tag_primary: D
+  source: CPS flows (pending ingest)
+  group: applications
+- id: P.124
+  name: Export-serving employment per revenue
+  central: null
+  min: null
+  max: null
+  unit: FTE per USD m
+  tag: D
+  tag_primary: D
+  source: services trade (Phase 7)
+  group: applications
+- id: P.125
+  name: Price sensitivity γ_s (output substitution)
+  central: 2.0
+  min: 1.0
+  max: 4.0
+  unit: —
+  tag: S
+  tag_primary: S
+  source: 'V?: Armington-type; Phase 7'
+  group: applications
+- id: P.126
+  name: Quality gap q_0, q_1
+  central: null
+  min: null
+  max: null
+  unit: logit units
+  tag: E
+  tag_primary: E
+  source: Phase 7
+  group: applications
+  by:
+    q0:
+      central: -2.0
+      min: -4.0
+      max: 0.0
+    q1:
+      central: 3.0
+      min: 1.0
+      max: 6.0
+- id: P.127
+  name: Authenticity premium α_s (2025 level; half-life if eroding)
+  central: null
+  min: null
+  max: null
+  unit: logit units; years
+  tag: E
+  tag_primary: E
+  source: 'V?: ensemble axis {persistent, eroding}; Phase 7'
+  group: applications
+  by:
+    level:
+      central: 1.5
+      min: 0.5
+      max: 3.0
+    half_life_years:
+      central: 8
+      min: 4
+      max: 20
+- id: P.128
+  name: AI content platform margin
+  central: 0.4
+  min: 0.2
+  max: 0.7
+  unit: share of price
+  tag: E
+  tag_primary: E
+  source: Phase 7
+  group: applications

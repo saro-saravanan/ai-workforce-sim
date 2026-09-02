@@ -1,0 +1,17 @@
+{
+  "table": "applications/applications",
+  "source": "spec v0.3 §A.8 application catalogue",
+  "source_url": "docs/model-spec-v0.3-applications.md",
+  "license": "n/a (catalogue)",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "7892356553a0909262104d0f03e4d39b8f8dbae09b27dd20082926b10e425964",
+  "transformations": [
+    "one row per application: family, embodiment class(es), target occupation codes, platform flag, regions first, anchor series, constraints, provisional timings"
+  ],
+  "status": "FIXTURE (E: authors' estimates, spec v0.3)",
+  "notes": "Phase 6 implements the embodied rows; output-substitution and traded-services rows arrive in Phase 7. Timings are provisional ranges for the reviewer, not results.",
+  "built_at": "2026-09-02T11:32:26+00:00",
+  "output": "data/processed/applications/applications.csv",
+  "extra": {}
+}
