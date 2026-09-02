@@ -26,7 +26,7 @@ export const LEVER_GROUP_LABELS: Record<string, string> = {
   adoption: 'Adoption',
   labor: 'Labor market',
   policy: 'Policy (US)',
-  applications: 'Applications (embodied)',
+  applications: 'Applications (v0.3: embodied, content, trade)',
   baseline: 'Baseline construction',
 }
 

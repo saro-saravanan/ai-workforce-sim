@@ -1,4 +1,10 @@
-import type { ChannelName, EmbodiedMetric, NationalMetric, StateMetric } from '@/types/results'
+import type {
+  ApplicationMetric,
+  ChannelName,
+  EmbodiedMetric,
+  NationalMetric,
+  StateMetric,
+} from '@/types/results'
 import { fmtBn, fmtCompact, fmtPct, fmtPp, fmtShare } from './format'
 import { CATEGORICAL, NEUTRAL, type Mode } from './palette'
 import { stackCategorical } from './scales'
@@ -70,6 +76,8 @@ export const CHANNEL_LABELS: Record<string, string> = {
   automation: 'Automation',
   augmentation: 'Augmentation',
   embodied: 'Embodied automation',
+  output_substitution: 'Output substitution',
+  traded_services: 'Traded services',
   demand_response: 'Demand response',
   reinstatement: 'Reinstatement',
   demand_feedback: 'Demand feedback',
@@ -79,7 +87,8 @@ export const CHANNEL_LABELS: Record<string, string> = {
 
 /**
  * Fixed categorical slot per channel so a channel keeps its color whether the document carries
- * the six-entry (v0.2) or the eight-entry (v0.3, contracts §20) order.
+ * the six-entry (v0.2), the eight-entry (Phase 6, contracts §20) or the ten-entry (Phase 7,
+ * contracts §24) order.
  */
 export const CHANNEL_COLOR_SLOT: Record<ChannelName, number> = {
   automation: 0,
@@ -90,6 +99,23 @@ export const CHANNEL_COLOR_SLOT: Record<ChannelName, number> = {
   ai_investment: 5,
   embodied: 6,
   adjacent: 7,
+  output_substitution: 8,
+  traded_services: 9,
+}
+
+/**
+ * Names of the mechanism-cell axes in id order (spec §7.2, v0.3 §A.7): a document with n-part
+ * cell ids uses the first n. Eight cells = 3 axes, sixteen = 4, thirty-two = 5.
+ */
+export const CELL_AXIS_NAMES = [
+  'demand response',
+  'reinstatement',
+  'pass-through',
+  'hardware learning',
+  'authenticity',
+] as const
+export function cellAxesLabel(parts: number): string {
+  return CELL_AXIS_NAMES.slice(0, Math.max(1, Math.min(CELL_AXIS_NAMES.length, parts))).join(' | ')
 }
 
 /**
@@ -314,3 +340,51 @@ export const EMBODIED_TILES: Array<{ key: EmbodiedMetric; def: MetricDef }> = [
     },
   },
 ]
+
+// ---------- Phase 7 ----------
+
+/** Caption under the consumer-surplus proxy wherever it is shown (contracts §24). */
+export const SURPLUS_CAPTION = 'accounting proxy at baseline prices, not welfare'
+
+/**
+ * Economy tiles for the Phase 7 series (contracts §24). The consumer-surplus proxy is shown when
+ * the series exists; the traded-services tile only for regions where the share is nonzero
+ * (exporters: IN, RoA and EU members), see `seriesIsNonzero`.
+ */
+export const APPLICATION_TILES: Array<{
+  key: ApplicationMetric
+  def: MetricDef
+  note?: string
+  /** hide the tile when every median value is zero */
+  nonzeroOnly?: boolean
+}> = [
+  {
+    key: 'consumer_surplus_proxy_bn',
+    def: {
+      label: 'Consumer-surplus proxy',
+      short: 'Surplus proxy',
+      unit: '$bn per year, AI content at baseline prices',
+      polarity: 'magnitude',
+      format: (v) => fmtBn(v),
+      axisFormat: (v) => fmtBn(v),
+    },
+    note: SURPLUS_CAPTION,
+  },
+  {
+    key: 'traded_services_displacement_share',
+    def: {
+      label: 'Traded-services displacement',
+      short: 'Traded services',
+      unit: '% of employment, export-serving workers',
+      polarity: 'magnitude',
+      format: (v) => (v == null || !Number.isFinite(v) ? '—' : `${v.toFixed(v < 1 ? 3 : 2)}%`),
+      axisFormat: (v) => `${Number(v.toFixed(3))}%`,
+    },
+    nonzeroOnly: true,
+  },
+]
+
+/** True when any median value of the series is nonzero (the traded share is zero for importers). */
+export function seriesIsNonzero(s: { p50: number[] } | undefined | null): boolean {
+  return !!s && s.p50.some((v) => Number.isFinite(v) && v !== 0)
+}

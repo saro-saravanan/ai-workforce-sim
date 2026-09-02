@@ -827,5 +827,79 @@
    "employee_reclassification"
   ],
   "default": "status_quo"
+ },
+ {
+  "path": "levers.applications.content.authenticity",
+  "label": "Authenticity premium",
+  "group": "applications",
+  "param": "P.127",
+  "mechanism": "Willingness to pay for human provenance: persistent (constant at its 2025 level) or eroding with a half-life (spec v0.3 §A.4).",
+  "type": "enum",
+  "options": [
+   "persistent",
+   "eroding"
+  ],
+  "default": "eroding"
+ },
+ {
+  "path": "levers.applications.content.authenticity_level_scale",
+  "label": "Authenticity premium level (scale)",
+  "group": "applications",
+  "param": "P.127",
+  "mechanism": "Scales the 2025 authenticity premium of every content category (spec v0.3 §A.4).",
+  "type": "number",
+  "min": 0.2,
+  "max": 3,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
+  "path": "levers.applications.content.licensing_regime",
+  "label": "Content licensing regime",
+  "group": "applications",
+  "param": "P.128",
+  "mechanism": "AI content price and quality growth under permissive, licensed or restrictive training-data rules (spec v0.3 §A.4).",
+  "type": "enum",
+  "options": [
+   "permissive",
+   "licensed",
+   "restrictive"
+  ],
+  "default": "permissive"
+ },
+ {
+  "path": "levers.applications.content.price_sensitivity",
+  "label": "Content price sensitivity γ",
+  "group": "applications",
+  "param": "P.125",
+  "mechanism": "Logit sensitivity of the AI share to the AI/human price ratio (spec v0.3 §A.4).",
+  "type": "number",
+  "min": 1,
+  "max": 4,
+  "step": 0.1,
+  "unit": "",
+  "default": 2
+ },
+ {
+  "path": "levers.applications.trade.services_exposure_scale",
+  "label": "Services-trade exposure (scale)",
+  "group": "applications",
+  "param": "P.124",
+  "mechanism": "Scales export-serving employment facing the importers’ task displacement (spec v0.3 §A.5.3).",
+  "type": "number",
+  "min": 0,
+  "max": 2,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
+  "path": "levers.applications.enabled",
+  "label": "Application layer (v0.3) on",
+  "group": "applications",
+  "mechanism": "Embodied, output-substitution and traded-services channels (spec v0.3); off reproduces the v0.2 task engine.",
+  "type": "boolean",
+  "default": true
  }
 ]

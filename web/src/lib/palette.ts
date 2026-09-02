@@ -4,9 +4,13 @@
  */
 export type Mode = 'light' | 'dark'
 
+/**
+ * Slots 0–7 are the validated eight; slots 8–9 (teal, brown) were added for the Phase 7 channels
+ * (output substitution, traded services) and only the stacked-channel chart reaches them.
+ */
 export const CATEGORICAL: Record<Mode, string[]> = {
-  light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
-  dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'],
+  light: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948', '#0e8f9f', '#8a6a3c'],
+  dark: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767', '#2fa9ba', '#b4915f'],
 }
 
 /** All-pairs forms (scatter, choropleth) validate only the first three slots. */

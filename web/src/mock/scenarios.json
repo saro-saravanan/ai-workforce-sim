@@ -107,7 +107,17 @@
      "SG": "baseline",
      "RoA": "baseline"
     },
-    "platform_labor": "status_quo"
+    "platform_labor": "status_quo",
+    "content": {
+     "authenticity": "eroding",
+     "authenticity_level_scale": 1,
+     "licensing_regime": "permissive",
+     "price_sensitivity": 2
+    },
+    "trade": {
+     "services_exposure_scale": 1
+    },
+    "enabled": true
    }
   },
   "shocks": [],
@@ -147,7 +157,7 @@
   "schema_version": "0.2",
   "id": "preset-acemoglu-2024",
   "name": "Preset: Acemoglu 2024",
-  "description": "Report-replication preset (spec §8.4). Only directly exposed (E1) tasks within the decade, no reinstatement, no demand feedback, low intensity; targets TFP no more than +0.66% and GDP about +1% over ten years.",
+  "description": "Report-replication preset (spec §8.4). Only directly exposed (E1) tasks within the decade, no reinstatement, no demand feedback, low intensity; targets TFP no more than +0.66% and GDP about +1% over ten years. The v0.3 application layer (embodied automation, output substitution, traded services) is switched off: the study modelled generative AI on tasks only.",
   "parent": "baseline",
   "preset": true,
   "levers": {
@@ -160,6 +170,9 @@
    "labor": {
     "reinstatement_ratio": 0,
     "price_pass_through": 0.5
+   },
+   "applications": {
+    "enabled": false
    }
   },
   "overrides": {
@@ -184,7 +197,7 @@
   "schema_version": "0.2",
   "id": "preset-goldman-2023",
   "name": "Preset: Goldman Sachs 2023",
-  "description": "Report-replication preset (spec §8.4). Default feasibility, near-unit-elastic output demand with high pass-through of cost savings to prices, historical reinstatement, slightly higher intensity; reproduces GDP about +7% over ten years with employment roughly flat, which is the report's narrative.",
+  "description": "Report-replication preset (spec §8.4). Default feasibility, near-unit-elastic output demand with high pass-through of cost savings to prices, historical reinstatement, slightly higher intensity; reproduces GDP about +7% over ten years with employment roughly flat, which is the report's narrative. The v0.3 application layer (embodied automation, output substitution, traded services) is switched off: the study modelled generative AI on tasks only.",
   "parent": "baseline",
   "preset": true,
   "levers": {
@@ -195,6 +208,9 @@
     "reinstatement_ratio": 0.6,
     "demand_elasticity_scale": 1.1,
     "price_pass_through": 0.9
+   },
+   "applications": {
+    "enabled": false
    }
   },
   "ensemble": {
@@ -205,7 +221,7 @@
   "schema_version": "0.2",
   "id": "preset-imf-2024",
   "name": "Preset: IMF 2024",
-  "description": "Report-replication preset (spec §8.4). Exposure with a complementarity split: about 60% of advanced-economy employment exposed, half of it complementary (augmentation-leaning). Targets the IMF's qualitative result: wide exposure, roughly half augmented, rising inequality.",
+  "description": "Report-replication preset (spec §8.4). Exposure with a complementarity split: about 60% of advanced-economy employment exposed, half of it complementary (augmentation-leaning). Targets the IMF's qualitative result: wide exposure, roughly half augmented, rising inequality. The v0.3 application layer (embodied automation, output substitution, traded services) is switched off: the study modelled generative AI on tasks only.",
   "parent": "baseline",
   "preset": true,
   "levers": {
@@ -214,6 +230,9 @@
    },
    "labor": {
     "reinstatement_ratio": 0.4
+   },
+   "applications": {
+    "enabled": false
    }
   },
   "overrides": {

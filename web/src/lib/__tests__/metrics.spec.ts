@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest'
 import type { ChannelName, FlowsSection, Series } from '@/types/results'
 import { RENT_STAGES } from '@/types/results'
 import {
+  APPLICATION_TILES,
   CHANNEL_COLOR_SLOT,
   CHANNEL_LABELS,
   EMBODIED_TILES,
   FLOW_DESTINATION_LABELS,
+  SURPLUS_CAPTION,
+  cellAxesLabel,
   channelColorScale,
   flowDestinations,
+  seriesIsNonzero,
 } from '../metrics'
 import { CATEGORICAL, NEUTRAL } from '../palette'
 
@@ -15,6 +19,19 @@ const ORDER_V03: ChannelName[] = [
   'automation',
   'augmentation',
   'embodied',
+  'demand_response',
+  'reinstatement',
+  'demand_feedback',
+  'ai_investment',
+  'adjacent',
+]
+/** contracts §24: the ten-entry Phase 7 order */
+const ORDER_V03_P7: ChannelName[] = [
+  'automation',
+  'augmentation',
+  'embodied',
+  'output_substitution',
+  'traded_services',
   'demand_response',
   'reinstatement',
   'demand_feedback',
@@ -51,6 +68,45 @@ describe('channel colors and labels', () => {
     expect(CHANNEL_LABELS.embodied).toBe('Embodied automation')
     expect(CHANNEL_LABELS.adjacent).toBe('Adjacent and hardware jobs')
     for (const k of ORDER_V03) expect(CHANNEL_LABELS[k]).toBeTruthy()
+  })
+  it('maps the ten Phase 7 channels to ten distinct colors and keeps every earlier color', () => {
+    for (const mode of ['light', 'dark'] as const) {
+      const c10 = channelColorScale(ORDER_V03_P7, mode)
+      const colors = ORDER_V03_P7.map(c10)
+      expect(new Set(colors).size).toBe(10)
+      expect(colors.every((c) => CATEGORICAL[mode].includes(c))).toBe(true)
+      expect(colors).not.toContain(NEUTRAL[mode])
+      const c8 = channelColorScale(ORDER_V03, mode)
+      for (const k of ORDER_V03) expect(c10(k)).toBe(c8(k))
+      expect(c10('output_substitution')).toBe(CATEGORICAL[mode][CHANNEL_COLOR_SLOT.output_substitution])
+      expect(c10('traded_services')).toBe(CATEGORICAL[mode][CHANNEL_COLOR_SLOT.traded_services])
+    }
+    expect(CHANNEL_LABELS.output_substitution).toBe('Output substitution')
+    expect(CHANNEL_LABELS.traded_services).toBe('Traded services')
+    for (const k of ORDER_V03_P7) expect(CHANNEL_LABELS[k]).toBeTruthy()
+    // every channel has a slot inside the palette
+    for (const k of ORDER_V03_P7) expect(CHANNEL_COLOR_SLOT[k]).toBeLessThan(CATEGORICAL.light.length)
+  })
+  it('names the mechanism-cell axes for 3-, 4- and 5-part ids', () => {
+    expect(cellAxesLabel(3)).toBe('demand response | reinstatement | pass-through')
+    expect(cellAxesLabel(4)).toBe('demand response | reinstatement | pass-through | hardware learning')
+    expect(cellAxesLabel(5)).toBe(
+      'demand response | reinstatement | pass-through | hardware learning | authenticity',
+    )
+    expect(cellAxesLabel(9)).toBe(cellAxesLabel(5))
+  })
+  it('publishes the Phase 7 tiles: the surplus proxy with its caption, the traded share for exporters only', () => {
+    const [surplus, traded] = APPLICATION_TILES
+    expect(surplus!.key).toBe('consumer_surplus_proxy_bn')
+    expect(surplus!.note).toBe(SURPLUS_CAPTION)
+    expect(surplus!.def.format(51.47)).toBe('$51.5bn')
+    expect(traded!.key).toBe('traded_services_displacement_share')
+    expect(traded!.nonzeroOnly).toBe(true)
+    expect(traded!.def.format(0.0362)).toBe('0.036%')
+    expect(traded!.def.format(null)).toBe('—')
+    expect(seriesIsNonzero({ p50: [0, 0, 0] })).toBe(false)
+    expect(seriesIsNonzero({ p50: [0, 0.004, 0.036] })).toBe(true)
+    expect(seriesIsNonzero(undefined)).toBe(false)
   })
   it('falls back to the positional stack scale for non-channel keys (rents stages)', () => {
     const color = channelColorScale(RENT_STAGES, 'dark')

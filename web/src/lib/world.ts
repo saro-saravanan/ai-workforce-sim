@@ -7,6 +7,7 @@
  *   - the capability clock: the frontier, i.e. the maximum over regions.
  */
 import type {
+  ApplicationMetric,
   EmbodiedMetric,
   NationalMetric,
   RegionInfo,
@@ -41,6 +42,13 @@ export const WORLD_RULE_EMBODIED: Record<EmbodiedMetric, WorldRule> = {
   hardware_capex_bn: 'sum',
   underemployed_self_fte: 'sum',
   hours_cut_self_cum: 'sum',
+}
+
+/** Phase 7 series (contracts §24): dollar flows sum; the traded share is an employment share. */
+export const WORLD_RULE_APPLICATION: Record<ApplicationMetric, WorldRule> = {
+  ai_content_revenue_bn: 'sum',
+  consumer_surplus_proxy_bn: 'sum',
+  traded_services_displacement_share: 'weighted',
 }
 
 export const WORLD_RULE_LABEL: Record<WorldRule, string> = {
@@ -107,13 +115,17 @@ export function worldAggregate(
     if (s) out[m] = s
   }
   if (!out.employment_pct_vs_baseline) return null
-  const extra: Partial<Record<EmbodiedMetric, Series>> = {}
-  for (const m of Object.keys(WORLD_RULE_EMBODIED) as EmbodiedMetric[]) {
+  const extra: Partial<Record<EmbodiedMetric | ApplicationMetric, Series>> = {}
+  const extraRules: Array<[EmbodiedMetric | ApplicationMetric, WorldRule]> = [
+    ...(Object.entries(WORLD_RULE_EMBODIED) as Array<[EmbodiedMetric, WorldRule]>),
+    ...(Object.entries(WORLD_RULE_APPLICATION) as Array<[ApplicationMetric, WorldRule]>),
+  ]
+  for (const [m, rule] of extraRules) {
     const parts = ids
       .filter((id) => series[id]?.[m])
       .map((id) => ({ weight: w.get(id) ?? 0, series: series[id]![m]! }))
     if (!parts.length) continue
-    const s = aggregateSeries(parts, WORLD_RULE_EMBODIED[m])
+    const s = aggregateSeries(parts, rule)
     if (s) extra[m] = s
   }
   const rentParts = ids.filter((id) => series[id]?.ai_rents_received_bn)

@@ -35,7 +35,10 @@ export interface ResultsMeta {
   data_version?: string
   /** written by the static exporter (contracts §18) */
   static?: boolean
-  /** Phase 2: the 8 mechanism-cell ids, e.g. "bessen|acemoglu_low|passthrough_low" */
+  /**
+   * Mechanism-cell ids: 8 in v0.2 ("bessen|acemoglu_low|passthrough_low"), 16 with the Phase 6
+   * hardware-learning axis, 32 with the Phase 7 authenticity axis (`|eroding` / `|persistent`).
+   */
   cells?: string[]
   /** Phase 2: [10, 25, 50, 75, 90] */
   percentiles?: number[]
@@ -57,6 +60,11 @@ export interface ResultsMeta {
   /** self-employed FTE by region (2024) */
   self_employed_fte?: Record<string, number>
   embodied_on?: boolean
+  // ---------- Phase 7 (contracts §24) ----------
+  /** content categories of the output-substitution layer, e.g. ["video", "music", …] */
+  content_categories?: string[]
+  /** export-serving FTE by region (traded services, spec v0.3 §A.5.3) */
+  export_serving_fte?: Record<string, number>
 }
 
 export type NationalMetric =
@@ -113,8 +121,19 @@ export type EmbodiedMetric =
   | 'underemployed_self_fte'
   | 'hours_cut_self_cum'
 
+/**
+ * Phase 7 per-region series (contracts §24): AI-content revenue and the consumer-surplus proxy
+ * ($bn per year; the proxy is an accounting quantity at baseline prices, not welfare) and the
+ * traded-services displacement (% of employment; nonzero for exporters only).
+ */
+export type ApplicationMetric =
+  | 'ai_content_revenue_bn'
+  | 'consumer_surplus_proxy_bn'
+  | 'traded_services_displacement_share'
+
 export type RegionSeries = Record<NationalMetric, Series> &
-  Partial<Record<EmbodiedMetric, Series>> & {
+  Partial<Record<EmbodiedMetric, Series>> &
+  Partial<Record<ApplicationMetric, Series>> & {
     /** Phase 3 (contracts §12) */
     ai_rents_received_bn?: RentsByStage
     /** Phase 6: deployed units per embodiment class (percentiles) */
@@ -124,6 +143,10 @@ export type RegionSeries = Record<NationalMetric, Series> &
     /** Phase 6: approved share J per class (central; percentiles collapse to it) */
     approval_share?: Partial<Record<EmbodimentClass, Series>>
     self_employed_fte_2024?: number
+    /** Phase 7: AI share of each content category's consumption (percent, percentiles) */
+    ai_content_share?: Record<string, Series>
+    /** Phase 7: category consumption relative to the baseline (Q/Q0, percentiles) */
+    content_consumption_ratio?: Record<string, Series>
   }
 
 /** Phase 3 region ids (contracts §11), in display order. */
@@ -182,14 +205,17 @@ export interface StateResult {
 }
 
 /**
- * Channel order (contracts §20): automation, augmentation, embodied, demand_response,
- * reinstatement, demand_feedback, ai_investment, adjacent. Pre-Phase-6 documents omit
- * `embodied` and `adjacent`.
+ * Channel order (contracts §24): automation, augmentation, embodied, output_substitution,
+ * traded_services, demand_response, reinstatement, demand_feedback, ai_investment, adjacent.
+ * Pre-Phase-6 documents omit `embodied` and `adjacent`; pre-Phase-7 documents also omit
+ * `output_substitution` and `traded_services`.
  */
 export type ChannelName =
   | 'automation'
   | 'augmentation'
   | 'embodied'
+  | 'output_substitution'
+  | 'traded_services'
   | 'demand_response'
   | 'reinstatement'
   | 'demand_feedback'
@@ -354,11 +380,22 @@ export interface ApplicationRegion {
   first_quarter: Record<ApplicationGate, string | null>
 }
 
-/** One catalogue row (spec v0.3 §A.8) with its per-region status. */
+/** Catalogue families (contracts §23), in display order. */
+export type ApplicationFamily = 'embodied' | 'output' | 'traded' | 'software'
+export const APPLICATION_FAMILIES: ApplicationFamily[] = ['embodied', 'output', 'traded', 'software']
+
+/**
+ * One catalogue row (spec v0.3 §A.8) with its per-region status. For `output` rows (contracts
+ * §24) `displacement_share` is the share of the category's human-produced output lost vs
+ * baseline, `1 − (1 − s^AI)·Q/Q0`, which is negative when the category grows, and `coverage` is
+ * the AI share `s^AI`; `traded` rows report the traded-services displacement over the target
+ * occupations (nonzero for exporters only); `software` rows the software-channel displacement.
+ */
 export interface ApplicationEntry {
   app_id: string
   name: string
-  family: 'embodied' | 'output' | 'software' | string
+  family: ApplicationFamily | string
+  /** embodiment classes, a content category id (`output`) or a trade category (`traded`) */
   classes: Array<EmbodimentClass | string>
   /** the target workers are largely self-employed or platform workers */
   platform: boolean

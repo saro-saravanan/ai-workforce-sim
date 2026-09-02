@@ -7,7 +7,12 @@ import type { ResultsDocument, Series, TornadoRow } from '@/types/results'
 import type { Insight, InsightsResponse } from '@/types/chat'
 import { seriesFor } from '@/lib/world'
 import { renderMarkdown, escapeHtml } from '@/lib/markdown'
+import { contentCategoryLabel } from '@/lib/applications'
+import { SURPLUS_CAPTION } from '@/lib/metrics'
 import { FLOW_DESTINATIONS } from '@/types/results'
+
+/** Traded-services displacement (% of employment) above which the candidate is emitted. */
+export const TRADED_SERVICES_MIN_SHARE = 0.05
 
 type Pct = 'p10' | 'p50' | 'p90' | 'central'
 
@@ -45,7 +50,8 @@ export function tornadoFlips(r: TornadoRow): boolean {
 /**
  * Deterministic candidate insights, sorted by surprise. Ported candidates: output up while
  * employment down, the hiring channel (from `flows.destinations`), the dominant sensitivity
- * parameter, regional divergence, and sign confidence.
+ * parameter, regional divergence, embodied automation (Phase 6), output substitution and traded
+ * services (Phase 7, contracts §24), and sign confidence.
  */
 export function candidateInsights(doc: ResultsDocument, region = 'US'): Insight[] {
   const quarters = doc.meta.quarters
@@ -187,6 +193,69 @@ export function candidateInsights(doc: ResultsDocument, region = 'US'): Insight[
         confOf(doc, 'employment_pct_vs_baseline', qEnd),
         0.3 + Math.min(0.4, eEnd / 10) + (late ? 0.15 : 0),
         { embodied_share_2030: Number(e30.toFixed(3)), embodied_share_end: Number(eEnd.toFixed(3)), late },
+      )
+    }
+  }
+
+  // Phase 7: output substitution — the category with the highest AI share, and the surplus proxy
+  const shares = blk?.ai_content_share
+  if (shares) {
+    const cats = (doc.meta.content_categories ?? Object.keys(shares)).filter((c) => shares[c])
+    let top: string | null = null
+    let topShare = -1
+    for (const c of cats) {
+      const v = at(shares[c], tEnd)
+      if (v > topShare) {
+        topShare = v
+        top = c
+      }
+    }
+    if (top && topShare > 0) {
+      const s = shares[top]
+      const ratio = at(blk?.content_consumption_ratio?.[top], tEnd)
+      const surplus = blk?.consumer_surplus_proxy_bn
+      const revenue = blk?.ai_content_revenue_bn
+      const label = contentCategoryLabel(top).toLowerCase()
+      add(
+        'output_substitution',
+        `AI produces ${Math.round(topShare)}% of ${label} by ${qEnd}`,
+        `In ${region}, the AI share of ${label} consumption reaches ${topShare.toFixed(1)}%` +
+          (s?.p10 && s.p90 ? ` (10–90: ${at(s, tEnd, 'p10').toFixed(1)}% to ${at(s, tEnd, 'p90').toFixed(1)}%)` : '') +
+          ` by ${qEnd}, the highest of ${cats.length} content categories` +
+          (ratio > 0 ? `; the category consumes ${ratio.toFixed(2)}× its baseline volume` : '') +
+          (surplus ? `. The consumer-surplus proxy is $${at(surplus, tEnd).toFixed(1)}bn per year (${SURPLUS_CAPTION})` : '') +
+          (revenue ? ` and AI-content revenue $${at(revenue, tEnd).toFixed(1)}bn.` : '.'),
+        'The AI share is a logit in the AI/human price ratio, the quality gap and the authenticity premium (spec v0.3 §A.4); cheaper content expands the category with its own-price elasticity, so human output can grow even as the AI share rises. The persistent-versus-eroding premium is a structural axis.',
+        confOf(doc, 'employment_pct_vs_baseline', qEnd),
+        0.3 + Math.min(0.35, topShare / 200) + (surplus ? Math.min(0.2, at(surplus, tEnd) / 300) : 0),
+        {
+          category: top,
+          ai_share_end: Number(topShare.toFixed(2)),
+          consumption_ratio_end: ratio ? Number(ratio.toFixed(3)) : null,
+          consumer_surplus_proxy_bn: surplus ? Number(at(surplus, tEnd).toFixed(2)) : null,
+          ai_content_revenue_bn: revenue ? Number(at(revenue, tEnd).toFixed(2)) : null,
+        },
+      )
+    }
+  }
+
+  // Phase 7: traded services — exporters only (the share is zero for importers)
+  const traded = blk?.traded_services_displacement_share
+  if (traded) {
+    const tEndV = at(traded, tEnd)
+    if (tEndV > TRADED_SERVICES_MIN_SHARE) {
+      const fte = doc.meta.export_serving_fte?.[region]
+      add(
+        'traded_services',
+        'Traded services reach the exporter through its clients',
+        `Export-serving workers in ${region} lose ${tEndV.toFixed(2)}% of the region's employment by ${qEnd}` +
+          (traded.p10 && traded.p90 ? ` (10–90: ${at(traded, tEnd, 'p10').toFixed(2)}% to ${at(traded, tEnd, 'p90').toFixed(2)}%)` : '') +
+          (fte ? `, over an export-serving stock of ${(fte / 1e6).toFixed(2)}M FTE` : '') +
+          ', on top of the local task displacement.',
+        'Export-serving employment faces the importers’ task displacement for the traded category, max(D_importer − D_local, 0), weighted by export destination (spec v0.3 §A.5.3); the importer’s software clock and demand response set the pace.',
+        confOf(doc, 'employment_pct_vs_baseline', qEnd),
+        0.3 + Math.min(0.4, tEndV / 1),
+        { traded_share_end: Number(tEndV.toFixed(4)), export_serving_fte: fte ?? null },
       )
     }
   }

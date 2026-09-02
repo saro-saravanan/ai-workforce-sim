@@ -5,19 +5,23 @@ import { useScrubberStore } from '@/stores/scrubber'
 import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import {
+  APPLICATION_TILES,
   DASHBOARD_TILES,
   EMBODIED_TILES,
   EMPLOYMENT_DEF,
   RENTS_DEF,
   RENT_STAGE_LABELS,
+  cellAxesLabel,
+  seriesIsNonzero,
   type MetricDef,
 } from '@/lib/metrics'
 import { CATEGORICAL } from '@/lib/palette'
 import { quarterLabel } from '@/lib/format'
 import { referenceQuarter } from '@/lib/confidence'
-import { WORLD_RULE, WORLD_RULE_EMBODIED, WORLD_RULE_LABEL } from '@/lib/world'
+import { WORLD_RULE, WORLD_RULE_APPLICATION, WORLD_RULE_EMBODIED, WORLD_RULE_LABEL } from '@/lib/world'
 import { stackCategorical } from '@/lib/scales'
 import type {
+  ApplicationMetric,
   ChannelDecomposition,
   EmbodiedMetric,
   HeadlineMetric,
@@ -38,13 +42,25 @@ const regionStore = useRegionStore()
 const theme = useThemeStore()
 
 const RENTS_KEY = 'ai_rents_received_bn' as const
-type TileKey = NationalMetric | EmbodiedMetric | typeof RENTS_KEY
+type TileKey = NationalMetric | EmbodiedMetric | ApplicationMetric | typeof RENTS_KEY
 const EMBODIED_KEYS = EMBODIED_TILES.map((t) => t.key) as string[]
+const APPLICATION_KEYS = APPLICATION_TILES.map((t) => t.key) as string[]
 function isEmbodied(k: TileKey): k is EmbodiedMetric {
   return EMBODIED_KEYS.includes(k)
 }
+function isApplication(k: TileKey): k is ApplicationMetric {
+  return APPLICATION_KEYS.includes(k)
+}
 function isNational(k: TileKey): k is NationalMetric {
-  return k !== RENTS_KEY && !isEmbodied(k)
+  return k !== RENTS_KEY && !isEmbodied(k) && !isApplication(k)
+}
+interface Tile {
+  key: TileKey
+  def: MetricDef
+  series: Series | undefined
+  /** a short line under the unit (the headline definition, the surplus-proxy caption) */
+  note?: string
+  noteTitle?: string
 }
 const expanded = ref<TileKey | null>(null)
 const ensembleView = ref<'parametric' | 'structural'>('parametric')
@@ -55,7 +71,14 @@ const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
 /** For World the tile subtitle says how the aggregate was formed (lib/world.ts). */
 function unitFor(key: TileKey, def: MetricDef) {
   if (!regionStore.isWorld) return def.unit
-  const rule = key === RENTS_KEY ? 'sum' : isEmbodied(key) ? WORLD_RULE_EMBODIED[key] : WORLD_RULE[key]
+  const rule =
+    key === RENTS_KEY
+      ? 'sum'
+      : isEmbodied(key)
+        ? WORLD_RULE_EMBODIED[key]
+        : isApplication(key)
+          ? WORLD_RULE_APPLICATION[key]
+          : WORLD_RULE[key]
   return `${def.unit} · World = ${WORLD_RULE_LABEL[rule]}`
 }
 /**
@@ -64,12 +87,29 @@ function unitFor(key: TileKey, def: MetricDef) {
  */
 const headlineDefinition = computed(() => results.meta?.headline_definition ?? '')
 const headlineShort = computed(() => headlineDefinition.value.split(/[(;]/)[0]?.trim() ?? '')
-const tiles = computed<Array<{ key: TileKey; def: MetricDef; series: Series | undefined }>>(() => {
-  const base: Array<{ key: TileKey; def: MetricDef; series: Series | undefined }> = [
-    { key: 'employment_pct_vs_baseline', def: EMPLOYMENT_DEF, series: results.national('employment_pct_vs_baseline') },
+const tiles = computed<Tile[]>(() => {
+  const base: Tile[] = [
+    {
+      key: 'employment_pct_vs_baseline',
+      def: EMPLOYMENT_DEF,
+      series: results.national('employment_pct_vs_baseline'),
+      note: headlineShort.value || undefined,
+      noteTitle: headlineDefinition.value || undefined,
+    },
     ...DASHBOARD_TILES.map((t) => ({ ...t, series: results.national(t.key) })),
     // Phase 6 series exist only in v0.3 documents
     ...EMBODIED_TILES.map((t) => ({ ...t, series: results.series?.[t.key] })),
+    // Phase 7 (contracts §24): the surplus proxy when present; the traded share for exporters only
+    ...APPLICATION_TILES.map((t) => {
+      const series = results.series?.[t.key]
+      return {
+        key: t.key,
+        def: t.def,
+        series: t.nonzeroOnly && !seriesIsNonzero(series) ? undefined : series,
+        note: t.note,
+        noteTitle: t.note,
+      }
+    }),
   ]
   base.push({ key: RENTS_KEY, def: RENTS_DEF, series: results.rents?.total })
   return base.filter((t) => t.series)
@@ -113,12 +153,15 @@ const expandedTornado = computed(() =>
 const expandedConfidence = computed(() =>
   isHeadline(expanded.value) ? results.confidenceAt(expanded.value, refQ.value) : undefined,
 )
-/** Cell ids split into their three axis parts for the legend. */
+/** Cell ids split into their axis parts for the legend (3 axes in v0.2, 4 in Phase 6, 5 in Phase 7). */
 const cellList = computed(() =>
   Object.keys(expandedStructural.value?.by_cell ?? {}).map((id) => ({
     id,
     parts: id.split('|').map((p) => p.replace(/_/g, ' ')),
   })),
+)
+const cellAxes = computed(() =>
+  cellAxesLabel(Math.max(1, ...cellList.value.map((c) => c.parts.length))),
 )
 const overlays = computed<Overlay[]>(() => {
   const st = expandedStructural.value
@@ -181,8 +224,8 @@ function selectCell(id: string) {
         :expanded="expanded === t.key"
         :confidence="isHeadline(t.key) ? results.confidenceAt(t.key, refQ) : undefined"
         :confidence-at="isHeadline(t.key) ? refQ : undefined"
-        :note="t.key === 'employment_pct_vs_baseline' && headlineShort ? headlineShort : undefined"
-        :note-title="t.key === 'employment_pct_vs_baseline' ? headlineDefinition : undefined"
+        :note="t.note"
+        :note-title="t.noteTitle"
         @toggle="toggle(t.key)"
       />
     </div>
@@ -233,9 +276,8 @@ function selectCell(id: string) {
       <template v-if="expandedStructural && ensembleView === 'structural'">
         <div class="cells">
           <span class="chart-note">
-            Thin lines = the {{ cellList.length }} mechanism-cell medians (demand response |
-            reinstatement | pass-through{{ cellList.some((c) => c.parts.length > 3) ? ' | hardware learning' : '' }}).
-            Click one to highlight it (<code>cell=</code> in the URL).
+            Thin lines = the {{ cellList.length }} mechanism-cell medians ({{ cellAxes }}). Click
+            one to highlight it (<code>cell=</code> in the URL).
           </span>
           <div class="cell-list" role="list">
             <button

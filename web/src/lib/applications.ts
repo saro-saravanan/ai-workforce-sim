@@ -1,20 +1,39 @@
 /**
- * Helpers for the Applications panel (spec v0.3 §A.6.4, contracts §20): gate positions on a
- * 2024–2040 axis, the region fallback, the per-region displacement table and the U.S. mean wage
- * the cost-per-hour figures are compared with. Pure functions so they are unit-testable.
+ * Helpers for the Applications panel (spec v0.3 §A.6.4, contracts §20 and §24): gate positions
+ * on a 2024–2040 axis, the region fallback (and the exporter fallback of traded rows), the
+ * family grouping, the per-region displacement table, the output-substitution strip and the
+ * U.S. mean wage the cost-per-hour figures are compared with. Pure functions so they are
+ * unit-testable.
  */
 import type {
   ApplicationEntry,
+  ApplicationFamily,
   ApplicationGate,
   ApplicationRegion,
   OccupationResult,
+  RegionSeries,
+  Series,
 } from '@/types/results'
-import { APPLICATION_GATES } from '@/types/results'
+import { APPLICATION_FAMILIES, APPLICATION_GATES } from '@/types/results'
 
 export const GATE_LABELS: Record<ApplicationGate, string> = {
   displacement_1pct: '1% displaced',
   displacement_10pct: '10% displaced',
   coverage_50pct: '50% coverage',
+}
+
+/**
+ * Output rows (contracts §24) read the same three gates on different quantities: the share of
+ * the category's human output lost vs baseline, and the AI share of consumption.
+ */
+export const OUTPUT_GATE_LABELS: Record<ApplicationGate, string> = {
+  displacement_1pct: '1% of human output lost',
+  displacement_10pct: '10% of human output lost',
+  coverage_50pct: 'AI share 50%',
+}
+
+export function gateLabels(family?: string): Record<ApplicationGate, string> {
+  return family === 'output' ? OUTPUT_GATE_LABELS : GATE_LABELS
 }
 
 /** Short glyph labels for the gate markers, in the same order as APPLICATION_GATES. */
@@ -24,10 +43,61 @@ export const GATE_SHORT: Record<ApplicationGate, string> = {
   coverage_50pct: '½',
 }
 
-export const APPLICATION_FAMILY_LABELS: Record<string, string> = {
-  embodied: 'Embodied',
+/** Family headers of the panel, in `APPLICATION_FAMILIES` order (contracts §23). */
+export const APPLICATION_FAMILY_LABELS: Record<ApplicationFamily | string, string> = {
+  embodied: 'Embodied automation',
   output: 'Output substitution',
-  software: 'Software tasks',
+  traded: 'Traded services',
+  software: 'Software applications',
+}
+
+/** Column captions per family: what the row's displacement figure and its bar mean. */
+export const FAMILY_COLUMNS: Record<
+  ApplicationFamily | string,
+  { displacement: string; bar: string | null; approval: boolean }
+> = {
+  embodied: { displacement: 'Displacement share', bar: 'Coverage · approval', approval: true },
+  output: { displacement: 'Human output vs baseline', bar: 'AI share', approval: false },
+  traded: { displacement: 'Displacement share', bar: null, approval: false },
+  software: { displacement: 'Displacement share', bar: null, approval: false },
+}
+
+/** Labels of the content categories (`meta.content_categories`, contracts §23). */
+export const CONTENT_CATEGORY_LABELS: Record<string, string> = {
+  video: 'Video',
+  music: 'Music',
+  text: 'Text',
+  image_design: 'Image and design',
+  translation_voice: 'Translation and voice',
+  advertising: 'Advertising',
+}
+export function contentCategoryLabel(id: string): string {
+  return CONTENT_CATEGORY_LABELS[id] ?? id.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase())
+}
+
+export interface ApplicationGroup {
+  family: ApplicationFamily | string
+  label: string
+  apps: ApplicationEntry[]
+}
+
+/**
+ * Rows grouped by family in catalogue order (embodied, output, traded, software); families the
+ * document does not carry are omitted and unknown families follow in first-seen order. Row order
+ * within a family is the document's.
+ */
+export function groupApplications(apps: ApplicationEntry[]): ApplicationGroup[] {
+  const byFamily = new Map<string, ApplicationEntry[]>()
+  for (const a of apps) byFamily.set(a.family, [...(byFamily.get(a.family) ?? []), a])
+  const order = [
+    ...APPLICATION_FAMILIES.filter((f) => byFamily.has(f)),
+    ...[...byFamily.keys()].filter((f) => !(APPLICATION_FAMILIES as string[]).includes(f)),
+  ]
+  return order.map((family) => ({
+    family,
+    label: APPLICATION_FAMILY_LABELS[family] ?? family,
+    apps: byFamily.get(family) ?? [],
+  }))
 }
 
 /** Reference quarters of the per-region table (contracts §8 reference quarters plus 2035). */
@@ -59,18 +129,23 @@ export interface GateMarker {
   missing: boolean
 }
 
-/** The three gate markers for a region block; missing gates are pinned to x = 1 ("not by 2040"). */
+/**
+ * The three gate markers for a region block; missing gates are pinned to x = 1 ("not by 2040").
+ * `family` picks the labels (output rows: human output lost, AI share).
+ */
 export function gateMarkers(
   first: Partial<Record<ApplicationGate, string | null>> | undefined,
   start = 2024,
   end = 2041,
+  family?: string,
 ): GateMarker[] {
+  const labels = gateLabels(family)
   return APPLICATION_GATES.map((gate) => {
     const quarter = first?.[gate] ?? null
     const x = quarterPosition(quarter, start, end)
     return {
       gate,
-      label: GATE_LABELS[gate],
+      label: labels[gate],
       short: GATE_SHORT[gate],
       quarter,
       x: x ?? 1,
@@ -102,6 +177,48 @@ export function applicationRegion(
   return first
     ? { block: app.by_region[first]!, region: first, fallback: true }
     : { block: null, region, fallback: true }
+}
+
+/**
+ * The exporting region a traded row should show when the selected region has no exposure: the
+ * region with the largest `displacement_share` at quarter `q` (ties and an all-zero quarter fall
+ * back to the horizon end). Null when no region has any displacement at all.
+ */
+export function largestExporter(app: ApplicationEntry, q: number): string | null {
+  const entries = Object.entries(app.by_region)
+  const pick = (i: number) => {
+    let best: string | null = null
+    let max = 0
+    for (const [id, b] of entries) {
+      const v = b.displacement_share[i] ?? 0
+      if (v > max) {
+        max = v
+        best = id
+      }
+    }
+    return best
+  }
+  const n = Math.max(0, ...entries.map(([, b]) => b.displacement_share.length))
+  return pick(q) ?? (n ? pick(n - 1) : null)
+}
+
+/**
+ * Region block for a traded row (contracts §24): the selected region when it has any exposure,
+ * else the largest exporter at `q` (`fallback` and `region` say so). Regions without a block
+ * behave as in `applicationRegion`.
+ */
+export function tradedRegion(
+  app: ApplicationEntry,
+  region: string,
+  q: number,
+): { block: ApplicationRegion | null; region: string; fallback: boolean; exporter: boolean } {
+  const own = region !== 'world' ? app.by_region[region] : undefined
+  if (own && own.displacement_share.some((v) => v > 0))
+    return { block: own, region, fallback: false, exporter: false }
+  const exp = largestExporter(app, q)
+  if (exp && exp !== region)
+    return { block: app.by_region[exp]!, region: exp, fallback: true, exporter: true }
+  return { ...applicationRegion(app, region), exporter: false }
 }
 
 /** Displacement share (percent) at the reference quarters for every region in `by_region`. */
@@ -146,4 +263,77 @@ export function targetTitles(
       ? `all occupations on the ${code.slice(1)} class`
       : (byCode.get(code) ?? null),
   }))
+}
+
+// ---------- Phase 7: the output-substitution strip (contracts §24) ----------
+
+export interface OutputStripTile {
+  category: string
+  label: string
+  /** AI share of consumption at `q`, percent (median) with the 10–90 band when present */
+  share: number | null
+  shareLo: number | null
+  shareHi: number | null
+  /** consumption relative to the baseline at `q` (Q/Q0, median) */
+  ratio: number | null
+  /** the median share path, percent, for the sparkline */
+  path: number[]
+}
+
+export interface OutputStrip {
+  tiles: OutputStripTile[]
+  /** AI-content revenue at `q`, $bn per year (median), null when the series is absent */
+  revenue: number | null
+  revenueLo: number | null
+  revenueHi: number | null
+  /** consumer-surplus proxy at `q`, $bn per year (median) */
+  surplus: number | null
+  surplusLo: number | null
+  surplusHi: number | null
+}
+
+const at = (s: Series | undefined, i: number, k: 'p50' | 'p10' | 'p90' = 'p50'): number | null => {
+  const v = s?.[k]?.[i]
+  return v == null || !Number.isFinite(v) ? null : v
+}
+
+/**
+ * One tile per content category (the document's `meta.content_categories`, else the keys of
+ * `ai_content_share`) plus the two totals, read from a region's series block at quarter `q`.
+ * Null when the block carries no output-substitution series.
+ */
+export function outputStrip(
+  block: Pick<
+    RegionSeries,
+    'ai_content_share' | 'content_consumption_ratio' | 'ai_content_revenue_bn' | 'consumer_surplus_proxy_bn'
+  > | null | undefined,
+  q: number,
+  categories?: string[],
+): OutputStrip | null {
+  const shares = block?.ai_content_share
+  if (!shares) return null
+  const ids = (categories?.length ? categories : Object.keys(shares)).filter((c) => shares[c])
+  const tiles = ids.map((c) => {
+    const s = shares[c]
+    return {
+      category: c,
+      label: contentCategoryLabel(c),
+      share: at(s, q),
+      shareLo: at(s, q, 'p10'),
+      shareHi: at(s, q, 'p90'),
+      ratio: at(block?.content_consumption_ratio?.[c], q),
+      path: s?.p50 ?? [],
+    }
+  })
+  const rev = block?.ai_content_revenue_bn
+  const sur = block?.consumer_surplus_proxy_bn
+  return {
+    tiles,
+    revenue: at(rev, q),
+    revenueLo: at(rev, q, 'p10'),
+    revenueHi: at(rev, q, 'p90'),
+    surplus: at(sur, q),
+    surplusLo: at(sur, q, 'p10'),
+    surplusHi: at(sur, q, 'p90'),
+  }
 }

@@ -174,6 +174,42 @@ describe('candidateInsights', () => {
   })
 })
 
+describe('Phase 7 candidates', () => {
+  const withPhase7 = (tradedEnd: number): ResultsDocument => {
+    const doc = fixture()
+    doc.meta.content_categories = ['video', 'text']
+    doc.meta.export_serving_fte = { US: 0, EU: 180_000 }
+    doc.series.US!.ai_content_share = { video: s([0.5, 4, 8]), text: s([2, 15, 26]) }
+    doc.series.US!.content_consumption_ratio = { video: s([1, 1.03, 1.07]), text: s([1, 1.1, 1.26]) }
+    doc.series.US!.consumer_surplus_proxy_bn = s([0, 20, 55])
+    doc.series.US!.ai_content_revenue_bn = s([0, 2, 5])
+    doc.series.EU!.traded_services_displacement_share = s([0, 0.01, tradedEnd], 0.005)
+    doc.series.US!.traded_services_displacement_share = s([0, 0, 0], 0)
+    return doc
+  }
+  it('names the highest-share category and the surplus proxy with its caption', () => {
+    const c = candidateInsights(withPhase7(0.09), 'US').find((x) => x.key === 'output_substitution')!
+    expect(c).toBeTruthy()
+    expect(c.title).toBe('AI produces 26% of text by 2040Q4')
+    expect(c.statement).toContain('26.0%')
+    expect(c.statement).toContain('1.26×')
+    expect(c.statement).toContain('$55.0bn per year (accounting proxy at baseline prices, not welfare)')
+    expect(c.statement).toContain('AI-content revenue $5.0bn')
+    expect(c.evidence).toMatchObject({ category: 'text', ai_share_end: 26, consumer_surplus_proxy_bn: 55 })
+    // absent without the series
+    expect(candidateInsights(fixture(), 'US').some((x) => x.key === 'output_substitution')).toBe(false)
+  })
+  it('emits the traded-services candidate only above 0.05% and only for the exporter', () => {
+    const eu = candidateInsights(withPhase7(0.09), 'EU').find((x) => x.key === 'traded_services')!
+    expect(eu).toBeTruthy()
+    expect(eu.statement).toContain('0.09%')
+    expect(eu.statement).toContain('0.18M FTE')
+    expect(eu.evidence).toMatchObject({ traded_share_end: 0.09, export_serving_fte: 180_000 })
+    expect(candidateInsights(withPhase7(0.09), 'US').some((x) => x.key === 'traded_services')).toBe(false)
+    expect(candidateInsights(withPhase7(0.03), 'EU').some((x) => x.key === 'traded_services')).toBe(false)
+  })
+})
+
 describe('mockInsights', () => {
   it('returns the top n and every candidate', () => {
     const res = mockInsights(fixture(), 'US', 3)
