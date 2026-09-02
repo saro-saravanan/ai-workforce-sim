@@ -2,7 +2,7 @@
  {
   "schema_version": "0.3",
   "id": "baseline",
-  "name": "Consensus central",
+  "name": "Baseline: central assumptions",
   "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
   "parent": null,
   "seed": 42,
@@ -154,6 +154,101 @@
   }
  },
  {
+  "schema_version": "0.3",
+  "id": "policy-retraining",
+  "name": "Policy: retraining subsidy 50% of wage",
+  "description": "Retraining subsidy at 50% of the wage for enrolled workers, deficit-financed (spec §6.5, minimal wiring §A.16).",
+  "parent": "baseline",
+  "levers": {
+   "policy": {
+    "US": {
+     "retraining_subsidy_pct_wage": 50,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "ai_tax",
+      "work_week": "deficit"
+     }
+    }
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "policy-ubi-ai-tax",
+  "name": "Policy: $500/month basic income, AI-tax financed",
+  "description": "A $500 monthly payment to every adult, with a 30% tax on AI spend toward its cost; the shortfall falls on the deficit.",
+  "parent": "baseline",
+  "levers": {
+   "policy": {
+    "US": {
+     "ubi_monthly_usd": 500,
+     "ai_tax_pct_of_ai_spend": 30,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "ai_tax",
+      "work_week": "deficit"
+     }
+    }
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "policy-wage-insurance",
+  "name": "Policy: wage insurance 50% for 2 years",
+  "description": "Half of the earnings loss of re-employed displaced workers replaced for two years, financed by an AI tax.",
+  "parent": "baseline",
+  "levers": {
+   "policy": {
+    "US": {
+     "wage_insurance_replacement": 0.5,
+     "wage_insurance_years": 2,
+     "ai_tax_pct_of_ai_spend": 5,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "ai_tax",
+      "work_week": "deficit"
+     }
+    }
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "policy-work-week-36",
+  "name": "Policy: 36-hour standard week",
+  "description": "Standard week shortened to 36 hours; FTE spread over more heads at proportionally lower pay per head (P.72 conversion).",
+  "parent": "baseline",
+  "levers": {
+   "policy": {
+    "US": {
+     "work_week_hours": 36,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "ai_tax",
+      "work_week": "deficit"
+     }
+    }
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
   "schema_version": "0.2",
   "id": "preset-acemoglu-2024",
   "name": "Preset: Acemoglu 2024",
@@ -243,5 +338,56 @@
   "ensemble": {
    "mechanisms": "central"
   }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "preset-seba-rethinkx",
+  "name": "Preset: Seba / RethinkX disruption",
+  "description": "Tony Seba's technology-disruption framework as scenario levers: cost curves at electronics-like learning rates, fleets built at the fastest historical ramps, high utilization (transport as a service), approvals accelerated where fleets already operate, embodiment clocks coupled tightly to the software frontier, and an eroding preference for human-made content. Reproduces the shape of his S-curve claims; the forecast scoreboard compares his 2017 and 2020 numbers with the model's.",
+  "parent": "baseline",
+  "levers": {
+   "applications": {
+    "enabled": true,
+    "embodiment": {
+     "driving_doubling_months": 9,
+     "manipulation_doubling_months": 8,
+     "fixed_doubling_months": 12,
+     "aerial_doubling_months": 9,
+     "coupling_to_software": 0.7
+    },
+    "hardware": {
+     "learning_rate": 0.25,
+     "utilization_scale": 1.5,
+     "unit_price_scale": 0.7,
+     "ramp_max_growth_per_year": 1.5
+    },
+    "approval": {
+     "US": "accelerated",
+     "CN": "accelerated",
+     "UK": "accelerated",
+     "SG": "accelerated",
+     "RoA": "accelerated",
+     "EU": "baseline",
+     "JP": "accelerated",
+     "KR": "accelerated",
+     "IN": "baseline",
+     "TW": "accelerated"
+    },
+    "content": {
+     "authenticity": "eroding",
+     "authenticity_level_scale": 0.6,
+     "licensing_regime": "permissive",
+     "price_sensitivity": 3
+    },
+    "trade": {
+     "services_exposure_scale": 1
+    },
+    "platform_labor": "status_quo"
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  },
+  "preset": true
  }
 ]

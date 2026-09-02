@@ -2,6 +2,8 @@
 
 Branch `spec/model-v0.3` at Phase 8. Baseline, U.S., 256 draws, 32 structural cells; companions (four policy runs and the Seba preset) at 64 draws, central run quoted. Everything is a difference from a world in which AI stopped improving in 2023.
 
+![Story view](screenshots/phase8-story-light.png)
+
 ## 1. One set of numbers
 
 The reports of Phases 1–7 gave the same fact three ways (jobs below baseline, workers displaced, unemployed) and readers added them up. The story layer keeps two ledgers and explains why they differ:
@@ -48,6 +50,8 @@ The preset is labelled as levers, and the forecast rows are transcribed from rec
 Two lessons. Targeted labour-market policies barely move the headline because the headline is set by labour demand, not by frictions; they move who bears it. Large transfers move the headline a lot in a model with no inflation, interest-rate or debt response, and the run says so in every sentence it applies to. The work-week result is arithmetic: the same hours over more heads.
 
 ## 5. Your outlook
+
+![Your outlook](screenshots/phase8-outlook-light.png)
 
 `GET /api/outlook/{hash}?occ=&age=` gives one occupation and one age band a verdict (rank among all occupations), the 2030 and 2040 numbers with their range, whether the automated task-hours are software or machines, pay for those who stay, and nearby occupations that grow. Taxi drivers under the baseline: among the hardest hit, 32% fewer jobs by 2040 (1% by 2030), mostly machines and vehicles. Customer service representatives: about average, 8% fewer, mostly software. Static mode computes this client-side from the run document with the same rules.
 

@@ -816,6 +816,18 @@
   "default": "baseline"
  },
  {
+  "path": "levers.applications.induced_demand_scale",
+  "label": "Induced demand from cheaper applications (scale)",
+  "group": "applications",
+  "mechanism": "Scales each application's own induced-demand elasticity beyond the sector elasticity (Seba's 'transport as a service' effect; spec v0.3 §A.16): 0 = none, 1 = as catalogued.",
+  "type": "number",
+  "min": 0,
+  "max": 2,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
   "path": "levers.applications.platform_labor",
   "label": "Platform labor classification",
   "group": "applications",

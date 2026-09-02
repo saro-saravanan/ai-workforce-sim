@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useResultsStore } from '@/stores/results'
 import { REPO_URL } from '@/api/client'
 import { CONFIDENCE_GLYPH } from '@/lib/confidence'
@@ -108,6 +109,24 @@ const LINKS = [
           <span class="muted spec">spec {{ l.spec }}</span>
         </li>
       </ol>
+    </section>
+
+    <section class="card">
+      <h3>The story, your outlook and the scoreboard</h3>
+      <p class="text-p">
+        The <RouterLink :to="{ path: '/story', query: $route.query }">Story</RouterLink> view
+        reads the current run as one reconciled set of numbers and seven findings in plain
+        language, each with its likely range, how sure the model is of the direction, and what
+        would change it; it ends with the policy runs read against the baseline and an executive
+        brief without parameter codes. Named futures sit beside the model's own extremes: the
+        Seba / RethinkX disruption preset is one of them and can be opened as a scenario.
+        <RouterLink :to="{ path: '/outlook', query: $route.query }">Your outlook</RouterLink>
+        narrows the same run to one occupation and one age band. The forecast scoreboard on the
+        Story view puts named public claims (Goldman Sachs, IMF, Acemoglu, RethinkX and others)
+        next to the run's central value and likely range and says whether the model lands within,
+        below or above each claim; where the model tracks only a neighbouring quantity, the row
+        says so.
+      </p>
     </section>
 
     <section class="card">
@@ -292,7 +311,12 @@ table.flags th {
   cursor: default;
   position: static;
 }
-.links a {
+.links a,
+.text-p a {
   color: var(--accent-ink);
+}
+.text-p {
+  margin: 0;
+  line-height: 1.55;
 }
 </style>

@@ -1476,7 +1476,15 @@ interface JsonSchema {
 
 const LEVER_LABELS: Record<
   string,
-  { label: string; unit?: string; param?: string; mechanism?: string; step?: number }
+  {
+    label: string
+    unit?: string
+    param?: string
+    mechanism?: string
+    step?: number
+    /** the engine's default when neither the schema nor the baseline scenario carries one */
+    default?: number
+  }
 > = {
   doubling_months: {
     label: 'Capability doubling time',
@@ -1829,6 +1837,14 @@ Object.assign(LEVER_LABELS, {
     step: 0.1,
     mechanism: 'Logit sensitivity of the AI share to the AI/human price ratio (spec v0.3 §A.4).',
   },
+  'levers.applications.induced_demand_scale': {
+    label: 'Induced demand from cheaper applications (scale)',
+    unit: '×',
+    step: 0.05,
+    default: 1,
+    mechanism:
+      "Scales each application's own induced-demand elasticity beyond the sector elasticity (Seba's 'transport as a service' effect; spec v0.3 §A.16): 0 = none, 1 = as catalogued.",
+  },
   'levers.applications.trade.services_exposure_scale': {
     label: 'Services-trade exposure (scale)',
     unit: '×',
@@ -1900,7 +1916,7 @@ function buildLevers(schema: JsonSchema, baseline: ScenarioDocument): LeverDef[]
         max,
         step: meta?.step ?? niceStep(min, max),
         unit: meta?.unit ?? '',
-        default: (def as number) ?? (node.default as number) ?? min,
+        default: (def as number) ?? (node.default as number) ?? meta?.default ?? min,
       })
       return
     }

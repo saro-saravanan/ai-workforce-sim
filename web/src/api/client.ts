@@ -20,6 +20,7 @@ import type {
   ChatStatus,
   InsightsResponse,
 } from '@/types/chat'
+import type { OutlookResponse, StoryDocument } from '@/types/story'
 import { pairedCompare } from '@/lib/compare'
 import { seriesFor } from '@/lib/world'
 
@@ -89,6 +90,14 @@ export interface StaticManifest {
   /** keys: `<id>` and `<id>__vs__<a>` */
   insights?: Record<string, string>
   briefs?: Record<string, Partial<Record<BriefFormat, string>>>
+  // ---------- Phase 8 (contracts §28) ----------
+  /** `<id>` → `story/<id>.json` (the U.S. story, policies against the exported baseline) */
+  story?: Record<string, string>
+  /** `<id>` → the executive brief files */
+  exec_briefs?: Record<string, { md?: string; html?: string }>
+  /** the policy scenarios and the named-future scenarios the exporter ran */
+  policy_scenarios?: string[]
+  future_scenarios?: string[]
 }
 
 /** `${BASE_URL}static/<file>`; BASE_URL is `/` or the sub-path (`VITE_BASE`, e.g. `/ai-workforce-sim/`). */
@@ -584,4 +593,90 @@ export async function fetchBriefMarkdown(
   }
   const res = await fetchOrDetail(briefUrl(hash, 'md', region, compareHash))
   return res.text()
+}
+
+// ---------- Phase 8 endpoints (contracts §26–27) ----------
+
+/**
+ * The region the story endpoints take: a series block. World is aggregated client-side only, so
+ * the story and the outlook read the U.S. for it.
+ */
+export function storyRegion(region: string): string {
+  return region === 'world' ? 'US' : region
+}
+
+/** The mock story (a real baseline story, U.S.) relabelled for the current mock run. */
+async function mockStory(doc: ResultsDocument): Promise<StoryDocument> {
+  const mod = await import('@/mock/story.json')
+  const st = structuredClone(mod.default as unknown as StoryDocument)
+  st.scenario_hash = doc.meta.scenario_hash
+  st.scenario_id = doc.meta.scenario_id
+  st.scenario_name = doc.meta.scenario_name ?? (doc.meta.scenario_id === 'baseline' ? st.scenario_name : null)
+  return st
+}
+
+/**
+ * GET /api/story/{hash}?region= — the story document. Static mode reads the exporter's
+ * `story/<id>.json` (the U.S. story; other regions get it too, marked by its `region`); mock
+ * mode reads `src/mock/story.json` for every run.
+ */
+export async function fetchStory(doc: ResultsDocument, region = 'US'): Promise<StoryDocument> {
+  const r = storyRegion(region)
+  if (USE_MOCK) return mockStory(doc)
+  if (USE_STATIC) {
+    const m = await staticManifest()
+    const id = staticRunOf(m, doc.meta.scenario_hash)?.id ?? doc.meta.scenario_id
+    const file = m.story?.[id]
+    if (!file)
+      throw new Error(`Static demo: no story for "${id}". Pick a precomputed scenario instead.`)
+    return getJson<StoryDocument>(staticUrl(file))
+  }
+  return getJson<StoryDocument>(
+    `/api/story/${encodeURIComponent(doc.meta.scenario_hash)}?${new URLSearchParams({ region: r })}`,
+  )
+}
+
+/**
+ * GET /api/outlook/{hash}?occ=&age=&region= — the personal outlook. Static and mock modes
+ * compute it client-side from the document (lib/outlook.ts, the same rules as the server) with
+ * the beats of the story.
+ */
+export async function fetchOutlook(
+  doc: ResultsDocument,
+  occ: string | null | undefined,
+  age: string | null | undefined,
+  region = 'US',
+): Promise<OutlookResponse> {
+  const r = storyRegion(region)
+  if (USE_MOCK || USE_STATIC) {
+    let beats: StoryDocument['beats'] = []
+    try {
+      beats = (await fetchStory(doc, r)).beats
+    } catch {
+      /* no story file: the cards still work without the beats */
+    }
+    const { outlookFromDoc } = await import('@/lib/outlook')
+    return outlookFromDoc(doc, occ, age, r, beats)
+  }
+  const qs = new URLSearchParams({ region: r })
+  if (occ) qs.set('occ', occ)
+  if (age) qs.set('age', age)
+  return getJson<OutlookResponse>(`/api/outlook/${encodeURIComponent(doc.meta.scenario_hash)}?${qs}`)
+}
+
+/**
+ * URL of the executive brief page (GET /api/brief/{hash}?format=exec-html). Static mode: the
+ * exporter's `briefs/<id>.exec.html` once the manifest is known. Null when no page exists for
+ * this run (mock mode, or a static run without an exported brief): the view then renders the
+ * brief client-side from the story.
+ */
+export function execBriefUrl(doc: ResultsDocument, region = 'US'): string | null {
+  if (USE_MOCK) return null
+  if (USE_STATIC) {
+    const id = hashToId.get(doc.meta.scenario_hash) ?? doc.meta.scenario_id
+    const file = manifestCache?.exec_briefs?.[id]?.html
+    return file ? staticUrl(file) : null
+  }
+  const qs = new URLSearchParams({ format: 'exec-html', region: storyRegion(region) })
+  return `/api/brief/${encodeURIComponent(doc.meta.scenario_hash)}?${qs}`
 }

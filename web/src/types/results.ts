@@ -65,6 +65,19 @@ export interface ResultsMeta {
   content_categories?: string[]
   /** export-serving FTE by region (traded services, spec v0.3 §A.5.3) */
   export_serving_fte?: Record<string, number>
+  // ---------- Phase 8 (contracts §28) ----------
+  /** a policy lever is active in this run */
+  policy_on?: boolean
+  /** the active policy levers, by region */
+  policy?: Record<string, unknown>
+  /** the run's validity flags: the labour-rule range and the fiscal range (deficit beyond 3% of GDP) */
+  validity?: {
+    warning?: boolean
+    note?: string
+    fiscal_warning?: boolean
+    fiscal_balance_pct_gdp_2040?: number
+    [key: string]: unknown
+  }
 }
 
 export type NationalMetric =
@@ -131,9 +144,21 @@ export type ApplicationMetric =
   | 'consumer_surplus_proxy_bn'
   | 'traded_services_displacement_share'
 
+/**
+ * Phase 8 per-region series (contracts §28): the policy ledger in $bn per year, and the stock of
+ * extra unemployed (heads) that the story layer reads.
+ */
+export type PolicyMetric =
+  | 'transfers_bn'
+  | 'policy_cost_bn'
+  | 'ai_tax_revenue_bn'
+  | 'fiscal_balance_bn'
+  | 'unemployed_stock'
+
 export type RegionSeries = Record<NationalMetric, Series> &
   Partial<Record<EmbodiedMetric, Series>> &
-  Partial<Record<ApplicationMetric, Series>> & {
+  Partial<Record<ApplicationMetric, Series>> &
+  Partial<Record<PolicyMetric, Series>> & {
     /** Phase 3 (contracts §12) */
     ai_rents_received_bn?: RentsByStage
     /** Phase 6: deployed units per embodiment class (percentiles) */
@@ -356,6 +381,35 @@ export interface ResultsDocument {
   supply?: SupplySection
   // ---------- Phase 6 (contracts §20) ----------
   applications?: ApplicationEntry[]
+  // ---------- Phase 8 (contracts §28) ----------
+  /** the forecast scoreboard: named claims read against this run's band */
+  forecasts?: ForecastRow[]
+}
+
+// ---------- Phase 8 sections (contracts §28) ----------
+
+export type ForecastVerdict = 'within band' | 'model lower' | 'model higher'
+
+/** One scoreboard row (`forecasts.csv` read against the run's p10–p90 band at the claim's quarter). */
+export interface ForecastRow {
+  source: string
+  short: string
+  region: string
+  year: number
+  metric: string
+  /** 1 when the claim is compared with the nearest model quantity rather than the same one */
+  proxy: number | boolean
+  /** the preset scenario that runs the source's assumptions, when one exists */
+  preset_id: string | null
+  claimed: number
+  unit: string
+  note: string
+  source_tag?: string
+  quarter?: string
+  model_central: number | null
+  model_p10: number | null
+  model_p90: number | null
+  verdict: ForecastVerdict | string
 }
 
 // ---------- Phase 6 sections (contracts §19–20) ----------

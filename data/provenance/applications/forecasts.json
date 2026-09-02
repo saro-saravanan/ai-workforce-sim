@@ -1,0 +1,17 @@
+{
+  "table": "applications/forecasts",
+  "source": "named published forecasts (RethinkX/Seba, Acemoglu, Goldman Sachs, IMF, Brynjolfsson et al.) transcribed from recollection",
+  "source_url": "https://www.rethinkx.com/",
+  "license": "cite",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "add10474e0bc12e63b537e781af8f9d7dc8857754c25fb5b02bc688792c0ae98",
+  "transformations": [
+    "one row per claim: source, region, year, model metric id, claimed value, unit, note"
+  ],
+  "status": "FIXTURE (transcribed from recollection, V?)",
+  "notes": "Every claimed value is V? until the source document is fetched and quoted; the scoreboard compares each with the model's central value and band.",
+  "built_at": "2026-09-02T15:51:56+00:00",
+  "output": "data/processed/applications/forecasts.csv",
+  "extra": {}
+}

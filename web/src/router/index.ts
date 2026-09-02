@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 export const VIEWS = [
+  { name: 'story', path: '/story', label: 'Story', phase: 8 },
+  { name: 'outlook', path: '/outlook', label: 'Your outlook', phase: 8 },
   { name: 'map', path: '/map', label: 'Map', phase: 1 },
   { name: 'flows', path: '/flows', label: 'Flows', phase: 2 },
   { name: 'occupations', path: '/occupations', label: 'Occupations', phase: 1 },
@@ -14,7 +16,9 @@ export const VIEWS = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', redirect: '/map' },
+    { path: '/', redirect: '/story' },
+    { path: '/story', name: 'story', component: () => import('@/views/StoryView.vue') },
+    { path: '/outlook', name: 'outlook', component: () => import('@/views/OutlookView.vue') },
     { path: '/map', name: 'map', component: () => import('@/views/MapView.vue') },
     {
       path: '/occupations',
@@ -27,7 +31,7 @@ const router = createRouter({
     { path: '/compare', name: 'compare', component: () => import('@/views/CompareView.vue') },
     { path: '/supply', name: 'supply', component: () => import('@/views/SupplyView.vue') },
     { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue') },
-    { path: '/:pathMatch(.*)*', redirect: '/map' },
+    { path: '/:pathMatch(.*)*', redirect: '/story' },
   ],
 })
 

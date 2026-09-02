@@ -7,6 +7,7 @@ import type { ResultsDocument, ScenarioDocument } from '@/types/results'
 import resultsA from '@/mock/results.json'
 import resultsB from '@/mock/results-b.json'
 import scenarios from '@/mock/scenarios.json'
+import storyJson from '@/mock/story.json'
 
 type Api = typeof import('@/api/client')
 
@@ -48,6 +49,10 @@ const manifest = {
     baseline: { md: 'briefs/baseline.md', html: 'briefs/baseline.html' },
     'eu-delay-deepseek-2027': { md: 'briefs/eu-delay-deepseek-2027.md', html: 'briefs/eu-delay-deepseek-2027.html' },
   },
+  story: { baseline: 'story/baseline.json' },
+  exec_briefs: { baseline: { md: 'briefs/baseline.exec.md', html: 'briefs/baseline.exec.html' } },
+  policy_scenarios: ['policy-retraining'],
+  future_scenarios: ['preset-seba-rethinkx'],
 }
 
 const insight = (key: string) => ({
@@ -102,6 +107,7 @@ beforeEach(async () => {
     'insights/eu-delay-deepseek-2027__vs__baseline.json': { scenario_hash: HASH_B, region: 'US', top: [insight('delta')], candidates: [], method: 'file-vs' },
     'briefs/baseline.md': '# baseline brief (file)',
     'briefs/eu-delay-deepseek-2027.md': '# B brief with compare (file)',
+    'story/baseline.json': { ...storyJson, scenario_hash: HASH_A },
   }
   calls = []
   vi.stubGlobal(
@@ -296,5 +302,46 @@ describe('catalogues, geo and chat', () => {
     await expect(
       api.sendChat({ messages: [], context: {}, confirmed_proposals: [], mode: 'chat' }),
     ).rejects.toThrow(/Static demo: the chat layer/)
+  })
+})
+
+describe('story, outlook and executive brief (contracts §26–28)', () => {
+  it('reads the story file listed in the manifest, by hash or by id', async () => {
+    const st = await api.fetchStory(docA, 'US')
+    expect(st.scenario_hash).toBe(HASH_A)
+    expect(st.beats).toHaveLength(7)
+    expect(st.policies.map((p) => p.scenario_id)).toContain('policy-retraining')
+    expect(calls).toContain('/ai-workforce-sim/static/story/baseline.json')
+    // World reads the U.S. story
+    const world = await api.fetchStory(docA, 'world')
+    expect(world.region).toBe('US')
+  })
+
+  it('rejects a run without an exported story', async () => {
+    await expect(api.fetchStory(docB, 'US')).rejects.toThrow(/Static demo: no story for "eu-delay-deepseek-2027"/)
+    expect(calls.filter((u) => u.includes('/story/'))).toHaveLength(0)
+  })
+
+  it('computes the outlook client-side, with the story beats when there is a story', async () => {
+    const res = await api.fetchOutlook(docA, '53-3054', '16-24', 'US')
+    expect(res.region).toBe('US')
+    expect(res.beats.map((b) => b.id)).toEqual(['jobs', 'hiring', 'pay'])
+    expect(res.occupation?.title).toBe('Taxi drivers and chauffeurs')
+    expect(res.occupation?.sentence).toContain('task-hours')
+    expect(res.age?.band).toBe('16-24')
+    expect(calls.filter((u) => u.includes('/api/'))).toHaveLength(0)
+    // no story file: the cards still work, without the beats
+    const noStory = await api.fetchOutlook(docB, '53-3054', null, 'EU')
+    expect(noStory.beats).toEqual([])
+    expect(noStory.occupation?.occ_code).toBe('53-3054')
+    expect(noStory.age).toBeUndefined()
+    expect(noStory.note).toMatch(/U\.S\. detail/)
+  })
+
+  it('points the executive brief at the exporter page once the manifest is known', async () => {
+    expect(api.execBriefUrl(docA)).toBeNull() // manifest not fetched yet
+    await api.fetchScenarios()
+    expect(api.execBriefUrl(docA)).toBe('/ai-workforce-sim/static/briefs/baseline.exec.html')
+    expect(api.execBriefUrl(docB)).toBeNull()
   })
 })
