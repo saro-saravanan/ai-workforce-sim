@@ -1,0 +1,358 @@
+# Model specification v0.3 amendment: the application layer
+
+*Status: draft for adversarial review. Amends `docs/model-spec.md` v0.2; section numbers below refer to that document unless prefixed A. Nothing here is implemented. Every number marked `V?` is a provisional value written from the authors' recollection of public sources and must be verified by the data plan in §A.10 before it enters the registry; the ranges around such values are deliberately wide.*
+
+---
+
+## A.0 What v0.2 misses and why
+
+v0.2 has one displacement mechanism: **task substitution inside an employer**. A software system becomes able to do an O*NET task, the task is cheaper than the worker's hours, the firm hands it over on an adoption curve. This is what the exposure literature measures, and it is why the shipped results concentrate on clerical, programming, and analytical work.
+
+Three families of AI application work through other mechanisms, and v0.2 handles each badly for a specific reason:
+
+| Family | Example | Mechanism | Why v0.2 misses it |
+|---|---|---|---|
+| **Embodied autonomy and automation** | robotaxis and autonomous trucks; warehouse, factory, kitchen, farm, and construction robots; humanoids | a machine with hardware unit economics, a production ramp, and jurisdictional approval replaces physical task-hours | one slow robotics clock and a presence penalty; no hardware cost, no ramp, no approval; rideshare drivers are self-employed and absent from OEWS |
+| **Output substitution** | AI-produced video, music, books, images, voice, advertising creative, translation | a competing *product* takes market share; the human-produced sector shrinks even where its workers' tasks are unchanged | no product-market layer; most affected workers are freelance and absent from OEWS |
+| **Traded services substitution** | AI agents replacing outsourced customer service, back-office, and IT services | automation in the *importing* region removes the *exporting* region's jobs | tasks are automated where the firm is, but the workers are in India and the Philippines; trade matrix is inert |
+
+Everything else in v0.2 (flows, cohorts, wages, prices, rents, uncertainty, explanation) consumes displacement and augmentation by occupation, region, and quarter and does not care which mechanism produced them. v0.3 therefore adds a layer that **produces** displacement through three new channels and leaves the downstream layers unchanged except where §A.6 says otherwise.
+
+"All implications" is a direction, not a state. v0.3 makes coverage explicit through a **catalogue of applications** (§A.8): what is in, what is out, and why. That is a stronger claim than completeness and the only one a reviewer can check.
+
+---
+
+## A.1 Design principles, and the adversarial pre-review
+
+The amendment was written against the attacks a simulation reviewer would make. Each attack, the defence built into the design, and what remains exposed:
+
+| # | Attack | Defence in v0.3 | Residual exposure |
+|---|---|---|---|
+| 1 | **Double counting between channels.** A truck driver's driving tasks are E0-physical in the task engine *and* the target of an autonomous-trucking application. | **One task group, one channel.** Every task group carries a channel assignment `χ_k ∈ {software, embodied(c), none}` (§A.2). Embodied channels reuse the feasibility and profitability machinery with their own clock and cost; the software engine never sees an embodied task. Output substitution acts on a different margin (quantity of human-produced output, §A.4) and combines multiplicatively with per-unit labor. CI test: `Σ_channels D ≤ 1` per occupation, and channel sets are disjoint by construction. | The assignment itself is a classifier (tagged `E`, reviewed like the exposure classifier). Misassignment moves a task between clocks; it cannot count it twice. |
+| 2 | **Double counting with the baseline.** BLS Employment Projections already embed expected automation; industrial robots were displacing workers before 2023. | The frozen-AI baseline carries the **pre-2023 automation trend**: robot installations continue at their 2015–2023 growth on structured tasks, and EP occupation trends are unchanged. The embodied channel acts only on the **AI-enabled increment**: unstructured, variable, or mobile tasks that the baseline trend does not reach (`χ_k = embodied` is assigned only to those), and the baseline robot stock path `R^0_{c,r,t}` is subtracted from the modelled stock (§A.3.4). The EP adjustment lever (§7.6) is generalised to a per-channel baseline adjustment. | The split of the historical trend between "would have happened anyway" and "AI-enabled" is a judgement; it is a lever with a range that includes zero. |
+| 3 | **Half the affected workforce is not in the data.** OEWS counts payroll employees. Rideshare drivers, freelance writers, musicians, translators, and many delivery workers are self-employed. | New stock `N^{self}_{o,r}` (heads and FTE) from CPS class-of-worker and Census Nonemployer Statistics, mapped to occupations (§A.5). Platform and output substitution act on it; the employee stock in the same occupation goes through the task engine. The headline "employment" becomes **FTE jobs including self-employment**, with the payroll-only series still reported and the change flagged in every document. | Multiple-job holding is imperfectly measured; FTE conversion uses CPS hours, tagged `D`. |
+| 4 | **Hardware economics are not tokens.** A robotaxi competes on cost per mile with a vehicle, a driver's wage, insurance, and utilization; a warehouse robot on cost per pick with capex, lifetime, and integration. | Each embodied class has a **unit-cost model** (§A.3.2): annualized capex on a Wright's-law learning curve driven by cumulative production, operating cost, utilization, lifetime, integration cost scaled by firm size, entering the same log-ratio profitability test as tokens. Learning rate is a structural ensemble axis (§A.7). | Learning rates for autonomy stacks and humanoids are extrapolations from other hardware; the ranges span solar-like and automotive-like histories. |
+| 5 | **Pace is set by ramps and permits, not by capability.** Waymo could not scale to a million vehicles in a year regardless of the software. | Fleet **stock-flow with a production ramp** (maximum growth rate per year, sourced from EV and robot production histories) and **jurisdictional approval shares** `J_{c,r,t}` per region (§A.3.3, §A.3.4). Capability and cost gate the *ceiling*; production and approval gate the *speed*. Approval changes are dated shocks. | Approval timetables outside the U.S. are levers with qualitative states; there is no dataset of future permits. |
+| 6 | **Demand does not stand still.** Cheaper rides mean more rides; cheaper content means more content. Ignoring this overstates displacement. | Every application carries the **own-price elasticity of its end product** and enters the sector's demand equation (§5.2) through unit cost, so induced demand is automatic; applications also carry an **adjacent-employment coefficient** (remote assistance and fleet operations per vehicle, curation per unit of content) that adds jobs in named occupations (§A.3.5). | Second-order effects (fewer cars owned, less parking, insurance restructuring) are out of scope and listed as such. |
+| 7 | **Product substitution needs a preference model, not a cost test.** People may keep paying for human-made films and music. | Output substitution is a **logit share in relative price and quality** with an explicit **authenticity premium** `α_s` that is a structural ensemble axis {persistent, eroding} (§A.4). The share is calibrated where any series exists (AI-generated share of new releases on streaming platforms, stock-image and translation revenue) and prior-driven where none does, and the results say which. | The authenticity premium is unmeasured beyond a handful of surveys; it is the largest new estimate and ranked first in the updated risk register. |
+| 8 | **Free goods break GDP.** If AI films are nearly free, measured output falls while quantity rises. | v0.2 already values output at **baseline prices** (§6.1): real output counts AI-produced units at the baseline price of the category, and the nominal effect is reported separately. A **consumer-surplus proxy** (Harberger triangle by category) is added as an output and labelled as not welfare (§A.6.3). | Quality adjustment of AI-produced goods is not attempted; the proxy is a lower bound under substitution and an upper bound under quality loss, and the document says so. |
+| 9 | **Where do the revenues go?** Output substitution creates revenue for platforms and model providers, not for the sector's workers. | AI-produced revenue enters the value-chain rents (§6.3) at the model and integration stages, allocated by the same market-share and location rules; sector wage bills fall with human-produced output. Conservation test: category spending = human-produced revenue + AI-produced revenue + consumer saving. | Platform margins for AI content are `E` until public accounts exist. |
+| 10 | **Traded services need an exporter-side mechanism.** Automating a call in Ohio removes a job in Manila. | The **importing region's** displacement for an exported task set is applied to the **exporting region's export-serving employment** `N^{exp}_{o,r}` (services exports by category × occupation composition), using the existing trade matrix direction reversed (§A.5.3). | Services trade data by occupation is coarse (BPM6 categories); the mapping is `D` with a quality score. |
+| 11 | **Parameter explosion makes the bands meaningless.** Twenty applications with six parameters each is 120 new estimates. | Applications share **class-level** parameters (one learning rate per embodiment class, one ramp cap per class, one authenticity premium per media category), so the new registry block is 36 parameters (§A.9). The copula gains two blocks (hardware economics; product preferences). The tornado stays curated (top 25). Two new ensemble axes bring the cells to 16; default draws rise to 256 so each cell keeps 16 draws; runtime budget ≤ 60 s for ten regions. | Fewer draws per cell than v0.2's 25; the confidence classification's thresholds are unchanged, so it will call more effects "low", which is the correct response to more structural uncertainty. |
+| 12 | **Nothing here is identified.** | §A.10 states what is **fitted** (autonomous fleet ramp against public paid-ride and fleet counts; robot installations against IFR aggregates; BPO revenue trend against industry statistics), what is **anchored**, and what is **prior-driven**. Prior-driven applications are reported with a dashed central line and the `E` count in the explain trace. | Most of the embodied and media parameters are prior-driven through 2026; the amendment does not pretend otherwise. |
+| 13 | **Regional realism.** A robot that is cheaper than a $30/hour worker is not cheaper than a $3/hour worker. | The profitability test already runs at regional wage tiers (§2.4, §16); hardware unit cost is global while wages are local, so low-wage regions automate embodied tasks later. Traded-services substitution (attack 10) is the channel through which low-wage regions are hit first, which is the right ordering. | Regional occupation structure is still a fixture until the ILOSTAT ingest runs. |
+| 14 | **Cohort incidence changes.** Drivers and warehouse workers are older, less educated, and more male than clerical workers; freelance creatives are younger and more educated. | Cohort attribution uses the affected occupation's own cohort matrix (§1.4), and the self-employed stock gets its own cohort matrix from CPS (§A.5.1). Embodied displacement runs through layoffs more than hiring where fleet operators are new firms (§A.3.6), so the cohort result will differ from the software channel's, and the flows view shows it by channel. | The gig cohort matrix is national; regional gig composition is imputed. |
+
+---
+
+## A.2 Channel assignment of task groups
+
+Every task group `k` (v0.2 §16: ~9,400 groups) receives one channel:
+
+$$\chi_k \in \{\text{software},\ \text{embodied}(c),\ \text{none}\},\qquad c \in \mathcal{C} = \{\text{driving},\ \text{mobile manipulation},\ \text{fixed automation},\ \text{aerial}\}$$
+
+Assignment rule, in order:
+
+1. `m_k = physical` and the task's O*NET Generalized Work Activity is in the driving family (Operating Vehicles, Mechanized Devices, or Equipment; with vehicle keywords) → `embodied(driving)`.
+2. `m_k = physical` and the activity is handling, moving, assembling, inspecting, preparing, cleaning, or harvesting in a variable environment (Work Context "Spend Time Handling and Moving Objects" high, "Structured versus Unstructured Work" high) → `embodied(mobile manipulation)`.
+3. `m_k = physical` and the same activities in a structured environment → `embodied(fixed automation)`; this is the class the **baseline trend** already reaches, so its AI-enabled increment is the unstructured residual set by `P.104`.
+4. `m_k = physical` and delivery or inspection over distance → `embodied(aerial)`.
+5. `m_k = physical` otherwise (care, surgery, crafts requiring dexterity beyond the horizon) → `none` within the horizon, with `a_k = a_{\text{phys,none}}` (`P.105`, central 0, range 0–0.1).
+6. Non-physical `k` → `software` (unchanged from v0.2).
+
+The classifier is deterministic, keyword-and-rating based, tagged `E`, versioned, and reviewed on a stratified sample like the exposure classifier (v0.2 §16). Its output is a column in `tasks.csv` and is exposed in the Occupations view.
+
+The single robotics clock `C^{phys}` (`P.19`) and `a_phys` (`P.59`) are **retired**; `P.19` is kept as an alias of the mobile-manipulation clock for scenario compatibility.
+
+---
+
+## A.3 Embodied channels
+
+### A.3.1 Embodiment clocks
+
+One capability clock per class, in the same units as the software clock (doublings of a task-horizon-like index) so that `θ_k` remains comparable:
+
+$$C^{emb}_{c,t} = C^{emb}_{c,0} + \frac{\Delta t}{\tau_c}\quad\text{(saturating at } C^{sat}_c\text{)}$$
+
+Anchors: driving to the paid autonomous-ride series and disengagement statistics; mobile manipulation to published manipulation benchmarks and deployed-fleet task breadth; fixed automation to the IFR trend (its increment is small by construction); aerial to approved beyond-visual-line-of-sight operations. Each clock has a coupling `g^{emb}_c` to the software clock (`P.107`): progress in foundation models transfers to embodiment at a fraction, with a range that includes zero. This is the honest replacement for v0.2's "robotics is a single slow clock".
+
+Feasibility for `χ_k = embodied(c)`:
+
+$$F_{k,r,t} = a_k\,\Lambda\!\left(\frac{C^{emb}_{c,t} - \theta_k}{s_k}\right),\qquad a_k = a_{\text{emb}}(c)\,(1-\pi_k)^{\lambda^{emb}_\pi}$$
+
+with `a_emb(c)` per class (`P.100–P.103`, `E`, wide) and a presence exponent that is *weaker* than for software (`P.106`): a robot can be present.
+
+### A.3.2 Hardware unit cost
+
+Cost per task-unit for class `c` in region `r`:
+
+$$\kappa^{emb}_{k,c,r,t} = \frac{\text{AC}_{c,t}\,(1+o_c) + \text{int}_{c,f,r}}{u_{c}\;\text{TU}_{c}}$$
+
+- `AC_{c,t}` annualized capital cost: unit price `p_{c,t}` amortized over lifetime `L_c` at a real rate `i` (`P.110–P.112`).
+- Unit price follows **Wright's law** in cumulative production: `p_{c,t} = p_{c,0}\,(Q^{cum}_{c,t}/Q^{cum}_{c,0})^{-b_c}` with learning exponent `b_c` from learning rate `LR_c = 1 − 2^{-b_c}` (`P.113`, structural axis: automotive-like 8% vs electronics-like 20%, `V?`).
+- `o_c` operating cost ratio (energy, maintenance, insurance, remote supervision) (`P.114`).
+- `int_{c,f,r}` integration cost per unit, scaled by firm size and local integration wages (reuses `P.09` logic).
+- `u_c` utilization (hours per year in productive use) and `TU_c` task-units per productive hour relative to a worker (`P.115–P.116`; a robotaxi's utilization is the argument for its economics and a lever).
+
+The profitability test is unchanged in form: `Π_k = F_k Λ((ln ℓ_{o,k} − ln κ^{emb}_k)/b_κ)`. Because `κ^{emb}` is global and `ℓ` is local, the regional ordering falls out of the existing wage tiers.
+
+### A.3.3 Production ramp
+
+Cumulative production and the deployable stock are constrained:
+
+$$\Delta Q^{prod}_{c,t} \le Q^{prod}_{c,t-1}\,(1+g^{max}_c)^{1/4},\qquad Q^{prod}_{c,0} \text{ from 2025 fleet counts}$$
+
+`g^{max}_c` maximum annual production growth (`P.117`, `V?`: EV and industrial-robot production histories give 50–100%/yr at scale-up, with a wide range). Desired production is the profitable-feasible demand from all regions; supply is the constrained path; the shortfall delays deployment rather than raising price (a queue, as with compute capacity in §3.4). Hardware production is booked to the producing region's AI-production sector (§5.7) with a regional production-share table (`P.118`, `D` from vehicle and robot manufacturing locations).
+
+### A.3.4 Deployment stock and approval
+
+Per class, region, and use: stock `R_{c,r,t}` evolves with deliveries, retirements at `1/L_c`, and an approval share
+
+$$R^{dep}_{c,r,t} = R_{c,r,t}\;J_{c,r,t},\qquad J_{c,r,t} \in [0,1]$$
+
+`J` is the share of the class's addressable task-hours in jurisdictions where operation is permitted (driving and aerial: by state, member state, or city; manipulation: near 1, safety certification only). `J` follows a dated baseline path per region with lever states {frozen, baseline, accelerated, moratorium} (`P.119`; the baseline path is a verification item, §A.10). Approval changes are shocks of type `approval_change` (§A.9).
+
+Realized displacement for `χ_k = embodied(c)`:
+
+$$D_{o,s,r,t} = \sum_{k:\chi_k=c} w_{o,k}\,\Pi_{k,o,s,r,t}\;\min\!\Big(1,\ \frac{R^{dep}_{c,r,t}\,\text{TU}_c\,u_c}{\text{task-hours addressable}_{c,r,t}}\Big)$$
+
+The last factor is the **deployment coverage**: displacement cannot exceed what the deployed stock can do. The baseline robot stock `R^0_{c,r,t}` (fixed-automation trend) is netted out so only the increment displaces relative to the baseline.
+
+### A.3.5 Demand and adjacent employment
+
+Embodied cost savings enter the sector unit-cost equation (§5.2) exactly as software savings do, so induced demand follows from `η_s` and `π_p` with no new machinery. Applications add **adjacent employment** in named occupations:
+
+$$\Delta N^{adj}_{o',r,t} = \sum_c \beta_{c,o'}\,R^{dep}_{c,r,t}$$
+
+with `β_{c,o'}` jobs per deployed unit (remote assistance, fleet maintenance, depot operations, safety oversight; `P.120`, `E`, and the only publicly discussed figures are for autonomous ride-hail, `V?`). Adjacent jobs are counted in the AI-production sector's regional employment and in the flows view as a destination.
+
+### A.3.6 Which margin: hiring or layoffs
+
+v0.2's attrition-first rule applies within an employer. Embodied substitution by **new entrants** (an autonomous fleet operator taking ride-hail share) does not run through the incumbent's attrition; it removes demand for the incumbent's service. For `χ_k = embodied(driving)` in platform work, and for output substitution (§A.4), the displacement acts on the **self-employed stock** as a reduction in demanded FTE with no attrition buffer: hours fall first, exits follow at a rate tied to the earnings loss (`P.121`, `E`). For embodied substitution inside an employer (warehouses, factories, kitchens) the v0.2 rule holds, with the layoff share raised where the deployment is a site conversion (`P.122`).
+
+---
+
+## A.4 Output substitution (product markets)
+
+Applies to a set of **content and creative categories** `s ∈ \mathcal{S}^{out}` = {motion picture and video, sound recording and music publishing, book and periodical publishing, advertising creative, graphic and industrial design, photography, translation and interpretation, software as a product (games) partially}. Each category has total real consumption `Q_{s,r,t}`, a human-produced share, and an AI-produced share:
+
+$$s^{AI}_{s,r,t} = \frac{\exp(v^{AI}_{s,r,t})}{\exp(v^{AI}_{s,r,t}) + \exp(v^{H}_{s,r,t})},\qquad v^{AI} - v^{H} = -\gamma_s\,(\ln p^{AI}_{s,t} - \ln p^{H}_{s,t}) + q_{s,t} - \alpha_{s,t}$$
+
+- `γ_s` price sensitivity of the category (`P.125`, `S` from Armington-type elasticities for differentiated goods, `V?`).
+- `q_{s,t}` quality gap of AI output relative to human output, a function of the software clock through the category's task feasibility (`q = q_0 + q_1 F̄_s`), so quality rises as the generative tasks of the category become feasible (`P.126`).
+- `α_{s,t}` **authenticity premium**: the willingness to pay for human provenance. Structural ensemble axis: **persistent** (`α` constant at its 2025 level) versus **eroding** (`α` decays with a half-life `P.127`). Its 2025 level per category is anchored where survey or market data exist and `E` elsewhere.
+- `p^{AI}` follows the token price path (§3.3) plus a platform margin (`P.128`); `p^{H}` is the baseline price adjusted by the task engine's cost saving in the category (human creators use AI tools too, which is the v0.2 channel and is kept).
+
+Total category consumption responds to the average price with the category's own-price elasticity (`η_s` in §5.2), so cheaper content expands the category. **Human-produced output** `Q^H = (1 − s^{AI}) Q`, and the category's labor demand is
+
+$$N^{\ast}_{o,s,r,t} = N^0_{o,s,r,t}\,\frac{Q^H_{s,r,t}}{Q^0_{s,r,t}}\,\frac{1 - D_{o,s,r,t}}{1+\psi U_{o,s,r,t}}\,(1+\nu_{o,r,t})$$
+
+which is §5.2 with `Q` replaced by `Q^H`. The two margins (fewer human-produced units; fewer hours per human-produced unit) multiply and cannot double count. AI-produced revenue `p^{AI} s^{AI} Q` flows to the value-chain rents at the model and integration stages (§6.3). Distribution mapping of categories to occupations uses OEWS occupation × industry for employees and the self-employed table (§A.5) for freelancers; the model does not attempt superstar or long-tail dynamics within an occupation and says so.
+
+**Where the category is an intermediate input** (advertising creative, translation for firms), `s^{AI}` acts on the purchasing sector's costs through §5.2 as well; the category's own employment follows `Q^H`.
+
+---
+
+## A.5 Workforce coverage and traded services
+
+### A.5.1 Self-employed and platform work
+
+New input table `self_employed.csv` (occupation × region): heads, mean weekly hours, FTE, share platform-mediated, and a cohort matrix. Sources: CPS class-of-worker and multiple-job-holding items (IPUMS), Census Nonemployer Statistics by NAICS mapped to occupations, and platform-work supplements where they exist; EU-LFS status in employment for the EU; ILOSTAT for others (`D`, with the fixture rule where unavailable). The stock is reported separately and added to the headline as FTE; every document's `meta.data_flags.self_employed` records the source per region.
+
+### A.5.2 Labor-market states for the self-employed
+
+The seven states of §5.1 apply, with "employed" split into employee and self-employed and a transition between them (`P.123`, `D` from CPS flows). Displaced self-employed workers enter searching with a re-employment hazard drawn from the same age-band table, and their counterfactual earnings are their observed earnings, not an entry wage.
+
+### A.5.3 Traded services
+
+For exporting region `r'`, category `b` of services exports (BPM6: telecommunications, computer, and information services; other business services; call-center and back-office within them where national statistics split them), export-serving employment `N^{exp}_{o,r',b}` is derived from export revenue and category revenue per worker (`D`). The displacement applied to it is the **importers'** weighted task displacement for the category's task set:
+
+$$D^{exp}_{o,r',b,t} = \sum_{r} \omega_{b,r' \to r}\;D_{o,b,r,t}$$
+
+with `ω` the share of `r'`'s category exports going to `r` (the existing `trade_weights` table, reversed direction, extended to services). Demand response is the importer's. This is the channel through which India, the Philippines (in RoA), and Eastern EU members are reached first, and it is the reason the amendment ranks services-trade data above robot data in the plan for Asia.
+
+---
+
+## A.6 Downstream changes
+
+### A.6.1 Channel decomposition (§9)
+The explain trace and the Economy view's channel bars gain entries per family: `software tasks`, `embodied: driving`, `embodied: manipulation`, `embodied: fixed`, `embodied: aerial`, `output substitution`, `traded services`, `adjacent employment`. The sequential switch-on order is software → embodied → output → traded → adjacent, and the order is a documented convention as in v0.2.
+
+### A.6.2 Baseline (§7.6)
+The frozen-AI counterfactual freezes **all** AI clocks at 2023, including embodiment and generative media, and keeps the pre-2023 automation trend (robot installations, EP occupation trends, historical growth of streaming and stock content). `levers.baseline.automation_trend` scales the trend (0.5–1.5×) so a reviewer can see how much of the result is the increment.
+
+### A.6.3 Outputs (§11)
+New series per region: `self_employed_fte`, `fleet_stock` by class, `approval_share` by class, `ai_content_share` by category, `consumer_surplus_proxy_bn` by category (`½ Δp ΔQ` at baseline prices, labelled "not welfare"), and the channel entries above. New results section `applications` with per-application status per quarter: feasible share, profitable share, deployment coverage, realized displacement, adjacent jobs.
+
+### A.6.4 Views
+The AI Supply view gains an **Applications** panel: a timeline of each application's gates (feasible, profitable, approved, deployed) per region, with the catalogue entry, its sources, and its `E` count one click away. The Flows view labels the channel of each origin. No new view.
+
+---
+
+## A.7 Uncertainty (§7)
+
+- **Copula blocks** gain `hardware economics` (`LR_c`, `u_c`, `o_c`, `g^{max}_c`; 0.6) and `product preferences` (`α_s`, `γ_s`, `q_1`; 0.6).
+- **Structural ensemble** gains two axes: **hardware learning rate** {automotive-like, electronics-like} and **authenticity premium** {persistent, eroding}. Cells: 16 (was 8). Default draws: 256 (was 200), so 16 per cell.
+- **Tornado**: curated set grows to 25 parameters, adding `LR_c` (driving, manipulation), `u_driving`, `α_media`, `γ_media`, `g^{max}`, `J` baseline speed.
+- **Confidence classification** unchanged; more low-confidence calls are the intended consequence.
+- **Runtime budget**: ≤ 60 s for ten regions at 256 draws with tornado and channels on 4 cores. The embodied channel adds four clocks and per-class stock-flows (cheap); output substitution adds eight categories (cheap); the cost is the extra draws.
+
+---
+
+## A.8 Initial application catalogue
+
+Each row is a versioned record in `data/processed/applications.csv` with the fields of §A.9. Timing entries are **provisional ranges for the central draw** (`E`, `V?`) and exist so the reviewer can attack them; they are not results.
+
+| id | Family / class | Targets (task families → occupations, sectors) | Binding constraints | Anchor series (fit or check) | Provisional central: profitable at U.S. wages / deployed at 50% coverage | Regions first |
+|---|---|---|---|---|---|---|
+| `robotaxi` | embodied: driving | ride-hail and taxi driving → taxi drivers, rideshare (self-employed) | approval by city and state; production ramp; utilization | paid autonomous rides per week and fleet size (public company posts); state permits | 2026–28 / 2031–35 | US metros, CN metros, then UAE and SG (RoA); EU late |
+| `autonomous_trucking` | embodied: driving | long-haul freight driving → heavy truck drivers | approval by state and corridor; depot network | driverless corridor launches; permits | 2027–29 / 2033–37 | US Sun Belt corridors, CN |
+| `last_mile_delivery` | embodied: driving + aerial | parcel and food delivery → couriers (largely self-employed) | sidewalk and BVLOS approval; density | permitted operations counts | 2027–30 / 2033–38 | US, CN, KR, SG |
+| `warehouse_robotics` | embodied: mobile manipulation | picking, packing, moving → laborers and material movers | ramp; integration; site conversion | robot installations (IFR aggregates), retailer disclosures | 2025–27 / 2030–34 | US, CN, JP, KR, EU |
+| `manufacturing_flexible` | embodied: mobile manipulation | assembly and inspection in variable settings → assemblers, inspectors | learning rate; integration | IFR installations by application; humanoid pilot counts | 2028–31 / 2034–40 | CN, KR, JP, US, EU |
+| `humanoid_general` | embodied: mobile manipulation (late) | broad physical tasks across sectors | unit cost; dexterity; safety certification | unit price disclosures; pilot deployments | 2030–34 / beyond 2040 at central | CN, US |
+| `food_service_automation` | embodied: fixed + mobile | cooking, assembly, serving → cooks, food-prep workers | unit cost vs low wages; site conversion | vendor deployments | 2028–32 / 2035–40 | US, JP, KR |
+| `agricultural_robotics` | embodied: mobile manipulation | harvesting, weeding → agricultural workers | seasonality; crop specificity | deployment counts by crop | 2027–31 / 2035–40 | US, EU, JP |
+| `construction_robotics` | embodied: mobile manipulation | layout, bricklaying, drywall, rebar → construction trades (partial) | site variability; codes | pilot counts | 2030–35 / beyond 2040 | JP, US |
+| `retail_checkout_shelf` | embodied: fixed | checkout, shelf scanning → cashiers, stock clerks | shrink and customer acceptance | retailer disclosures | 2025–27 / 2030–34 | US, UK, EU, JP |
+| `generative_video` | output: motion picture and video | production → actors, animators, editors, camera operators (mixed employee and freelance) | quality gap; authenticity premium; licensing regime | AI-generated share of new uploads and releases; guild agreements | 2027–30 / 2032–38 | global by platform |
+| `generative_music` | output: sound recording | composition, performance, production → musicians, producers | authenticity premium; licensing | AI-generated share of streams and uploads | 2026–28 / 2030–36 | global by platform |
+| `generative_text` | output: publishing | writing → writers, editors, journalists | authenticity premium; discoverability | AI-generated share of new titles and articles | 2025–27 / 2029–34 | US, UK, EU |
+| `generative_image_design` | output: design, photography, advertising creative | image creation → graphic designers, photographers, illustrators | quality gap | stock-image revenue and AI share | 2024–26 / 2028–32 | global |
+| `machine_translation_voice` | output: translation and interpretation; voice | translation, dubbing, narration → translators, voice actors | quality gap in high-stakes domains | translation industry revenue mix | 2024–26 / 2027–31 | global; EU institutional last |
+| `ai_customer_service` | software tasks + traded services | customer support, back office → customer service reps in the U.S.; BPO workers in IN and RoA | deflection rates; regulation of automated decisions | BPO revenue growth and headcount; deflection disclosures | 2025–27 / 2029–33 | IN, RoA (Philippines) first via trade; US |
+| `ai_tutoring_education` | software tasks | instruction and grading → tutors, teaching assistants (institutional teachers largely protected by presence) | procurement; evidence of efficacy | adoption in districts and platforms | 2026–29 / 2032–38 | US, IN, CN |
+| `ai_diagnostics` | software tasks | image reading, triage → radiologic technologists (partial), medical scribes | regulatory clearance; liability | cleared devices counts; deployment | 2026–29 / 2032–38 | US, EU, CN |
+| `ai_legal_research` | software tasks | research, drafting → paralegals, associates (partial) | professional rules | firm adoption surveys | 2025–27 / 2029–33 | US, UK |
+
+Software-task rows exist so that the catalogue is the single place where coverage is stated; they add no mechanism beyond v0.2 except the traded-services link for `ai_customer_service`. **Out of scope and why**: care work and surgery (dexterity and liability beyond the horizon at central; `none` channel), military and security applications (no public labor data), scientific R&D acceleration (a TFP effect the model cannot attribute to occupations; noted as an omitted upside), and second-order effects of mobility (car ownership, parking, insurance).
+
+---
+
+## A.9 Registry block, levers, shocks, schema
+
+### Parameters (v0.3 block, P.100–P.135)
+
+| ID | Parameter | Central | Range | Unit | Tag | Note |
+|---|---|---|---|---|---|---|
+| P.100 | `a_emb(driving)` | 0.85 | 0.5–0.95 | share | E | ever-automatable mass of driving task-hours |
+| P.101 | `a_emb(mobile manipulation)` | 0.6 | 0.3–0.85 | share | E | |
+| P.102 | `a_emb(fixed automation)` increment | 0.3 | 0.1–0.5 | share | E | over the baseline trend |
+| P.103 | `a_emb(aerial)` | 0.5 | 0.2–0.8 | share | E | |
+| P.104 | Baseline automation trend scale | 1.0 | 0.5–1.5 | × | E | lever `baseline.automation_trend` |
+| P.105 | `a_phys,none` | 0 | 0–0.1 | share | E | |
+| P.106 | Presence exponent, embodied `λ^{emb}_π` | 0.5 | 0–1.5 | | E | weaker than software (P.23) |
+| P.107 | Coupling to software clock `g^{emb}_c` | 0.3 | 0–0.7 | | E | per class; range includes zero |
+| P.108 | Clock anchors `C^{emb}_{c,0}`, doubling `τ_c` | per class | | doublings, months | S/E, V? | driving from paid-ride and disengagement series; others E |
+| P.109 | Clock saturation per class | per class | | doublings | E | |
+| P.110 | Unit price 2025 `p_{c,0}` | driving V?; manipulation V?; humanoid V? | wide | USD | S, V? | verification items §A.10 |
+| P.111 | Lifetime `L_c` | 5 (driving), 8 (manipulation), 10 (fixed) | ±40% | years | S, V? | |
+| P.112 | Real rate `i` | 0.06 | 0.03–0.10 | /yr | S | |
+| P.113 | Learning rate `LR_c` | 0.12 | 0.05–0.25 | per doubling of cumulative production | S, V? | ensemble axis {0.08, 0.20} |
+| P.114 | Operating cost ratio `o_c` | 0.5 | 0.2–1.0 | × annual capital cost | E | |
+| P.115 | Utilization `u_c` | driving 0.45 of hours; manipulation 0.6; fixed 0.8 | ±50% | share | E, V? | lever |
+| P.116 | Task-units per hour relative to worker `TU_c` | 1.0 | 0.5–2.0 | × | E | |
+| P.117 | Max production growth `g^{max}_c` | 0.7 | 0.3–1.5 | /yr | S, V? | EV and robot ramps |
+| P.118 | Production location shares | table | | share | D | vehicle and robot manufacturing |
+| P.119 | Approval path `J_{c,r,t}` | table by region | lever states | share | E, V? | baseline path is a verification item |
+| P.120 | Adjacent jobs per deployed unit `β_{c,o'}` | driving 0.1; manipulation 0.05 | 0–0.3 | FTE per unit | E, V? | |
+| P.121 | Self-employed exit hazard per unit earnings loss | 0.3 | 0.1–0.6 | /yr per 100% loss | E | |
+| P.122 | Layoff share for site conversions | 0.6 | 0.3–0.9 | share | E | |
+| P.123 | Employee ↔ self-employed transition rates | table | | /q | D | CPS flows |
+| P.124 | Export-serving employment per revenue | table by category | | FTE per USD m | D | |
+| P.125 | Price sensitivity `γ_s` | 2.0 | 1.0–4.0 | | S, V? | Armington-type |
+| P.126 | Quality gap `q_0`, `q_1` | −2.0, 3.0 | wide | logit units | E | |
+| P.127 | Authenticity premium `α_s` 2025 level; half-life if eroding | 1.5; 8 | 0.5–3; 4–20 | logit units; years | E, V? | ensemble axis {persistent, eroding} |
+| P.128 | AI content platform margin | 0.4 | 0.2–0.7 | share of price | E | |
+| P.129 | Category own-price elasticity | per category | | | S, V? | reuses `η_s` where the category is a sector |
+| P.130 | Channel switch-on order | fixed | | | — | convention |
+| P.131–135 | Reserved for calibration constants of the driving clock, the deflection-rate series, and the services-trade mapping quality score | | | | D | |
+
+### Levers (§8.2 additions)
+
+| Lever | Parameters | Range or states |
+|---|---|---|
+| Embodiment progress per class | `P.108` | doubling 6–36 months per class |
+| Hardware learning rate | `P.113` | 0.05–0.25 |
+| Utilization (robotaxi) | `P.115` | 0.2–0.7 |
+| Production ramp cap | `P.117` | 0.3–1.5/yr |
+| Approval regime per region and class | `P.119` | {frozen, baseline, accelerated, moratorium} |
+| Authenticity premium | `P.127` | level 0.5–3; {persistent, eroding} |
+| Content licensing regime | `P.128`, `q_1` | {permissive, licensed, restrictive}: restrictive raises AI content price and lowers quality growth |
+| Baseline automation trend | `P.104` | 0.5–1.5× |
+| Platform labor classification | `P.123` | {status_quo, employee_reclassification}: moves platform FTE to the employee stock, which changes the attrition buffer |
+
+### Shocks (§8.3 additions)
+`approval_change` (class, region, at, new `J` path), `hardware_recall` (class, at, duration; sets deliveries to zero and `J` down), `content_licensing_ruling` (category, at, regime), `production_shock` (class, at, cap multiplier).
+
+### Scenario schema
+`schema_version` 0.3 adds `levers.applications.{embodiment, hardware, approval, content}` and the four shock types; v0.2 scenarios remain valid (new levers default to baseline).
+
+---
+
+## A.10 Data plan and verification items
+
+Everything below is written from recollection of public sources and is flagged `V?` until an ingest script has fetched it and a provenance record exists; the sandbox that produced this amendment could reach only GitHub.
+
+| Need | Candidate source | Access | Feeds | Fit / anchor / prior |
+|---|---|---|---|---|
+| Self-employed and platform workers by occupation | CPS (IPUMS) class of worker, hours, multiple jobs; Census Nonemployer Statistics; BLS Contingent Worker Supplement | IPUMS extract (script exists for CPS ASEC); Census API | §A.5.1 | data |
+| Autonomous ride-hail fleet and rides | company posts and regulatory filings (paid rides per week, fleet size, cities); state permit registries | scraped and transcribed with dates | driving clock, `J`, ramp | **fit** (ramp, clock anchor) |
+| Autonomous trucking corridors | company announcements; state permits | transcribed | `J` driving freight | anchor |
+| Robot installations and stock | IFR press-release aggregates (paid detail not used); national robot associations (JARA, KAR); retailer and 3PL disclosures | transcribed, license-checked | baseline trend, manipulation clock, ramp | **fit** (installations trend) |
+| Hardware unit prices and learning | vendor disclosures; investment-bank estimates (cited as estimates, not data); EV battery and industrial-robot price histories for `LR` priors | transcribed | `P.110`, `P.113` | prior with verified histories |
+| Approval timetables | NHTSA and state DMV rules; EU type-approval; China city pilots; FAA BVLOS rules | transcribed with dates | `P.119` | baseline path |
+| AI-generated content shares | streaming and platform statements (uploads flagged as AI-generated), stock-image marketplaces, publisher statements; guild agreements | transcribed | `s^{AI}` anchors, `α` | anchor where any exists, else prior |
+| Category consumption and prices | BEA PCE by category; BLS CPI components; national accounts for EU and Asia | public API | `Q_s`, `p^H` | data |
+| Authenticity premium | consumer surveys on willingness to pay for human-made content; music and art market studies | literature | `P.127` | prior; ranked first in risks |
+| Services exports by category | UNCTAD and WTO BPM6 services trade; NASSCOM and IBPAP industry statistics; Eurostat ITS | public | §A.5.3 | data; **fit** BPO revenue trend |
+| Deflection rates in customer service | vendor and enterprise disclosures; surveys | transcribed | `ai_customer_service` check | check |
+
+Verification items to close before implementation (each becomes a row in `docs/data-inventory.md` §9): the 2025 fleet counts and paid-ride series for the driving anchor; a defensible 2025 unit price and utilization for robotaxis; IFR aggregates for 2015–2025; two independent estimates of AI-generated share for music and images; the BPM6 services export matrix for IN, RoA, EU; and a survey basis for the authenticity premium. If an item cannot be verified, the corresponding application ships with a dashed line and an `E` count, never with a fabricated anchor.
+
+---
+
+## A.11 Validation tests (additions to §7.5)
+
+1. **Channel exclusivity**: every task group has exactly one channel; `Σ_channels D_{o,s,r,t} ≤ 1`.
+2. **Conservation**: category spending = human-produced revenue + AI-produced revenue + consumer saving, per category, region, quarter; jobs below baseline by channel sum to the total.
+3. **Baseline reproduction**: with all AI clocks frozen, the modelled robot stock reproduces the pre-2023 trend within 5%, and no application displaces anything.
+4. **Deployment bound**: realized embodied displacement never exceeds deployment coverage.
+5. **Regional ordering**: at the central draw, an embodied class becomes profitable in the highest-wage tier no later than in lower tiers.
+6. **Monotonicity**: raising `LR_c` or `u_c` weakly raises embodied displacement; raising `α_s` weakly lowers `s^{AI}`.
+7. **Fitted anchors**: driving-clock and ramp fit reproduce the paid-ride series within its stated band; IFR trend fit within 10%.
+8. **Central-draw identity** (from v0.2 Phase 5) extends to the new fitted constants.
+9. **Runtime**: ≤ 60 s for ten regions at 256 draws.
+
+---
+
+## A.12 What the amendment does not do, said plainly
+
+- No general equilibrium: capital reallocation between the auto industry and fleet operators, land and parking, insurance, and energy demand are outside the model.
+- No superstar dynamics within creative occupations; the model moves the mean, not the distribution within an occupation.
+- No welfare measure; the consumer-surplus proxy is an accounting quantity at baseline prices.
+- No endogenous regulation: approval paths are levers and shocks, not responses to accidents or unemployment.
+- Care, surgery, crafts, and military applications stay out; scientific acceleration stays out as an unattributed upside.
+- Through 2026 most embodied and media parameters are prior-driven, and the explain trace will say so on every number they touch.
+
+---
+
+## A.13 Phase mapping
+
+| Phase | Scope | Demoable end state |
+|---|---|---|
+| 6 | Channel assignment; self-employed table; embodied channels for driving and mobile manipulation with unit cost, ramp, approval; `robotaxi`, `autonomous_trucking`, `warehouse_robotics`, `retail_checkout_shelf`; channel decomposition and Applications panel | "What happens to drivers, and where, if approvals accelerate?" answered with bands and confidence |
+| 7 | Output substitution with the authenticity ensemble axis; `generative_*`, `machine_translation_voice`; consumer-surplus proxy; traded services with `ai_customer_service`; remaining catalogue entries; 16-cell ensemble | "How much of the music sector's employment survives an eroding authenticity premium, and who captures the revenue?" |
+
+Each phase ends with a findings note and an update of this amendment's `V?` marks to `S` or `E` as verification completes.
+
+---
+
+## A.14 Questions for the reviewer
+
+1. Is one channel per task group the right exclusivity rule, or should driving tasks in mixed occupations (delivery drivers who also load) be split by hours across two channels?
+2. Should the authenticity premium be a structural axis (as proposed) or a continuous parameter with a wide range? The axis makes the disagreement visible; the parameter would give smoother bands.
+3. Is Wright's law in cumulative production the right cost model for autonomy stacks, whose cost is dominated by software amortized over a fleet rather than by hardware?
+4. The deployment-coverage bound makes production capacity the binding constraint for a decade at central values. Is that a feature or an assumption smuggled in through `g^{max}`?
+5. Traded services reverse the trade matrix; should the model also carry re-shoring (importing regions replacing imports with domestic AI-augmented work), which cuts the other way?
+6. Headline employment changes definition (FTE including self-employment). Keep the payroll-only headline as the default and the inclusive one as a toggle, or the reverse?

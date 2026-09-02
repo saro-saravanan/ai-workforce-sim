@@ -2,7 +2,7 @@
 
 An interactive, multi-region simulation of how AI models reshape the workforce and, through it, the economy, 2024–2040. The U.S., the EU, and Asia are first-class regions. Every parameter has a source, a central value, and a range; every output is a band relative to a world in which frontier AI froze in 2023, never a line.
 
-**Status:** all five build phases complete on branch `spec/model-v0.1`. Model specification v0.2. Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/` once Pages is enabled for the repository (source: GitHub Actions); the workflow in `.github/workflows/pages.yml` builds it on every push.
+**Status:** all five build phases complete; `main` carries the shipped model (specification v0.2). A **v0.3 amendment** adding embodied automation, output substitution, and traded-services channels is under review in [docs/model-spec-v0.3-applications.md](docs/model-spec-v0.3-applications.md) on branch `spec/model-v0.3`; nothing in it is implemented yet. Public demo: a static export served from GitHub Pages at `https://saro-saravanan.github.io/ai-workforce-sim/` once Pages is enabled for the repository (source: GitHub Actions); the workflow in `.github/workflows/pages.yml` builds it on every push.
 
 ![Economy view with the Ask panel](docs/screenshots/phase4-ask-insights-light.png)
 

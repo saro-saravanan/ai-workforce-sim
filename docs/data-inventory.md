@@ -55,6 +55,24 @@ Provenance rule for ingestion: every dataset pulled by `data/ingest/*` writes a 
 | 29 | CPS matched monthly files (occupation exits) | via IPUMS CPS (row 7) | IPUMS terms | Retirement, occupation change, labor-force exit by occupation and age | IPUMS extracts | indirect | Net occupational attrition `P.63`, transition matrix `P.67` |
 | 30 | BTOS young-firm cut | row 8 | Public domain | AI use by firm age | Bulk | indirect | Entrant adoption `P.52` |
 
+
+### Proposed for v0.3 (application layer; not yet fetched, all `V?`)
+
+| Dataset | Feeds | Access | License | Status |
+|---|---|---|---|---|
+| CPS class of worker, hours, multiple job holding (IPUMS) | self-employed and platform stock §A.5.1 | IPUMS extract via `ingest/cps_asec.py` extension | IPUMS terms; derived tables committed | unverified |
+| Census Nonemployer Statistics by NAICS | self-employed stock by industry → occupation | Census API | public domain | unverified |
+| BLS Contingent Worker Supplement | platform share | BLS | public domain | unverified |
+| Autonomous ride-hail fleet, paid rides, cities; state permit registries | driving clock anchor, ramp fit, approval path | company posts and DMV/PUC registries, transcribed with dates | public statements; cite | unverified |
+| IFR World Robotics press-release aggregates; JARA; KAR | baseline automation trend, manipulation clock, ramp | transcribed | press aggregates public; detailed report paid and not used | unverified |
+| EV and industrial-robot price histories | learning-rate priors | literature, BloombergNEF public summaries | cite | unverified |
+| NHTSA, state DMV rules; EU type-approval; China city pilots; FAA BVLOS | approval baseline paths | transcribed with dates | public | unverified |
+| Platform statements on AI-generated uploads; stock-image marketplace disclosures; publisher statements; guild agreements | AI content share anchors | transcribed | public statements; cite | unverified |
+| BEA PCE by category; BLS CPI components; Eurostat and national accounts | category consumption and prices | public API | public domain | unverified |
+| Consumer willingness-to-pay surveys for human-made content | authenticity premium prior | literature | cite | unverified |
+| UNCTAD/WTO BPM6 services trade; NASSCOM; IBPAP; Eurostat ITS | traded-services channel | public | public | unverified |
+| Customer-service deflection-rate disclosures | `ai_customer_service` check | transcribed | cite | unverified |
+
 ## 3. Key series recorded during verification
 
 ### Anthropic Economic Index, augmentation vs automation (Claude.ai)
@@ -150,3 +168,11 @@ Provenance rule for ingestion: every dataset pulled by `data/ingest/*` writes a 
 5. Acemoglu's exact GDP bound (only "closer to 1%" confirmed).
 6. Microsoft FY2024 Q2 capex including finance leases.
 7. Full BTOS biweekly series, to be pulled directly at ingestion.
+
+### Added for v0.3 review
+- Fleet counts and paid-ride series for the driving anchor (dated).
+- A defensible 2025 unit price and utilization for robotaxis; humanoid and mobile-manipulator unit prices.
+- IFR aggregates 2015–2025.
+- Two independent estimates of AI-generated share for music and for images.
+- BPM6 services export matrix for IN, RoA, EU.
+- A survey basis for the authenticity premium.

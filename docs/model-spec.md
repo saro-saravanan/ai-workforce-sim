@@ -684,3 +684,9 @@ Where the code departs from or sharpens the text above, the code is documented h
 - Sultan, F., Farley, J., Lehmann, D. (1990). *JMR* 27(1).
 - U.S. Census Bureau. BTOS AI question (2023–); Business Dynamics Statistics.
 - U.S. BEA. Input-Output accounts (labor cost shares). U.S. BLS. OEWS, CPS, JOLTS, CPI relative importance, Employment Projections 2024–34 and methodology notes on AI adjustments.
+
+---
+
+## 17. v0.3 amendment under review: the application layer
+
+v0.2 has one displacement mechanism (task substitution inside an employer). The proposed v0.3 amendment, `docs/model-spec-v0.3-applications.md`, adds three channels: embodied autonomy and automation with hardware unit economics, production ramps, and approval paths; output substitution in product markets with an authenticity premium; and traded-services substitution that reaches exporting regions. It assigns every task group to exactly one channel, adds a self-employed and platform workforce stock, retires the single robotics clock (`P.19`, `P.59`) in favour of per-class embodiment clocks, adds registry block P.100–P.135, two structural ensemble axes, and a catalogue of applications that states coverage explicitly. Nothing in it is implemented; it awaits adversarial review.
