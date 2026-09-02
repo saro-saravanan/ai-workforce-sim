@@ -414,7 +414,7 @@ def _svg_fan(chart: dict[str, Any], w: int = 640, h: int = 220) -> str:
             parts.append(f'<polygon points="{pts}" fill="{c}" fill-opacity="0.15"/>')
         pts = " ".join(f"{x(i):.1f},{y(s['p50'][i]):.1f}" for i in range(n))
         parts.append(f'<polyline points="{pts}" fill="none" stroke="{c}" stroke-width="2"/>')
-        parts.append(f'<text x="{w-pad+4}" y="{y(s["p50"][-1]):.1f}" font-size="11" fill="{c}">{name}</text>')
+        parts.append(f'<text x="{w-pad-4}" y="{y(s["p50"][-1])-6:.1f}" font-size="11" text-anchor="end" fill="{c}">{ {"employment": "jobs", "gdp": "GDP"}.get(name, name)}</text>')
     for i in range(0, n, 16):
         parts.append(f'<text x="{x(i):.1f}" y="{h-8}" font-size="11" text-anchor="middle" fill="currentColor">{q[i][:4]}</text>')
     for v in (lo, 0, hi):
@@ -429,11 +429,11 @@ def _svg_bars(chart: dict[str, Any], w: int = 640, h: int | None = None) -> str:
     vals = [float(v) for _, v in items] + list(ref.values()); m = max(abs(v) for v in vals) or 1.0
     parts = [f'<svg viewBox="0 0 {w} {h}" width="100%" role="img">']
     for i, (label, v) in enumerate(items):
-        yy = 8 + i * 26; bw = (w - label_w - 80) * abs(float(v)) / m
+        yy = 8 + i * 26; bw = (w - label_w - 150) * abs(float(v)) / m
         parts.append(f'<text x="{label_w-8}" y="{yy+14}" font-size="12" text-anchor="end" fill="currentColor">{html.escape(str(label))}</text>')
         parts.append(f'<rect x="{label_w}" y="{yy+2}" width="{bw:.1f}" height="16" fill="{"#2f6db3" if float(v) >= 0 else "#b3402f"}" rx="2"/>')
         if label in ref:
-            rw_ = (w - label_w - 80) * abs(ref[label]) / m
+            rw_ = (w - label_w - 150) * abs(ref[label]) / m
             parts.append(f'<rect x="{label_w}" y="{yy+19}" width="{rw_:.1f}" height="3" fill="currentColor" fill-opacity="0.4"/>')
         txt = f"{float(v):,.0f}" if abs(float(v)) >= 1000 else f"{float(v):+.1f}{unit if unit.startswith('%') else ''}"
         parts.append(f'<text x="{label_w+bw+6:.1f}" y="{yy+14}" font-size="12" fill="currentColor">{txt}</text>')
