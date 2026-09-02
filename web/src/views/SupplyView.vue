@@ -9,6 +9,7 @@ import { REGULATORY_KIND_LABELS } from '@/lib/metrics'
 import { CATEGORICAL, NEUTRAL } from '@/lib/palette'
 import { REGION_NAMES, isRegionId } from '@/types/results'
 import SupplyTimeline, { type ShockMarker } from '@/components/charts/SupplyTimeline.vue'
+import ApplicationsPanel from '@/components/ApplicationsPanel.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
@@ -57,6 +58,8 @@ const at = computed(() => {
     priceFixed: s.price_fixed_capability_usd_per_mtok.central[i],
   }
 })
+/** Phase 6: the application layer (contracts §20) is present in v0.3 documents only */
+const hasApplications = computed(() => (results.doc?.applications?.length ?? 0) > 0)
 const releasesSorted = computed(() =>
   [...(supply.value?.releases ?? [])].sort((a, b) => a.date.localeCompare(b.date)),
 )
@@ -136,6 +139,7 @@ const rulesSorted = computed(() =>
     <div v-else class="card empty">
       <p class="muted">This run has no supply section (Phase 3 results only).</p>
     </div>
+    <ApplicationsPanel v-if="hasApplications" />
     <div v-if="table && supply" class="tables">
       <div class="card tbl">
         <h3>Releases ({{ releasesSorted.length }})</h3>

@@ -10,7 +10,9 @@ import {
   clampLever,
   deepMerge,
   fmtLeverValue,
+  layoutLevers,
   leverDiff,
+  leverLeaf,
   leverValues,
   type LeverValues,
 } from '@/lib/levers'
@@ -32,7 +34,11 @@ const parentValues = computed(() => leverValues(results.levers, results.scenario
 const groups = computed(() => {
   const present = new Set(results.levers.map((l) => l.group))
   const ordered = [...LEVER_GROUP_ORDER.filter((g) => present.has(g)), ...[...present].filter((g) => !(LEVER_GROUP_ORDER as readonly string[]).includes(g))]
-  return ordered.map((g) => ({ key: g, label: LEVER_GROUP_LABELS[g] ?? g, levers: results.levers.filter((l) => l.group === g) }))
+  return ordered.map((g) => {
+    const levers = results.levers.filter((l) => l.group === g)
+    // sibling enums with the same options (the ten approval regimes) render as one compact grid
+    return { key: g, label: LEVER_GROUP_LABELS[g] ?? g, levers, items: layoutLevers(levers) }
+  })
 })
 const diff = computed(() => leverDiff(results.levers, parentValues.value, values.value))
 const changedByGroup = computed(() => {
@@ -139,54 +145,93 @@ function onKey(e: KeyboardEvent) {
               >
               <span class="muted count">{{ g.levers.length }}</span>
             </summary>
-            <div v-for="l in g.levers" :key="l.path" class="lever" :class="{ changed: diff.some((d) => d.path === l.path) }">
-              <div class="lever-head">
-                <label :for="'lv-' + l.path" class="lever-label">{{ l.label }}</label>
-                <span v-if="l.param" class="muted param" :title="l.mechanism">{{ l.param }}</span>
-              </div>
-              <div v-if="l.type === 'number'" class="num-row">
-                <input
-                  :id="'lv-' + l.path"
-                  type="range"
-                  :min="l.min"
-                  :max="l.max"
-                  :step="l.step"
-                  :value="values[l.path]"
-                  :aria-label="l.label"
-                  @input="setNumber(l, ($event.target as HTMLInputElement).value)"
-                />
-                <input
-                  type="number"
-                  class="input num"
-                  :min="l.min"
-                  :max="l.max"
-                  :step="l.step"
-                  :value="values[l.path]"
-                  :aria-label="`${l.label} value`"
-                  @change="setNumber(l, ($event.target as HTMLInputElement).value)"
-                />
-                <span class="unit muted">{{ l.unit }}</span>
-              </div>
-              <select
-                v-else-if="l.type === 'enum'"
-                :id="'lv-' + l.path"
-                class="select"
-                :value="values[l.path]"
-                @change="setValue(l, ($event.target as HTMLSelectElement).value)"
+            <template v-for="item in g.items" :key="item.kind === 'lever' ? item.lever.path : item.key">
+              <div
+                v-if="item.kind === 'grid'"
+                class="lever"
+                :class="{ changed: item.levers.some((l) => diff.some((d) => d.path === l.path)) }"
               >
-                <option v-for="o in l.options" :key="o" :value="o">{{ fmtLeverValue(o) }}</option>
-              </select>
-              <label v-else class="check">
-                <input
-                  :id="'lv-' + l.path"
-                  type="checkbox"
-                  :checked="values[l.path] === true"
-                  @change="setValue(l, ($event.target as HTMLInputElement).checked)"
-                />
-                <span>{{ values[l.path] === true ? 'on' : 'off' }}</span>
-              </label>
-              <p v-if="l.mechanism" class="mech muted">{{ l.mechanism }}</p>
-            </div>
+                <div class="lever-head">
+                  <span class="lever-label">{{ item.label }}</span>
+                  <span v-if="item.levers[0]?.param" class="muted param" :title="item.levers[0]?.mechanism">{{
+                    item.levers[0]?.param
+                  }}</span>
+                </div>
+                <div class="enum-grid" role="group" :aria-label="item.label">
+                  <label
+                    v-for="l in item.levers"
+                    :key="l.path"
+                    class="enum-cell"
+                    :class="{ changed: diff.some((d) => d.path === l.path) }"
+                    :title="l.label"
+                  >
+                    <span class="mono">{{ leverLeaf(l) }}</span>
+                    <select
+                      :id="'lv-' + l.path"
+                      class="select small"
+                      :value="values[l.path]"
+                      :aria-label="l.label"
+                      @change="setValue(l, ($event.target as HTMLSelectElement).value)"
+                    >
+                      <option v-for="o in l.options" :key="o" :value="o">{{ fmtLeverValue(o) }}</option>
+                    </select>
+                  </label>
+                </div>
+                <p v-if="item.levers[0]?.mechanism" class="mech muted">{{ item.levers[0]?.mechanism }}</p>
+              </div>
+              <div
+                v-else
+                class="lever"
+                :class="{ changed: diff.some((d) => d.path === item.lever.path) }"
+              >
+                <div class="lever-head">
+                  <label :for="'lv-' + item.lever.path" class="lever-label">{{ item.lever.label }}</label>
+                  <span v-if="item.lever.param" class="muted param" :title="item.lever.mechanism">{{ item.lever.param }}</span>
+                </div>
+                <div v-if="item.lever.type === 'number'" class="num-row">
+                  <input
+                    :id="'lv-' + item.lever.path"
+                    type="range"
+                    :min="item.lever.min"
+                    :max="item.lever.max"
+                    :step="item.lever.step"
+                    :value="values[item.lever.path]"
+                    :aria-label="item.lever.label"
+                    @input="setNumber(item.lever, ($event.target as HTMLInputElement).value)"
+                  />
+                  <input
+                    type="number"
+                    class="input num"
+                    :min="item.lever.min"
+                    :max="item.lever.max"
+                    :step="item.lever.step"
+                    :value="values[item.lever.path]"
+                    :aria-label="`${item.lever.label} value`"
+                    @change="setNumber(item.lever, ($event.target as HTMLInputElement).value)"
+                  />
+                  <span class="unit muted">{{ item.lever.unit }}</span>
+                </div>
+                <select
+                  v-else-if="item.lever.type === 'enum'"
+                  :id="'lv-' + item.lever.path"
+                  class="select"
+                  :value="values[item.lever.path]"
+                  @change="setValue(item.lever, ($event.target as HTMLSelectElement).value)"
+                >
+                  <option v-for="o in item.lever.options" :key="o" :value="o">{{ fmtLeverValue(o) }}</option>
+                </select>
+                <label v-else class="check">
+                  <input
+                    :id="'lv-' + item.lever.path"
+                    type="checkbox"
+                    :checked="values[item.lever.path] === true"
+                    @change="setValue(item.lever, ($event.target as HTMLInputElement).checked)"
+                  />
+                  <span>{{ values[item.lever.path] === true ? 'on' : 'off' }}</span>
+                </label>
+                <p v-if="item.lever.mechanism" class="mech muted">{{ item.lever.mechanism }}</p>
+              </div>
+            </template>
           </details>
         </div>
 
@@ -364,6 +409,36 @@ function onKey(e: KeyboardEvent) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+.enum-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px 10px;
+}
+.enum-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  font-size: 13px;
+  border-radius: 4px;
+  min-width: 0;
+}
+.enum-cell > span {
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.enum-cell.changed > span {
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.select.small {
+  padding: 3px 22px 3px 6px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
 }
 .mech {
   margin: 0;

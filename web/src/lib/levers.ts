@@ -15,6 +15,7 @@ export const LEVER_GROUP_ORDER = [
   'adoption',
   'labor',
   'policy',
+  'applications',
   'baseline',
 ] as const
 
@@ -25,7 +26,62 @@ export const LEVER_GROUP_LABELS: Record<string, string> = {
   adoption: 'Adoption',
   labor: 'Labor market',
   policy: 'Policy (US)',
+  applications: 'Applications (embodied)',
   baseline: 'Baseline construction',
+}
+
+/** A lever row in the drawer, or a compact grid of sibling enum levers (the ten approval regimes). */
+export type LeverLayoutItem =
+  | { kind: 'lever'; lever: LeverDef }
+  | { kind: 'grid'; key: string; label: string; options: string[]; levers: LeverDef[] }
+
+/** Human label for a compact grid from its parent path, e.g. "levers.applications.approval" → "Approval regime". */
+const GRID_LABELS: Record<string, string> = {
+  'levers.applications.approval': 'Approval regime by region',
+  'levers.policy.US.financing': 'Financing rule by transfer',
+}
+
+/**
+ * Groups `min` or more sibling enum levers with identical options (same parent path) into one
+ * grid item, keeping the position of the first sibling; every other lever is passed through.
+ */
+export function layoutLevers(levers: LeverDef[], min = 4): LeverLayoutItem[] {
+  const parentOf = (p: string) => p.slice(0, p.lastIndexOf('.'))
+  const siblings = new Map<string, LeverDef[]>()
+  for (const l of levers) {
+    if (l.type !== 'enum' || !l.options?.length) continue
+    const key = `${parentOf(l.path)}|${l.options.join(',')}`
+    siblings.set(key, [...(siblings.get(key) ?? []), l])
+  }
+  const gridOf = new Map<string, string>()
+  for (const [key, ls] of siblings) if (ls.length >= min) for (const l of ls) gridOf.set(l.path, key)
+  const out: LeverLayoutItem[] = []
+  const emitted = new Set<string>()
+  for (const l of levers) {
+    const key = gridOf.get(l.path)
+    if (!key) {
+      out.push({ kind: 'lever', lever: l })
+      continue
+    }
+    if (emitted.has(key)) continue
+    emitted.add(key)
+    const ls = siblings.get(key)!
+    const parent = parentOf(l.path)
+    const leaf = parent.slice(parent.lastIndexOf('.') + 1)
+    out.push({
+      kind: 'grid',
+      key,
+      label: GRID_LABELS[parent] ?? leaf.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase()),
+      options: l.options ?? [],
+      levers: ls,
+    })
+  }
+  return out
+}
+
+/** The short name of a lever inside a compact grid: the last path segment ("US", "RoA", "wage insurance"). */
+export function leverLeaf(l: LeverDef): string {
+  return l.path.slice(l.path.lastIndexOf('.') + 1).replace(/_/g, ' ')
 }
 
 export function getPath(obj: unknown, path: string): unknown {

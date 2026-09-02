@@ -14,6 +14,8 @@ export interface ScatterPoint {
   x: number
   y: number
   gap: number
+  /** Phase 6: displacement through the embodied channels at the same quarter (central run) */
+  yEmb?: number
 }
 
 const props = defineProps<{
@@ -127,6 +129,12 @@ function onMove(e: PointerEvent) {
     { label: 'Ever-automatable share', value: fmtShare(mk.p.x) },
     { label: `Displaced by ${props.quarterLabel}`, value: fmtShare(mk.p.y, 1) },
     { label: 'Gap (exposed, not hit)', value: fmtShare(mk.p.gap, 1) },
+    ...(mk.p.occ.automatable_share_embodied != null
+      ? [{ label: 'Ever-automatable, embodied', value: fmtShare(mk.p.occ.automatable_share_embodied) }]
+      : []),
+    ...(mk.p.yEmb != null
+      ? [{ label: `Displaced by embodied, ${props.quarterLabel}`, value: fmtShare(mk.p.yEmb, 1) }]
+      : []),
     { label: 'Group', value: MAJOR_GROUPS[mk.p.occ.major_group] ?? mk.p.occ.major_group },
   ])
 }

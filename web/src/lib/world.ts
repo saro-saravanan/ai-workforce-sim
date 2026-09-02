@@ -7,6 +7,7 @@
  *   - the capability clock: the frontier, i.e. the maximum over regions.
  */
 import type {
+  EmbodiedMetric,
   NationalMetric,
   RegionInfo,
   RegionSeries,
@@ -31,6 +32,15 @@ export const WORLD_RULE: Record<NationalMetric, WorldRule> = {
   ai_spend_bn: 'sum',
   capability_index: 'max',
   capability_horizon_hours: 'max',
+}
+
+/** Phase 6 series (contracts §20) aggregate like their v0.2 counterparts; absent in older runs. */
+export const WORLD_RULE_EMBODIED: Record<EmbodiedMetric, WorldRule> = {
+  embodied_displacement_share: 'weighted',
+  adjacent_jobs: 'sum',
+  hardware_capex_bn: 'sum',
+  underemployed_self_fte: 'sum',
+  hours_cut_self_cum: 'sum',
 }
 
 export const WORLD_RULE_LABEL: Record<WorldRule, string> = {
@@ -97,6 +107,15 @@ export function worldAggregate(
     if (s) out[m] = s
   }
   if (!out.employment_pct_vs_baseline) return null
+  const extra: Partial<Record<EmbodiedMetric, Series>> = {}
+  for (const m of Object.keys(WORLD_RULE_EMBODIED) as EmbodiedMetric[]) {
+    const parts = ids
+      .filter((id) => series[id]?.[m])
+      .map((id) => ({ weight: w.get(id) ?? 0, series: series[id]![m]! }))
+    if (!parts.length) continue
+    const s = aggregateSeries(parts, WORLD_RULE_EMBODIED[m])
+    if (s) extra[m] = s
+  }
   const rentParts = ids.filter((id) => series[id]?.ai_rents_received_bn)
   let rents: RentsByStage | undefined
   if (rentParts.length) {
@@ -110,7 +129,7 @@ export function worldAggregate(
     }
     if (r.total) rents = r as RentsByStage
   }
-  return { ...(out as Record<NationalMetric, Series>), ai_rents_received_bn: rents }
+  return { ...(out as Record<NationalMetric, Series>), ...extra, ai_rents_received_bn: rents }
 }
 
 /** The series block a view should read for a region selection ('world' or a region id). */

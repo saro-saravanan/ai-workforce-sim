@@ -91,7 +91,9 @@ export function pairedCompare(
     for (const k of Object.keys(A) as NationalMetric[]) {
       const sa = A[k]
       const sb = B[k]
-      if (sa && sb && 'p50' in sa && 'p50' in sb) series[k] = pairedDeltaSeries(sa, sb, rho)
+      // Phase 6 blocks also carry scalars (self_employed_fte_2024) and per-class maps (fleet_stock)
+      if (sa && sb && typeof sa === 'object' && typeof sb === 'object' && 'p50' in sa && 'p50' in sb)
+        series[k] = pairedDeltaSeries(sa, sb, rho)
     }
   }
   const aStates = new Map(a.states.map((s) => [s.fips, s]))

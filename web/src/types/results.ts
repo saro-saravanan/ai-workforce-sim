@@ -49,6 +49,14 @@ export interface ResultsMeta {
     [key: string]: DataFlag
   }
   capability_units: string
+  // ---------- Phase 6 (contracts §20) ----------
+  /** e.g. "FTE jobs including self-employed and platform workers" */
+  headline_definition?: string
+  /** employment-weighted task-hour share by channel (software, emb_driving, …, none) */
+  channels_task_hours?: Record<string, number>
+  /** self-employed FTE by region (2024) */
+  self_employed_fte?: Record<string, number>
+  embodied_on?: boolean
 }
 
 export type NationalMetric =
@@ -84,10 +92,39 @@ export type RentStage = 'model' | 'compute' | 'chips' | 'integration'
 export const RENT_STAGES: RentStage[] = ['model', 'compute', 'chips', 'integration']
 export type RentsByStage = Record<RentStage | 'total', Series>
 
-export type RegionSeries = Record<NationalMetric, Series> & {
-  /** Phase 3 (contracts §12) */
-  ai_rents_received_bn?: RentsByStage
+/** Phase 6 embodiment classes (contracts §19), in display order. */
+export type EmbodimentClass = 'driving' | 'manip' | 'fixed' | 'aerial'
+export const EMBODIMENT_CLASSES: EmbodimentClass[] = ['driving', 'manip', 'fixed', 'aerial']
+export const EMBODIMENT_CLASS_LABELS: Record<EmbodimentClass, string> = {
+  driving: 'Driving',
+  manip: 'Mobile manipulation',
+  fixed: 'Fixed automation',
+  aerial: 'Aerial',
 }
+export function isEmbodimentClass(v: unknown): v is EmbodimentClass {
+  return typeof v === 'string' && (EMBODIMENT_CLASSES as string[]).includes(v)
+}
+
+/** Phase 6 per-region series that older documents lack (contracts §20). */
+export type EmbodiedMetric =
+  | 'embodied_displacement_share'
+  | 'adjacent_jobs'
+  | 'hardware_capex_bn'
+  | 'underemployed_self_fte'
+  | 'hours_cut_self_cum'
+
+export type RegionSeries = Record<NationalMetric, Series> &
+  Partial<Record<EmbodiedMetric, Series>> & {
+    /** Phase 3 (contracts §12) */
+    ai_rents_received_bn?: RentsByStage
+    /** Phase 6: deployed units per embodiment class (percentiles) */
+    fleet_stock?: Partial<Record<EmbodimentClass, Series>>
+    /** Phase 6: share of the class's addressable task-hours covered by deployed units */
+    coverage?: Partial<Record<EmbodimentClass, Series>>
+    /** Phase 6: approved share J per class (central; percentiles collapse to it) */
+    approval_share?: Partial<Record<EmbodimentClass, Series>>
+    self_employed_fte_2024?: number
+  }
 
 /** Phase 3 region ids (contracts §11), in display order. */
 export type RegionId = 'US' | 'EU' | 'UK' | 'CN' | 'JP' | 'KR' | 'IN' | 'TW' | 'SG' | 'RoA'
@@ -122,6 +159,10 @@ export interface OccupationResult {
   real_wage_pct_vs_baseline: Series
   /** Phase 3: central-only paths for the non-U.S. regions (contracts §12) */
   by_region?: Record<string, OccupationByRegion>
+  /** Phase 6: the embodied part of `automatable_share` (which includes it) */
+  automatable_share_embodied?: number
+  /** Phase 6: displacement through the embodied channels, central run */
+  displacement_embodied?: CentralSeries
 }
 
 export interface OccupationByRegion {
@@ -140,13 +181,20 @@ export interface StateResult {
   displaced_workers_cum: Series
 }
 
+/**
+ * Channel order (contracts §20): automation, augmentation, embodied, demand_response,
+ * reinstatement, demand_feedback, ai_investment, adjacent. Pre-Phase-6 documents omit
+ * `embodied` and `adjacent`.
+ */
 export type ChannelName =
   | 'automation'
   | 'augmentation'
+  | 'embodied'
   | 'demand_response'
   | 'reinstatement'
   | 'demand_feedback'
   | 'ai_investment'
+  | 'adjacent'
 
 export interface ChannelDecomposition {
   order: ChannelName[]
@@ -227,9 +275,12 @@ export const FLOW_DESTINATIONS: FlowDestination[] = [
   'unfilled_entry',
 ]
 
+/** Phase 6 destinations (contracts §20); `hours_cut_self` is a stock of FTE-equivalent hours cut. */
+export type ExtraFlowDestination = 'hours_cut_self' | 'laid_off' | 'self_employed_margin_cum'
+
 export interface FlowsSection {
   origins: FlowOrigin[]
-  destinations: Record<FlowDestination, Series>
+  destinations: Record<FlowDestination, Series> & Partial<Record<ExtraFlowDestination, Series>>
 }
 
 export type TraceKey =
@@ -277,6 +328,49 @@ export interface ResultsDocument {
   regions?: RegionInfo[]
   world?: WorldEntry[]
   supply?: SupplySection
+  // ---------- Phase 6 (contracts §20) ----------
+  applications?: ApplicationEntry[]
+}
+
+// ---------- Phase 6 sections (contracts §19–20) ----------
+
+export type ApplicationGate = 'displacement_1pct' | 'displacement_10pct' | 'coverage_50pct'
+export const APPLICATION_GATES: ApplicationGate[] = [
+  'displacement_1pct',
+  'displacement_10pct',
+  'coverage_50pct',
+]
+
+export interface ApplicationRegion {
+  target_employment_2024: number
+  /** percent of the target occupations' task-hours, central run, per quarter */
+  displacement_share: number[]
+  jobs_below_baseline: number[]
+  /** share (0–1) per quarter */
+  coverage: number[]
+  /** approved share J (0–1) per quarter */
+  approval: number[]
+  /** first quarter each gate is passed, or null when not by the horizon */
+  first_quarter: Record<ApplicationGate, string | null>
+}
+
+/** One catalogue row (spec v0.3 §A.8) with its per-region status. */
+export interface ApplicationEntry {
+  app_id: string
+  name: string
+  family: 'embodied' | 'output' | 'software' | string
+  classes: Array<EmbodimentClass | string>
+  /** the target workers are largely self-employed or platform workers */
+  platform: boolean
+  /** SOC codes, or a wildcard such as "*manip" */
+  occ_codes: string[]
+  regions_first: string[]
+  anchor: string
+  constraints: string
+  /** provisional central ranges from the catalogue (E, V?), e.g. "2026-28" or "beyond 2040" */
+  provisional_profitable: string
+  provisional_deployed50: string
+  by_region: Record<string, ApplicationRegion>
 }
 
 // ---------- Phase 3 sections (contracts §12–13) ----------
@@ -351,6 +445,14 @@ export interface SupplySection {
   /** region → actor → 0/1 per quarter */
   availability: Record<string, Record<string, number[]>>
   market_share: Record<string, Record<string, CentralSeries>>
+  /** Phase 6: per embodiment class, the class clock (doublings), unit price and cost per hour */
+  embodiment?: Partial<Record<EmbodimentClass, EmbodimentSeries>>
+}
+
+export interface EmbodimentSeries {
+  clock: Series
+  unit_price_usd: Series
+  cost_per_hour_usd: Series
 }
 
 /** GET /api/regions — regions.csv rows (only the columns the web app reads are typed). */
@@ -414,7 +516,7 @@ export interface ScenarioSummary {
 
 /** A scenario document (scenarios/schema.json). Levers are a nested plain object. */
 export interface ScenarioDocument {
-  schema_version: '0.2'
+  schema_version: '0.2' | '0.3' | string
   id: string
   name: string
   description?: string
@@ -439,7 +541,15 @@ export interface RunResponse {
   meta: ResultsMeta
 }
 
-export type LeverGroup = 'capability' | 'cost' | 'regulation' | 'adoption' | 'labor' | 'policy'
+export type LeverGroup =
+  | 'capability'
+  | 'cost'
+  | 'regulation'
+  | 'adoption'
+  | 'labor'
+  | 'policy'
+  | 'applications'
+  | 'baseline'
 
 /** GET /api/levers */
 export interface LeverDef {

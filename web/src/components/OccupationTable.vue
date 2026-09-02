@@ -6,17 +6,22 @@ import { MAJOR_GROUPS } from '@/lib/metrics'
 
 const props = defineProps<{ points: ScatterPoint[]; q: number; quarterLabel: string }>()
 
-type Col = 'title' | 'group' | 'emp0' | 'wage0' | 'x' | 'y' | 'gap' | 'emp'
-const cols: Array<{ key: Col; label: string; num?: boolean }> = [
+type Col = 'title' | 'group' | 'emp0' | 'wage0' | 'x' | 'y' | 'yEmb' | 'gap' | 'emp'
+const allCols: Array<{ key: Col; label: string; num?: boolean }> = [
   { key: 'title', label: 'Occupation' },
   { key: 'group', label: 'Group' },
   { key: 'emp0', label: 'Employment 2023', num: true },
   { key: 'wage0', label: 'Wage 2023', num: true },
   { key: 'x', label: 'Automatable share', num: true },
   { key: 'y', label: 'Displaced', num: true },
+  { key: 'yEmb', label: 'Displaced, embodied', num: true },
   { key: 'gap', label: 'Gap (x − y)', num: true },
   { key: 'emp', label: 'Employment vs baseline', num: true },
 ]
+/** the embodied column (Phase 6) only when the document carries `displacement_embodied` */
+const cols = computed(() =>
+  props.points.some((p) => p.yEmb != null) ? allCols : allCols.filter((c) => c.key !== 'yEmb'),
+)
 const sortKey = ref<Col>('gap')
 const sortDir = ref<1 | -1>(-1)
 
@@ -34,6 +39,8 @@ function val(p: ScatterPoint, k: Col): number | string {
       return p.x
     case 'y':
       return p.y
+    case 'yEmb':
+      return p.yEmb ?? 0
     case 'gap':
       return p.gap
     case 'emp':
@@ -51,6 +58,7 @@ function fmt(p: ScatterPoint, k: Col): string {
     case 'x':
       return fmtShare(v)
     case 'y':
+    case 'yEmb':
     case 'gap':
       return fmtShare(v, 1)
     case 'emp':
@@ -95,7 +103,7 @@ defineExpose({ sortBy })
             scope="col"
             @click="sortBy(c.key)"
           >
-            {{ c.key === 'y' ? `Displaced by ${quarterLabel}` : c.label }}
+            {{ c.key === 'y' ? `Displaced by ${quarterLabel}` : c.key === 'yEmb' ? `Embodied by ${quarterLabel}` : c.label }}
             <span v-if="sortKey === c.key" aria-hidden="true">{{ sortDir === 1 ? '↑' : '↓' }}</span>
           </th>
         </tr>

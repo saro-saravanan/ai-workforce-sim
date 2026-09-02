@@ -155,6 +155,18 @@ describe('candidateInsights', () => {
     d.series.US!.employment_pct_vs_baseline = s([0, 1, 2])
     expect(candidateInsights(d, 'US').some((c) => c.key === 'gdp_vs_employment')).toBe(false)
   })
+  it('adds the embodied candidate only when the v0.3 series exists', () => {
+    const d = fixture()
+    expect(candidateInsights(d, 'US').some((c) => c.key === 'embodied_late_large')).toBe(false)
+    d.series.US!.embodied_displacement_share = s([0, 0.3, 5.6], 0.2)
+    const c = candidateInsights(d, 'US').find((x) => x.key === 'embodied_late_large')!
+    expect(c.title).toBe('Embodied automation arrives late but large')
+    expect(c.statement).toContain('0.3% of task-hours by 2030Q4')
+    expect(c.statement).toContain('5.6% by 2040Q4')
+    expect(c.statement).toContain('95% of the horizon effect lands after 2030')
+    expect(c.evidence.late).toBe(true)
+    expect(c.surprise).toBeGreaterThan(0.5)
+  })
   it('EU region reads the EU block and omits the U.S.-only hiring channel', () => {
     const out = candidateInsights(fixture(), 'EU')
     expect(out.some((c) => c.key === 'hiring_channel')).toBe(false)

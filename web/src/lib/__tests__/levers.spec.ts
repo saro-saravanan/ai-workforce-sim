@@ -6,7 +6,9 @@ import {
   clampLever,
   deepMerge,
   getPath,
+  layoutLevers,
   leverDiff,
+  leverLeaf,
   leverValues,
   leversPatch,
   resolveScenario,
@@ -141,5 +143,54 @@ describe('levers form model', () => {
     expect(doc.parent).toBe('baseline')
     expect(doc.levers).toEqual({ capability: { doubling_months: 4.5 } })
     expect(doc.user).toBe(true)
+  })
+})
+
+describe('layoutLevers (Phase 6 compact enum grid)', () => {
+  const approval = (r: string): LeverDef => ({
+    path: `levers.applications.approval.${r}`,
+    label: `Approval regime: ${r}`,
+    group: 'applications',
+    type: 'enum',
+    options: ['frozen', 'baseline', 'accelerated', 'moratorium'],
+    default: 'baseline',
+    param: 'P.119',
+    mechanism: 'J path',
+  })
+  const number: LeverDef = {
+    path: 'levers.applications.hardware.learning_rate',
+    label: 'Hardware learning rate',
+    group: 'applications',
+    type: 'number',
+    min: 0.05,
+    max: 0.25,
+    step: 0.01,
+    default: 0.12,
+  }
+  const platform: LeverDef = {
+    path: 'levers.applications.platform_labor',
+    label: 'Platform labor classification',
+    group: 'applications',
+    type: 'enum',
+    options: ['status_quo', 'employee_reclassification'],
+    default: 'status_quo',
+  }
+  it('folds the ten approval enums into one grid at the first sibling’s position', () => {
+    const regions = ['US', 'EU', 'UK', 'CN', 'JP', 'KR', 'IN', 'TW', 'SG', 'RoA']
+    const items = layoutLevers([number, ...regions.map(approval), platform])
+    expect(items.map((i) => i.kind)).toEqual(['lever', 'grid', 'lever'])
+    const grid = items[1]!
+    if (grid.kind !== 'grid') throw new Error('expected a grid')
+    expect(grid.levers).toHaveLength(10)
+    expect(grid.label).toBe('Approval regime by region')
+    expect(grid.options).toEqual(['frozen', 'baseline', 'accelerated', 'moratorium'])
+    expect(grid.levers.map(leverLeaf)).toEqual(regions)
+  })
+  it('leaves fewer than four siblings, or siblings with different options, as plain rows', () => {
+    const items = layoutLevers([approval('US'), approval('EU'), approval('UK'), platform])
+    expect(items.every((i) => i.kind === 'lever')).toBe(true)
+    const odd = { ...approval('CN'), options: ['frozen', 'baseline'] }
+    const mixed = layoutLevers([approval('US'), approval('EU'), approval('UK'), approval('JP'), odd])
+    expect(mixed.map((i) => i.kind)).toEqual(['grid', 'lever'])
   })
 })

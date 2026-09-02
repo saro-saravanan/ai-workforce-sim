@@ -4,13 +4,26 @@ import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
 import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
-import { DASHBOARD_TILES, RENTS_DEF, RENT_STAGE_LABELS, type MetricDef } from '@/lib/metrics'
+import {
+  DASHBOARD_TILES,
+  EMBODIED_TILES,
+  EMPLOYMENT_DEF,
+  RENTS_DEF,
+  RENT_STAGE_LABELS,
+  type MetricDef,
+} from '@/lib/metrics'
 import { CATEGORICAL } from '@/lib/palette'
 import { quarterLabel } from '@/lib/format'
 import { referenceQuarter } from '@/lib/confidence'
-import { WORLD_RULE, WORLD_RULE_LABEL } from '@/lib/world'
+import { WORLD_RULE, WORLD_RULE_EMBODIED, WORLD_RULE_LABEL } from '@/lib/world'
 import { stackCategorical } from '@/lib/scales'
-import type { ChannelDecomposition, HeadlineMetric, NationalMetric, Series } from '@/types/results'
+import type {
+  ChannelDecomposition,
+  EmbodiedMetric,
+  HeadlineMetric,
+  NationalMetric,
+  Series,
+} from '@/types/results'
 import { HEADLINE_METRICS, RENT_STAGES, REGION_NAMES, isRegionId } from '@/types/results'
 import StatTile from '@/components/StatTile.vue'
 import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
@@ -25,7 +38,14 @@ const regionStore = useRegionStore()
 const theme = useThemeStore()
 
 const RENTS_KEY = 'ai_rents_received_bn' as const
-type TileKey = NationalMetric | typeof RENTS_KEY
+type TileKey = NationalMetric | EmbodiedMetric | typeof RENTS_KEY
+const EMBODIED_KEYS = EMBODIED_TILES.map((t) => t.key) as string[]
+function isEmbodied(k: TileKey): k is EmbodiedMetric {
+  return EMBODIED_KEYS.includes(k)
+}
+function isNational(k: TileKey): k is NationalMetric {
+  return k !== RENTS_KEY && !isEmbodied(k)
+}
 const expanded = ref<TileKey | null>(null)
 const ensembleView = ref<'parametric' | 'structural'>('parametric')
 const hue = computed(() => CATEGORICAL[theme.mode][0] ?? '#2a78d6')
@@ -35,14 +55,22 @@ const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
 /** For World the tile subtitle says how the aggregate was formed (lib/world.ts). */
 function unitFor(key: TileKey, def: MetricDef) {
   if (!regionStore.isWorld) return def.unit
-  const rule = key === RENTS_KEY ? 'sum' : WORLD_RULE[key]
+  const rule = key === RENTS_KEY ? 'sum' : isEmbodied(key) ? WORLD_RULE_EMBODIED[key] : WORLD_RULE[key]
   return `${def.unit} · World = ${WORLD_RULE_LABEL[rule]}`
 }
+/**
+ * Phase 6: the headline employment definition (contracts §20) under the Employment tile, cut at
+ * the first parenthesis or semicolon so the tile line stays short; the full text is the tooltip.
+ */
+const headlineDefinition = computed(() => results.meta?.headline_definition ?? '')
+const headlineShort = computed(() => headlineDefinition.value.split(/[(;]/)[0]?.trim() ?? '')
 const tiles = computed<Array<{ key: TileKey; def: MetricDef; series: Series | undefined }>>(() => {
-  const base: Array<{ key: TileKey; def: MetricDef; series: Series | undefined }> = DASHBOARD_TILES.map((t) => ({
-    ...t,
-    series: results.national(t.key),
-  }))
+  const base: Array<{ key: TileKey; def: MetricDef; series: Series | undefined }> = [
+    { key: 'employment_pct_vs_baseline', def: EMPLOYMENT_DEF, series: results.national('employment_pct_vs_baseline') },
+    ...DASHBOARD_TILES.map((t) => ({ ...t, series: results.national(t.key) })),
+    // Phase 6 series exist only in v0.3 documents
+    ...EMBODIED_TILES.map((t) => ({ ...t, series: results.series?.[t.key] })),
+  ]
   base.push({ key: RENTS_KEY, def: RENTS_DEF, series: results.rents?.total })
   return base.filter((t) => t.series)
 })
@@ -56,7 +84,7 @@ const expandedChannels = computed<ChannelDecomposition | undefined>(() => {
     for (const st of RENT_STAGES) (contributions as Record<string, number[]>)[st] = r[st].p50
     return { order: RENT_STAGES as unknown as ChannelDecomposition['order'], contributions }
   }
-  return results.channels[expanded.value]
+  return isNational(expanded.value) ? results.channels[expanded.value] : undefined
 })
 const stageColor = computed(() => stackCategorical(RENT_STAGES, theme.mode))
 /** World: one stacked bar per region (rents are a sum, so the split is exact). */
@@ -153,6 +181,8 @@ function selectCell(id: string) {
         :expanded="expanded === t.key"
         :confidence="isHeadline(t.key) ? results.confidenceAt(t.key, refQ) : undefined"
         :confidence-at="isHeadline(t.key) ? refQ : undefined"
+        :note="t.key === 'employment_pct_vs_baseline' && headlineShort ? headlineShort : undefined"
+        :note-title="t.key === 'employment_pct_vs_baseline' ? headlineDefinition : undefined"
         @toggle="toggle(t.key)"
       />
     </div>
@@ -203,8 +233,9 @@ function selectCell(id: string) {
       <template v-if="expandedStructural && ensembleView === 'structural'">
         <div class="cells">
           <span class="chart-note">
-            Thin lines = the eight mechanism-cell medians (demand response | reinstatement |
-            pass-through). Click one to highlight it (<code>cell=</code> in the URL).
+            Thin lines = the {{ cellList.length }} mechanism-cell medians (demand response |
+            reinstatement | pass-through{{ cellList.some((c) => c.parts.length > 3) ? ' | hardware learning' : '' }}).
+            Click one to highlight it (<code>cell=</code> in the URL).
           </span>
           <div class="cell-list" role="list">
             <button

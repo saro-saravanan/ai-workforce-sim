@@ -6,8 +6,7 @@ import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { fmtCompact, quarterLabel } from '@/lib/format'
 import { stackCategorical } from '@/lib/scales'
-import { FLOW_DESTINATION_LABELS } from '@/lib/metrics'
-import { FLOW_DESTINATIONS } from '@/types/results'
+import { FLOW_DESTINATION_LABELS, flowDestinations } from '@/lib/metrics'
 import SankeyChart from '@/components/charts/SankeyChart.vue'
 
 const results = useResultsStore()
@@ -29,12 +28,15 @@ const color = computed(() =>
 )
 const destRows = computed(() =>
   results.flows
-    ? FLOW_DESTINATIONS.map((d) => {
+    ? flowDestinations(results.flows).flatMap((d) => {
         const s = results.flows!.destinations[d]
-        return { d, label: FLOW_DESTINATION_LABELS[d], v: s.p50[scrubber.q] ?? 0, lo: s.p10?.[scrubber.q], hi: s.p90?.[scrubber.q] }
+        if (!s) return []
+        return [{ d, label: FLOW_DESTINATION_LABELS[d], v: s.p50[scrubber.q] ?? 0, lo: s.p10?.[scrubber.q], hi: s.p90?.[scrubber.q] }]
       })
     : [],
 )
+/** Phase 6: the self-employed margin is a stock of hours cut, drawn as its own destination. */
+const hasHoursCut = computed(() => !!results.flows?.destinations.hours_cut_self)
 </script>
 
 <template>
@@ -86,6 +88,10 @@ const destRows = computed(() =>
         <p class="chart-note">
           The results document publishes origin and destination totals; origin → destination
           links are drawn as origin × destination share until the engine publishes the joint flow.
+          <template v-if="hasHoursCut">
+            “Hours cut” is the self-employed and platform margin (spec v0.3 §A.5.2): FTE-equivalent
+            hours lost by workers who keep their activity rather than a separation.
+          </template>
         </p>
       </aside>
     </div>

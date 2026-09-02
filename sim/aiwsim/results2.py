@@ -355,7 +355,7 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
     flags = dict(inp.data_flags); flags["aei_anchoring"] = "unavailable"; flags["cohorts"] = cohort_flag
     conf = confidence(o, torn, q)
     cells = sorted({c for c in o.cell_ids if c != "central"})
-    meta = {"spec_version": SPEC_VERSION, "schema_version": "0.3", "scenario_id": scenario.get("id"), "scenario_name": scenario.get("name"),
+    meta = {"spec_version": SPEC_VERSION, "schema_version": "0.4", "scenario_id": scenario.get("id"), "scenario_name": scenario.get("name"),
             "scenario_parent": scenario.get("parent"), "scenario_hash": shash, "seed": scenario.get("seed", 42),
             "run_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "draws": draws, "ensemble": ensemble, "cells": cells,
             "percentiles": PCTS, "quarters": q, "regions": ["US"], "baseline": "no_frontier_ai_after_2023", "data_flags": flags,

@@ -11,9 +11,8 @@ import {
 import type { ChannelDecomposition, Series } from '@/types/results'
 import { useSize } from '@/composables/useSize'
 import { useTooltip, type TooltipRow } from '@/composables/useTooltip'
-import { stackCategorical } from '@/lib/scales'
 import { quarterLabel, quarterYear } from '@/lib/format'
-import { CHANNEL_LABELS } from '@/lib/metrics'
+import { CHANNEL_LABELS, channelColorScale } from '@/lib/metrics'
 import type { Mode } from '@/lib/palette'
 import ChartTooltip from '@/components/ChartTooltip.vue'
 
@@ -37,7 +36,7 @@ const iw = computed(() => Math.max(100, width.value - m.left - m.right))
 const ih = computed(() => Math.max(80, height.value - m.top - m.bottom))
 
 const keys = computed(() => props.channels.order.filter((k) => props.channels.contributions[k]))
-const color = computed(() => stackCategorical(keys.value, props.mode))
+const color = computed(() => channelColorScale(keys.value, props.mode))
 const rows = computed(() =>
   props.quarters.map((_, i) => {
     const row: Record<string, number> = {}
@@ -167,28 +166,18 @@ const atQ = computed(() => tooltipRows(props.q))
       </svg>
       <ChartTooltip :tip="tip" :width="width" />
     </div>
-    <table class="data compact">
-      <caption class="muted">
-        Contributions at
-        {{
-          quarterLabel(quarters[q])
-        }}
-        ({{
-          unit
-        }})
-      </caption>
-      <tbody>
-        <tr>
-          <td v-for="r in atQ" :key="r.label">
-            <span class="cell-label"
-              ><span v-if="r.swatch" class="sw" :style="{ background: r.swatch }"></span
-              >{{ r.label }}</span
-            >
-            <strong class="mono">{{ r.value }}</strong>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="at" role="list" :aria-label="`Contributions at ${quarterLabel(quarters[q])}`">
+      <span class="muted at-caption">Contributions at {{ quarterLabel(quarters[q]) }} ({{ unit }})</span>
+      <div class="at-cells">
+        <div v-for="r in atQ" :key="r.label" class="at-cell" role="listitem">
+          <span class="cell-label"
+            ><span v-if="r.swatch" class="sw" :style="{ background: r.swatch }"></span
+            >{{ r.label }}</span
+          >
+          <strong class="mono">{{ r.value }}</strong>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -248,17 +237,22 @@ svg {
 .cross {
   stroke: var(--muted);
 }
-table.compact {
+.at {
   font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-table.compact caption {
-  text-align: left;
-  padding: 2px 0 6px;
+.at-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
 }
-table.compact td {
-  border: 0;
-  padding: 4px 10px 4px 0;
-  vertical-align: top;
+.at-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .cell-label {
   display: flex;

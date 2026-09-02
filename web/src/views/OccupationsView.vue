@@ -42,23 +42,35 @@ function displacementAt(occ: OccupationResult, q: number): number {
   }
   return occ.displacement.p50[q] ?? 0
 }
+/**
+ * Phase 6: displacement through the embodied channels (`displacement_embodied`, central run,
+ * U.S. only — contracts §20 publishes no regional split) and its ever-automatable mass.
+ */
+const hasEmbodied = computed(() => results.occupations.some((o) => o.displacement_embodied))
+const channel = ref<'total' | 'embodied'>('total')
+const showEmbodied = computed(() => hasEmbodied.value && channel.value === 'embodied')
+function embodiedAt(occ: OccupationResult, q: number): number | undefined {
+  return occ.displacement_embodied?.central[q]
+}
 
 const mode = ref<'scatter' | 'table'>('scatter')
 const colorBy = ref<'group' | 'single'>('group')
-const sortKey = ref<'gap' | 'y' | 'x' | 'emp0'>('gap')
+const sortKey = ref<'gap' | 'y' | 'x' | 'emp0' | 'yEmb'>('gap')
 const qLabel = computed(() => quarterLabel(results.quarters[scrubber.q]))
 
 const points = computed<ScatterPoint[]>(() =>
   results.occupations.map((occ) => {
-    const x = occ.automatable_share
-    const y = displacementAt(occ, scrubber.q)
-    return { occ, x, y, gap: x - y }
+    const yEmb = hasEmbodied.value ? (embodiedAt(occ, scrubber.q) ?? 0) : undefined
+    const x = showEmbodied.value ? (occ.automatable_share_embodied ?? 0) : occ.automatable_share
+    const y = showEmbodied.value ? (yEmb ?? 0) : displacementAt(occ, scrubber.q)
+    return { occ, x, y, gap: x - y, yEmb }
   }),
 )
 const yMax = computed(() => {
   let m = 0
   for (const o of results.occupations)
-    for (let i = 0; i < o.displacement.p50.length; i++) m = Math.max(m, displacementAt(o, i))
+    for (let i = 0; i < o.displacement.p50.length; i++)
+      m = Math.max(m, showEmbodied.value ? (embodiedAt(o, i) ?? 0) : displacementAt(o, i))
   return Math.max(0.1, Math.ceil((m + 0.02) * 10) / 10)
 })
 
@@ -84,12 +96,15 @@ const legend = computed(() =>
 
 const sorted = computed(() => {
   const k = sortKey.value
-  return [...points.value].sort((a, b) => {
-    const va = k === 'emp0' ? a.occ.emp0 : a[k]
-    const vb = k === 'emp0' ? b.occ.emp0 : b[k]
-    return vb - va
-  })
+  const of = (p: ScatterPoint) => (k === 'emp0' ? p.occ.emp0 : k === 'yEmb' ? (p.yEmb ?? 0) : p[k])
+  return [...points.value].sort((a, b) => of(b) - of(a))
 })
+const rankValue = (p: ScatterPoint) => {
+  const k = sortKey.value
+  if (k === 'emp0') return (p.occ.emp0 / 1e6).toFixed(1) + 'M'
+  const v = k === 'yEmb' ? (p.yEmb ?? 0) : p[k]
+  return (v * 100).toFixed(1) + '%'
+}
 /** Direct-label the headline: the five largest exposed-but-not-yet-hit occupations. */
 const labelled = computed(() => {
   const ranked = [...points.value].sort((a, b) => b.gap * b.occ.emp0 - a.gap * a.occ.emp0)
@@ -105,7 +120,12 @@ const labelled = computed(() => {
         {{ usesByRegion ? regionStore.label : 'US' }}, {{ qLabel }}
       </h2>
       <span class="chart-note"
-        >Size = 2023 U.S. employment. Below the diagonal = exposed but not yet hit.</span
+        >Size = 2023 U.S. employment. Below the diagonal = exposed but not yet hit.<template
+          v-if="showEmbodied"
+        >
+          Embodied channel only: x = ever-automatable mass on the embodiment classes, y = displacement
+          through them (central run, U.S.).</template
+        ></span
       >
       <span v-if="regionNote" class="badge composition" :title="regionNote">{{
         usesByRegion ? 'bands U.S.-only' : 'U.S. detail'
@@ -118,11 +138,26 @@ const labelled = computed(() => {
         </button>
         <button class="btn" :aria-pressed="mode === 'table'" @click="mode = 'table'">Table</button>
       </div>
+      <template v-if="hasEmbodied">
+        <span class="muted">Channel</span>
+        <div class="seg" role="group" aria-label="Displacement channel">
+          <button class="btn" :aria-pressed="channel === 'total'" @click="channel = 'total'">All</button>
+          <button
+            class="btn"
+            :aria-pressed="channel === 'embodied'"
+            title="Displacement through the embodied channels only (robotaxis, trucking, warehouse and fixed robots)"
+            @click="channel = 'embodied'"
+          >
+            Embodied
+          </button>
+        </div>
+      </template>
       <label class="muted"
         >Sort
         <select v-model="sortKey" class="select">
           <option value="gap">by gap (exposed − hit)</option>
           <option value="y">by displacement</option>
+          <option v-if="hasEmbodied" value="yEmb">by embodied displacement</option>
           <option value="x">by automatable share</option>
           <option value="emp0">by employment</option>
         </select>
@@ -160,11 +195,7 @@ const labelled = computed(() => {
     <ol class="rank" aria-label="Largest gaps">
       <li v-for="p in sorted.slice(0, 5)" :key="p.occ.occ_code">
         <span>{{ p.occ.title }}</span>
-        <strong class="mono">{{
-          sortKey === 'emp0'
-            ? (p.occ.emp0 / 1e6).toFixed(1) + 'M'
-            : (p[sortKey] * 100).toFixed(1) + '%'
-        }}</strong>
+        <strong class="mono">{{ rankValue(p) }}</strong>
       </li>
     </ol>
   </section>

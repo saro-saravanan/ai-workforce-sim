@@ -16,6 +16,10 @@ const props = defineProps<{
   /** confidence classification (Phase 2) and the reference quarter it is reported at */
   confidence?: Confidence
   confidenceAt?: string
+  /** a short definition line under the unit (Phase 6: `meta.headline_definition`) */
+  note?: string
+  /** the full text behind `note`, shown on hover */
+  noteTitle?: string
 }>()
 defineEmits<{ toggle: [] }>()
 
@@ -39,6 +43,7 @@ const band = computed(() => {
         <span v-if="band" class="band mono">{{ band }}</span>
       </div>
       <div class="unit">{{ unit }}</div>
+      <div v-if="note" class="note" :title="noteTitle ?? note">{{ note }}</div>
       <SparkLine :series="series" :q="q" :hue="hue" :zero="zero" />
     </button>
     <ConfidenceGlyph
@@ -101,6 +106,11 @@ const band = computed(() => {
   font-size: 14px;
   color: var(--muted);
   margin-bottom: 4px;
+}
+.note {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: -2px 0 6px;
 }
 .conf {
   position: absolute;

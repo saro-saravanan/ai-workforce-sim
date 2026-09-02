@@ -169,6 +169,28 @@ export function candidateInsights(doc: ResultsDocument, region = 'US'): Insight[
     }
   }
 
+  // Phase 6: the embodied channel arrives late but grows into a large share by the horizon
+  const emb = blk?.embodied_displacement_share
+  if (emb) {
+    const i30 = quarters.indexOf('2030Q4')
+    const e30 = i30 >= 0 ? at(emb, i30) : 0
+    const eEnd = at(emb, tEnd)
+    if (eEnd > 0) {
+      const late = e30 < 0.25 * eEnd
+      add(
+        'embodied_late_large',
+        late ? 'Embodied automation arrives late but large' : 'Embodied automation is under way',
+        `In ${region}, embodied automation (robotaxis, trucking, warehouse and fixed robots) displaces ${e30.toFixed(1)}% of task-hours by 2030Q4 and ${eEnd.toFixed(1)}% by ${qEnd}` +
+          (emb.p10 && emb.p90 ? ` (10–90: ${at(emb, tEnd, 'p10').toFixed(1)}% to ${at(emb, tEnd, 'p90').toFixed(1)}%)` : '') +
+          (late ? `; ${Math.round(100 * (1 - e30 / eEnd))}% of the horizon effect lands after 2030.` : '.'),
+        'Embodied channels run on their own class clocks (spec v0.3 §A.3.1) and are gated by hardware unit cost (§A.3.2), the production ramp (§A.3.3) and approval (§A.3.4); each gate delays deployment relative to the software clock.',
+        confOf(doc, 'employment_pct_vs_baseline', qEnd),
+        0.3 + Math.min(0.4, eEnd / 10) + (late ? 0.15 : 0),
+        { embodied_share_2030: Number(e30.toFixed(3)), embodied_share_end: Number(eEnd.toFixed(3)), late },
+      )
+    }
+  }
+
   const conf = doc.confidence?.employment_pct_vs_baseline?.[qEnd]
   if (conf)
     add(

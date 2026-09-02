@@ -534,5 +534,298 @@
    "keep_projection"
   ],
   "default": "restore_trend"
+ },
+ {
+  "path": "levers.baseline.automation_trend",
+  "label": "Baseline: pre-AI automation trend (scale)",
+  "group": "baseline",
+  "param": "P.104",
+  "mechanism": "Scales the pre-2023 automation trend the frozen-AI baseline keeps; results are the AI-enabled increment over it (spec v0.3 §A.6.2).",
+  "type": "number",
+  "min": 0.5,
+  "max": 1.5,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
+  "path": "levers.applications.embodiment.driving_doubling_months",
+  "label": "Driving autonomy doubling time",
+  "group": "applications",
+  "param": "P.108",
+  "mechanism": "Embodiment clock for driving (spec v0.3 §A.3.1).",
+  "type": "number",
+  "min": 6,
+  "max": 48,
+  "step": 1,
+  "unit": "months",
+  "default": 18
+ },
+ {
+  "path": "levers.applications.embodiment.manipulation_doubling_months",
+  "label": "Mobile manipulation doubling time",
+  "group": "applications",
+  "param": "P.108",
+  "mechanism": "Embodiment clock for mobile manipulation (spec v0.3 §A.3.1).",
+  "type": "number",
+  "min": 6,
+  "max": 48,
+  "step": 1,
+  "unit": "months",
+  "default": 15
+ },
+ {
+  "path": "levers.applications.embodiment.fixed_doubling_months",
+  "label": "Fixed automation doubling time",
+  "group": "applications",
+  "param": "P.108",
+  "mechanism": "Embodiment clock for fixed automation (spec v0.3 §A.3.1).",
+  "type": "number",
+  "min": 6,
+  "max": 60,
+  "step": 1,
+  "unit": "months",
+  "default": 24
+ },
+ {
+  "path": "levers.applications.embodiment.aerial_doubling_months",
+  "label": "Aerial autonomy doubling time",
+  "group": "applications",
+  "param": "P.108",
+  "mechanism": "Embodiment clock for aerial autonomy (spec v0.3 §A.3.1).",
+  "type": "number",
+  "min": 6,
+  "max": 48,
+  "step": 1,
+  "unit": "months",
+  "default": 18
+ },
+ {
+  "path": "levers.applications.embodiment.coupling_to_software",
+  "label": "Coupling of embodiment clocks to the software clock",
+  "group": "applications",
+  "param": "P.107",
+  "mechanism": "Share of software-clock progress that carries over to the embodiment clocks (spec v0.3 §A.3.1).",
+  "type": "number",
+  "min": 0,
+  "max": 0.7,
+  "step": 0.05,
+  "unit": "share",
+  "default": 0.3
+ },
+ {
+  "path": "levers.applications.hardware.learning_rate",
+  "label": "Hardware learning rate",
+  "group": "applications",
+  "param": "P.113",
+  "mechanism": "Wright’s-law unit-cost decline per doubling of cumulative production (spec v0.3 §A.3.2).",
+  "type": "number",
+  "min": 0.05,
+  "max": 0.25,
+  "step": 0.01,
+  "unit": "per doubling",
+  "default": 0.12
+ },
+ {
+  "path": "levers.applications.hardware.utilization_scale",
+  "label": "Hardware utilization (scale)",
+  "group": "applications",
+  "param": "P.115",
+  "mechanism": "Scales paid hours per unit; sets the cost per task-hour (spec v0.3 §A.3.2).",
+  "type": "number",
+  "min": 0.4,
+  "max": 1.6,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
+  "path": "levers.applications.hardware.unit_price_scale",
+  "label": "Hardware unit price 2025 (scale)",
+  "group": "applications",
+  "param": "P.110",
+  "mechanism": "Scales the 2025 unit price of every class; sets the cost per task-hour (spec v0.3 §A.3.2).",
+  "type": "number",
+  "min": 0.5,
+  "max": 2,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
+ },
+ {
+  "path": "levers.applications.hardware.ramp_max_growth_per_year",
+  "label": "Production ramp cap",
+  "group": "applications",
+  "param": "P.117",
+  "mechanism": "Maximum yearly growth of deliveries; bounds deployment speed (spec v0.3 §A.3.3).",
+  "type": "number",
+  "min": 0.3,
+  "max": 1.5,
+  "step": 0.05,
+  "unit": "/yr",
+  "default": 0.5
+ },
+ {
+  "path": "levers.applications.approval.US",
+  "label": "Approval regime: US",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.EU",
+  "label": "Approval regime: EU",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.UK",
+  "label": "Approval regime: UK",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.CN",
+  "label": "Approval regime: CN",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.JP",
+  "label": "Approval regime: JP",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.KR",
+  "label": "Approval regime: KR",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.IN",
+  "label": "Approval regime: IN",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.TW",
+  "label": "Approval regime: TW",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.SG",
+  "label": "Approval regime: SG",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.approval.RoA",
+  "label": "Approval regime: RoA",
+  "group": "applications",
+  "param": "P.119",
+  "mechanism": "Deployment share J path per region and class: frozen, baseline, accelerated or moratorium (spec v0.3 §A.3.4).",
+  "type": "enum",
+  "options": [
+   "frozen",
+   "baseline",
+   "accelerated",
+   "moratorium"
+  ],
+  "default": "baseline"
+ },
+ {
+  "path": "levers.applications.platform_labor",
+  "label": "Platform labor classification",
+  "group": "applications",
+  "param": "P.123",
+  "mechanism": "Employee reclassification moves platform FTE to the employee stock, changing the attrition buffer (spec v0.3 §A.3.6).",
+  "type": "enum",
+  "options": [
+   "status_quo",
+   "employee_reclassification"
+  ],
+  "default": "status_quo"
  }
 ]

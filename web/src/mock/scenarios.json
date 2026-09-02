@@ -1,12 +1,12 @@
 [
  {
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "id": "baseline",
   "name": "Consensus central",
   "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
   "parent": null,
   "seed": 42,
-  "draws": 200,
+  "draws": 256,
   "horizon": {
    "start": "2024Q1",
    "end": "2040Q4"
@@ -78,7 +78,36 @@
     }
    },
    "baseline": {
-    "bls_ai_adjustment": "restore_trend"
+    "bls_ai_adjustment": "restore_trend",
+    "automation_trend": 1
+   },
+   "applications": {
+    "embodiment": {
+     "driving_doubling_months": 18,
+     "manipulation_doubling_months": 15,
+     "fixed_doubling_months": 24,
+     "aerial_doubling_months": 18,
+     "coupling_to_software": 0.3
+    },
+    "hardware": {
+     "learning_rate": 0.12,
+     "utilization_scale": 1,
+     "unit_price_scale": 1,
+     "ramp_max_growth_per_year": 0.5
+    },
+    "approval": {
+     "US": "baseline",
+     "EU": "baseline",
+     "UK": "baseline",
+     "CN": "baseline",
+     "JP": "baseline",
+     "KR": "baseline",
+     "IN": "baseline",
+     "TW": "baseline",
+     "SG": "baseline",
+     "RoA": "baseline"
+    },
+    "platform_labor": "status_quo"
    }
   },
   "shocks": [],

@@ -1,5 +1,7 @@
-import type { NationalMetric, StateMetric } from '@/types/results'
+import type { ChannelName, EmbodiedMetric, NationalMetric, StateMetric } from '@/types/results'
 import { fmtBn, fmtCompact, fmtPct, fmtPp, fmtShare } from './format'
+import { CATEGORICAL, NEUTRAL, type Mode } from './palette'
+import { stackCategorical } from './scales'
 
 export type Polarity = 'diverging' | 'magnitude'
 
@@ -67,10 +69,40 @@ export const DASHBOARD_TILES: Array<{ key: NationalMetric; def: MetricDef }> = [
 export const CHANNEL_LABELS: Record<string, string> = {
   automation: 'Automation',
   augmentation: 'Augmentation',
+  embodied: 'Embodied automation',
   demand_response: 'Demand response',
   reinstatement: 'Reinstatement',
   demand_feedback: 'Demand feedback',
   ai_investment: 'AI investment',
+  adjacent: 'Adjacent and hardware jobs',
+}
+
+/**
+ * Fixed categorical slot per channel so a channel keeps its color whether the document carries
+ * the six-entry (v0.2) or the eight-entry (v0.3, contracts §20) order.
+ */
+export const CHANNEL_COLOR_SLOT: Record<ChannelName, number> = {
+  automation: 0,
+  augmentation: 1,
+  demand_response: 2,
+  reinstatement: 3,
+  demand_feedback: 4,
+  ai_investment: 5,
+  embodied: 6,
+  adjacent: 7,
+}
+
+/**
+ * Color for a stacked-channel key: channels use their fixed slot; any other key set (the rents
+ * stages reuse the same chart) falls back to the positional stack scale.
+ */
+export function channelColorScale(keys: string[], mode: Mode): (key: string) => string {
+  const allChannels = keys.every((k) => k in CHANNEL_COLOR_SLOT)
+  if (!allChannels) return stackCategorical(keys, mode)
+  return (key: string) => {
+    const slot = CHANNEL_COLOR_SLOT[key as ChannelName]
+    return slot == null ? NEUTRAL[mode] : (CATEGORICAL[mode][slot] ?? NEUTRAL[mode])
+  }
 }
 
 export const MAJOR_GROUPS: Record<string, string> = {
@@ -100,7 +132,15 @@ export const MAJOR_GROUPS: Record<string, string> = {
 
 // ---------- Phase 2 ----------
 
-import type { CohortFacet, FlowDestination, HeadlineMetric, TraceKey } from '@/types/results'
+import type {
+  CohortFacet,
+  ExtraFlowDestination,
+  FlowDestination,
+  FlowsSection,
+  HeadlineMetric,
+  TraceKey,
+} from '@/types/results'
+import { FLOW_DESTINATIONS } from '@/types/results'
 
 export const EMPLOYMENT_DEF: MetricDef = { label: 'Net employment', short: 'Employment', ...pct }
 
@@ -157,13 +197,27 @@ export const COHORT_METRICS = {
 } as const
 export type CohortMetric = keyof typeof COHORT_METRICS
 
-export const FLOW_DESTINATION_LABELS: Record<FlowDestination, string> = {
+export const FLOW_DESTINATION_LABELS: Record<FlowDestination | ExtraFlowDestination, string> = {
   reemployed: 'Re-employed',
   retraining: 'In retraining',
   unemployed: 'Long-term unemployed',
   exited: 'Exited labor force',
   retired: 'Retired',
   unfilled_entry: 'Unfilled entry positions',
+  hours_cut_self: 'Hours cut (self-employed and platform)',
+  laid_off: 'Laid off',
+  self_employed_margin_cum: 'Self-employed margin (cumulative)',
+}
+
+/**
+ * The destinations drawn in the Sankey: the six v0.2 states plus, when the document carries it,
+ * the Phase 6 self-employed margin `hours_cut_self` (contracts §20). `laid_off` and
+ * `self_employed_margin_cum` are cumulative counters, not states, and stay in the table only.
+ */
+export function flowDestinations(flows: FlowsSection): Array<FlowDestination | 'hours_cut_self'> {
+  const out: Array<FlowDestination | 'hours_cut_self'> = [...FLOW_DESTINATIONS]
+  if (flows.destinations.hours_cut_self) out.push('hours_cut_self')
+  return out
 }
 
 export const TRACE_LABELS: Record<TraceKey, string> = {
@@ -232,3 +286,31 @@ export const REGULATORY_KIND_LABELS: Record<RegulatoryKind, string> = {
   guidance: 'Guidance',
   localization: 'Data localization',
 }
+
+// ---------- Phase 6 ----------
+
+/** Economy tiles for the embodied series (contracts §20); shown only when the document has them. */
+export const EMBODIED_TILES: Array<{ key: EmbodiedMetric; def: MetricDef }> = [
+  {
+    key: 'embodied_displacement_share',
+    def: {
+      label: 'Embodied displacement',
+      short: 'Embodied',
+      unit: '% of task-hours',
+      polarity: 'magnitude',
+      format: (v) => (v == null || !Number.isFinite(v) ? '—' : `${v.toFixed(1)}%`),
+      axisFormat: (v) => `${Number(v.toFixed(1))}%`,
+    },
+  },
+  {
+    key: 'adjacent_jobs',
+    def: {
+      label: 'Adjacent and hardware jobs',
+      short: 'Adjacent jobs',
+      unit: 'jobs vs baseline (count)',
+      polarity: 'magnitude',
+      format: (v) => fmtCompact(v),
+      axisFormat: (v) => fmtCompact(v),
+    },
+  },
+]
