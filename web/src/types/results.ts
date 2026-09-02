@@ -29,6 +29,12 @@ export interface ResultsMeta {
   run_at: string
   draws: number
   ensemble: 'all' | 'central' | string
+  /** the scenario's display name (API runs) */
+  scenario_name?: string | null
+  /** hash of data/processed at run time */
+  data_version?: string
+  /** written by the static exporter (contracts §18) */
+  static?: boolean
   /** Phase 2: the 8 mechanism-cell ids, e.g. "bessen|acemoglu_low|passthrough_low" */
   cells?: string[]
   /** Phase 2: [10, 25, 50, 75, 90] */
@@ -402,6 +408,8 @@ export interface ScenarioSummary {
   preset?: boolean
   /** saved by a user through POST /api/scenarios */
   user?: boolean
+  /** static mode (contracts §18): the precomputed run's result hash */
+  hash?: string
 }
 
 /** A scenario document (scenarios/schema.json). Levers are a nested plain object. */

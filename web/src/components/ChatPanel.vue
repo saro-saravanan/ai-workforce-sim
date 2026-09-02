@@ -41,9 +41,11 @@ const expanded = ref<Record<string, boolean>>({})
 const hash = computed(() => results.doc?.meta.scenario_hash ?? null)
 /** World has no series block on the server; the U.S. is the reference region. */
 const insightRegion = computed(() => (regionStore.isWorld ? 'US' : regionStore.region))
+/** with a compare run the ranking also covers what this run changed against it (contracts §16) */
+const insightCompare = computed(() => results.docB?.meta.scenario_hash ?? null)
 watch(
-  [hash, insightRegion],
-  async ([h, r]) => {
+  [hash, insightRegion, insightCompare],
+  async ([h, r, c]) => {
     if (!h) {
       insights.value = []
       return
@@ -51,8 +53,9 @@ watch(
     insightsLoading.value = true
     insightsError.value = null
     try {
-      const res = await api.fetchInsights(h, r, 3, results.doc)
-      if (hash.value === h && insightRegion.value === r) insights.value = res.top
+      const res = await api.fetchInsights(h, r, 3, results.doc, c)
+      if (hash.value === h && insightRegion.value === r && insightCompare.value === c)
+        insights.value = res.top
     } catch (e) {
       insightsError.value = (e as Error).message
     } finally {

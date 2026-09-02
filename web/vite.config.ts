@@ -6,6 +6,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // GitHub Pages serves the static demo under /ai-workforce-sim/ (contracts §18)
+  base: process.env.VITE_BASE ?? '/',
   plugins: [vue(), vueDevTools()],
   resolve: {
     alias: {

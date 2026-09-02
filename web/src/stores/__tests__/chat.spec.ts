@@ -6,6 +6,7 @@ import type { ChatResponse } from '@/types/chat'
 type Api = typeof import('@/api/client')
 vi.mock('@/api/client', () => ({
   USE_MOCK: false,
+  USE_STATIC: false,
   fetchChatStatus: vi.fn<Api['fetchChatStatus']>(async () => ({
     available: true,
     model: 'test-model',

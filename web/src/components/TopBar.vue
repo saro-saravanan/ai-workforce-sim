@@ -55,13 +55,19 @@ async function exportMarkdown() {
 async function openHtml() {
   if (!briefHash.value) return
   briefOpen.value = false
-  if (!api.USE_MOCK) {
+  if (!api.USE_MOCK && !api.USE_STATIC) {
     window.open(api.briefUrl(briefHash.value, 'html', briefRegion.value, compareHash.value), '_blank', 'noopener')
     return
   }
-  // mock mode: no server; render the client-side brief into a self-contained page
+  // no server: the exporter's brief when one matches this request (static mode), else the
+  // client-side brief rendered into a self-contained page
   briefBusy.value = true
   try {
+    const file = await api.staticBriefFile(briefHash.value, 'html', briefRegion.value, compareHash.value)
+    if (file) {
+      window.open(file, '_blank', 'noopener')
+      return
+    }
     const html = briefHtml(await briefMarkdown(), briefTitle())
     const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }))
     window.open(url, '_blank')
@@ -174,6 +180,15 @@ function onRegion(e: Event) {
       <span v-if="results.loading" class="muted">Running…</span>
       <span v-if="results.isMock" class="badge fixture" title="VITE_USE_MOCK=1: synthetic data"
         >mock data</span
+      >
+      <a
+        v-else-if="results.isStatic"
+        class="badge static"
+        :href="api.REPO_URL"
+        target="_blank"
+        rel="noopener"
+        title="VITE_STATIC=1: precomputed runs from the static export, no server. Opens the repository."
+        >static demo · precomputed runs</a
       >
       <div class="spacer"></div>
       <ThemeToggle />
@@ -299,6 +314,16 @@ function onRegion(e: Event) {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+.badge.static {
+  background: var(--surface-2);
+  color: var(--ink-2);
+  border: 1px solid var(--border);
+  text-decoration: none;
+}
+.badge.static:hover {
+  color: var(--ink);
+  text-decoration: underline;
 }
 .tab sup {
   font-size: 10px;

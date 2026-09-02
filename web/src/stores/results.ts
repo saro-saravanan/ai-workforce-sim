@@ -95,6 +95,8 @@ export const useResultsStore = defineStore('results', () => {
   const flows = computed(() => doc.value?.flows ?? null)
   const isFixture = computed(() => doc.value?.meta.data_flags.occ_state === 'FIXTURE')
   const isMock = api.USE_MOCK
+  /** static demo (contracts §18): precomputed runs, no engine and no chat */
+  const isStatic = api.USE_STATIC
   const scenarioName = computed(
     () => scenarios.value.find((s) => s.id === scenarioId.value)?.name ?? scenarioId.value,
   )
@@ -366,6 +368,7 @@ export const useResultsStore = defineStore('results', () => {
     flows,
     isFixture,
     isMock,
+    isStatic,
     national,
     confidenceAt,
     loadScenarios,

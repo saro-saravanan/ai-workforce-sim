@@ -8,6 +8,7 @@ export const VIEWS = [
   { name: 'economy', path: '/economy', label: 'Economy', phase: 1 },
   { name: 'supply', path: '/supply', label: 'AI Supply', phase: 3 },
   { name: 'compare', path: '/compare', label: 'Compare', phase: 2 },
+  { name: 'about', path: '/about', label: 'About', phase: 5 },
 ] as const
 
 const router = createRouter({
@@ -25,6 +26,7 @@ const router = createRouter({
     { path: '/cohorts', name: 'cohorts', component: () => import('@/views/CohortView.vue') },
     { path: '/compare', name: 'compare', component: () => import('@/views/CompareView.vue') },
     { path: '/supply', name: 'supply', component: () => import('@/views/SupplyView.vue') },
+    { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/map' },
   ],
 })

@@ -74,7 +74,7 @@ function onKey(e: KeyboardEvent) {
   } else if (e.key === ' ' && tag !== 'BUTTON' && t?.getAttribute('role') !== 'button') {
     e.preventDefault()
     scrubber.toggle()
-  } else if (/^[1-7]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
+  } else if (/^[1-8]$/.test(e.key) && !e.metaKey && !e.ctrlKey && !e.altKey) {
     const v = VIEWS[Number(e.key) - 1]
     if (v) router.push({ path: v.path, query: router.currentRoute.value.query })
   }

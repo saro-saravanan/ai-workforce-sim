@@ -37,3 +37,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Static export (contracts §18), produced by CI: python -m aiwsim_api.export_static
+/public/static/

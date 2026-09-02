@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useResultsStore } from '@/stores/results'
+import { STATIC_RUN_MESSAGE, STATIC_SAVE_MESSAGE } from '@/api/client'
 import type { LeverDef, ScenarioDocument } from '@/types/results'
 import {
   LEVER_GROUP_LABELS,
@@ -84,7 +85,7 @@ function child() {
 }
 async function run() {
   const c = child()
-  if (!c) return
+  if (!c || results.isStatic) return
   busy.value = true
   await results.runChild(c)
   busy.value = false
@@ -92,7 +93,7 @@ async function run() {
 }
 async function save() {
   const c = child()
-  if (!c) return
+  if (!c || results.isStatic) return
   busy.value = true
   await results.saveScenario(c)
   busy.value = false
@@ -202,12 +203,27 @@ function onKey(e: KeyboardEvent) {
         </div>
 
         <div class="actions">
-          <button class="btn primary" :disabled="busy || !results.scenarioDoc" @click="run">
+          <button
+            class="btn primary"
+            :disabled="busy || !results.scenarioDoc || results.isStatic"
+            :title="results.isStatic ? STATIC_RUN_MESSAGE : undefined"
+            @click="run"
+          >
             {{ busy ? 'Running…' : 'Run' }}
           </button>
-          <button class="btn" :disabled="busy || !results.scenarioDoc || !diff.length" @click="save">Save</button>
+          <button
+            class="btn"
+            :disabled="busy || !results.scenarioDoc || !diff.length || results.isStatic"
+            :title="results.isStatic ? STATIC_SAVE_MESSAGE : undefined"
+            @click="save"
+          >
+            Save
+          </button>
           <button class="btn" :disabled="busy" @click="reset">Reset</button>
           <span v-if="results.isMock" class="muted small">mock: Run re-uses the parent's results</span>
+          <p v-else-if="results.isStatic" class="muted small static-note" role="note">
+            {{ STATIC_RUN_MESSAGE }}
+          </p>
         </div>
       </aside>
     </div>
@@ -397,6 +413,10 @@ function onKey(e: KeyboardEvent) {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
+}
+.static-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
 }
 .btn:disabled {
   opacity: 0.5;
