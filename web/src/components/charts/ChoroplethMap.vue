@@ -169,7 +169,7 @@ function onFocus(s: { fips: string; name: string; cx: number; cy: number }) {
   position: relative;
   width: 100%;
   height: 100%;
-  min-height: 360px;
+  min-height: 240px;
 }
 svg {
   display: block;

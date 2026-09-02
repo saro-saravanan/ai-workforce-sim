@@ -6,7 +6,7 @@ export const VIEWS = [
   { name: 'occupations', path: '/occupations', label: 'Occupations', phase: 1 },
   { name: 'cohorts', path: '/cohorts', label: 'Cohorts', phase: 2 },
   { name: 'economy', path: '/economy', label: 'Economy', phase: 1 },
-  { name: 'supply', path: '/supply', label: 'AI Supply', phase: 2 },
+  { name: 'supply', path: '/supply', label: 'AI Supply', phase: 3 },
   { name: 'compare', path: '/compare', label: 'Compare', phase: 2 },
 ] as const
 
@@ -21,7 +21,10 @@ const router = createRouter({
       component: () => import('@/views/OccupationsView.vue'),
     },
     { path: '/economy', name: 'economy', component: () => import('@/views/DashboardView.vue') },
-    ...(['flows', 'cohorts', 'supply', 'compare'] as const).map((name) => ({
+    { path: '/flows', name: 'flows', component: () => import('@/views/FlowsView.vue') },
+    { path: '/cohorts', name: 'cohorts', component: () => import('@/views/CohortView.vue') },
+    { path: '/compare', name: 'compare', component: () => import('@/views/CompareView.vue') },
+    ...(['supply'] as const).map((name) => ({
       path: `/${name}`,
       name,
       component: () => import('@/views/PlaceholderView.vue'),

@@ -4,6 +4,8 @@ import { RouterView, useRouter } from 'vue-router'
 import TopBar from '@/components/TopBar.vue'
 import ExplainPanel from '@/components/ExplainPanel.vue'
 import TimeScrubber from '@/components/TimeScrubber.vue'
+import LeversDrawer from '@/components/LeversDrawer.vue'
+import ToastStack from '@/components/ToastStack.vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
 import { useThemeStore } from '@/stores/theme'
@@ -25,6 +27,7 @@ const explainOpen = ref(
     }
   })(),
 )
+const leversOpen = ref(false)
 function toggleExplain() {
   explainOpen.value = !explainOpen.value
   try {
@@ -74,7 +77,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="shell">
-    <TopBar :explain-open="explainOpen" @toggle-explain="toggleExplain" />
+    <TopBar
+      :explain-open="explainOpen"
+      :levers-open="leversOpen"
+      @toggle-explain="toggleExplain"
+      @toggle-levers="leversOpen = !leversOpen"
+    />
     <div class="body">
       <main class="main" :class="{ stale: results.loading && results.doc }">
         <p v-if="results.error" class="error" role="alert">{{ results.error }}</p>
@@ -84,6 +92,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <ExplainPanel :open="explainOpen" @toggle="toggleExplain" />
     </div>
     <TimeScrubber />
+    <LeversDrawer :open="leversOpen" @close="leversOpen = false" />
+    <ToastStack />
   </div>
 </template>
 

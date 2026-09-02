@@ -1,7 +1,19 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import type { StateMetric } from '@/types/results'
+import type { CohortFacet, StateMetric } from '@/types/results'
 import { STATE_METRIC_KEYS } from '@/lib/metrics'
+
+/** URL value ↔ cohort facet key (`cohort=age|education|income`) */
+export const COHORT_URL: Record<CohortFacet, string> = {
+  age: 'age',
+  education: 'education',
+  income_decile: 'income',
+}
+const COHORT_FROM_URL: Record<string, CohortFacet> = {
+  age: 'age',
+  education: 'education',
+  income: 'income_decile',
+}
 
 export const PLAYBACK_QPS = 4 // quarters per second
 export const PLAYBACK_MS = 1000 / PLAYBACK_QPS
@@ -19,6 +31,9 @@ export const useScrubberStore = defineStore('scrubber', () => {
   const playing = ref(false)
   const metric = ref<StateMetric>('employment_pct_vs_baseline')
   const state = ref<string | null>(null)
+  /** Phase 2: cohort facet (`cohort=`) and structural mechanism cell (`cell=`) */
+  const cohort = ref<CohortFacet>('age')
+  const cell = ref<string | null>(null)
   let timer: ReturnType<typeof setInterval> | null = null
 
   const maxQ = computed(() => Math.max(0, length.value - 1))
@@ -31,7 +46,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
 
   function set(i: number) {
     if (!Number.isFinite(i)) return
-    q.value = Math.min(maxQ.value, Math.max(0, Math.round(i)))
+    // before the results document is loaded (length 0) keep the requested quarter; setLength clamps it
+    q.value = length.value > 0 ? Math.min(maxQ.value, Math.max(0, Math.round(i))) : Math.max(0, Math.round(i))
   }
 
   function step(delta: number) {
@@ -70,12 +86,23 @@ export const useScrubberStore = defineStore('scrubber', () => {
     state.value = fips
   }
 
+  function setCohort(c: string) {
+    if (c in COHORT_URL) cohort.value = c as CohortFacet
+    else if (c in COHORT_FROM_URL) cohort.value = COHORT_FROM_URL[c]!
+  }
+
+  function selectCell(id: string | null) {
+    cell.value = id
+  }
+
   /** URL query fragment carried by the scrubber store. Omits defaults. */
   function toQuery(): UrlQuery {
     return {
       q: q.value > 0 ? String(q.value) : undefined,
       metric: metric.value !== 'employment_pct_vs_baseline' ? metric.value : undefined,
       state: state.value ?? undefined,
+      cohort: cohort.value !== 'age' ? COHORT_URL[cohort.value] : undefined,
+      cell: cell.value ?? undefined,
     }
   }
 
@@ -92,6 +119,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
         ? (query.metric as StateMetric)
         : 'employment_pct_vs_baseline'
     state.value = query.state && /^\d{2}$/.test(query.state) ? query.state : null
+    cohort.value = (query.cohort && COHORT_FROM_URL[query.cohort]) || 'age'
+    cell.value = query.cell && /^[a-z0-9_|-]{1,80}$/.test(query.cell) ? query.cell : null
   }
 
   return {
@@ -100,6 +129,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
     playing,
     metric,
     state,
+    cohort,
+    cell,
     maxQ,
     atEnd,
     setLength,
@@ -110,6 +141,8 @@ export const useScrubberStore = defineStore('scrubber', () => {
     toggle,
     setMetric,
     selectState,
+    setCohort,
+    selectCell,
     toQuery,
     applyQuery,
   }

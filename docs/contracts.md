@@ -162,4 +162,4 @@ Phase 2 build: deciles derived from OEWS percentiles per occupation (lognormal f
 
 ## 10. Web state additions
 
-`compare=HASH_B` in the URL selects the comparison scenario; `cell=` selects a mechanism cell in the dashboard's structural view; `cohort=age|education|income` selects the cohort facet.
+`compare=` in the URL selects the comparison scenario by scenario id (preferred, shareable) or by result hash; `cell=` selects a mechanism cell in the dashboard's structural view; `cohort=age|education|income` selects the cohort facet.

@@ -3,7 +3,7 @@
   "source": "national employed age distribution (approximate CPS 2024, E) tilted by O*NET Job Zone (occupations_onet_basic_skills.csv, GPTs-are-GPTs mirror)",
   "source_url": "https://cps.ipums.org/cps/",
   "license": "n/a (fixture); O*NET data CC BY 4.0 (https://www.onetcenter.org/database.html)",
-  "pulled_at": "2026-09-01",
+  "pulled_at": "2026-09-02",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
   "sha256": "ab87d617a77c9f9a670c4d54c2f3f740e399ef5cbac1211740cb9ba2030bfcb2",
   "transformations": [
@@ -13,7 +13,7 @@
   ],
   "status": "FIXTURE",
   "notes": "FIXTURE: the national vector is approximate (transcribed, not fetched) and the tilt is a guess. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0418, 'jz2': 0.3449, 'jz3': 0.2393, 'jz4': 0.2052, 'jz5': 0.1688}. Employment-weighted age shares: {'16-24': 0.1264, '25-44': 0.4393, '45-54': 0.1997, '55+': 0.2346}.",
-  "built_at": "2026-09-01T23:52:10+00:00",
+  "built_at": "2026-09-02T00:09:32+00:00",
   "output": "data/processed/cohorts/occ_age.csv",
   "extra": {
     "job_zone_unmatched": {

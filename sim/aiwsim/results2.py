@@ -193,9 +193,14 @@ def trace(o: BatchOutput, quarters: list[str]) -> dict[str, Any]:
     return out
 
 
+META_PATHS = {"id", "name", "description", "parent", "created", "author", "preset", "user", "schema_version", "seed", "draws"}
+
+
 def annotate_diff(d: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out = []
     for e in d:
+        if e["path"].split(".")[0] in META_PATHS:
+            continue
         mech = next((v for k, v in MECHANISM_OF.items() if e["path"].startswith(k)), "")
         out.append({**e, "mechanism": mech})
     return out

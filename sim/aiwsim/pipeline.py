@@ -83,8 +83,8 @@ def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, e
                                "total": round(time.perf_counter() - t0, 2), "workers": workers}
     raw = {"employment_pct": out.employment_pct, "gdp_pct": out.gdp_pct, "real_wage_pct": out.real_wage_pct,
            "wage_share_pp": out.wage_share_pp, "cell_ids": np.array(out.cell_ids),
-           "state_emp_pct": _state_emp(inp, out), "occ_D_2030": out.D_[:, :, out.quarters.index("2030Q4")] if "2030Q4" in out.quarters else out.D_[:, :, -1],
-           "occ_D_2040": out.D_[:, :, -1]}
+           "state_emp_pct": _state_emp(inp, out),
+           "occ_D_p50": (np.median(out.D_[1:], axis=0) if out.D_.shape[0] > 1 else out.D_[0]).astype(np.float32)}
     return doc, raw
 
 
@@ -122,8 +122,8 @@ def paired_compare(a: dict[str, np.ndarray], b: dict[str, np.ndarray], quarters:
               "wage_share_pp_vs_baseline": pc(b["wage_share_pp"][:n] - a["wage_share_pp"][:n])}
     ds = 100 * (b["state_emp_pct"][:n] - a["state_emp_pct"][:n])
     st = [{"fips": f, "employment_pct_vs_baseline": {"p50": [round(float(v), 4) for v in np.median(ds[:, g, :], axis=0)]}} for g, f in enumerate(states)]
-    d30 = np.median(b["occ_D_2030"][:n] - a["occ_D_2030"][:n], axis=0); d40 = np.median(b["occ_D_2040"][:n] - a["occ_D_2040"][:n], axis=0)
-    occ = [{"occ_code": c, "displacement_delta_2030Q4": round(float(d30[i]), 4), "displacement_delta_2040Q4": round(float(d40[i]), 4)} for i, c in enumerate(occ_codes)]
+    dD = b["occ_D_p50"] - a["occ_D_p50"]                                                      # [n_occ, n_q], delta of medians
+    occ = [{"occ_code": c, "displacement": {"p50": [round(float(v), 4) for v in dD[i]]}} for i, c in enumerate(occ_codes)]
     return {"series": series, "states": st, "occupations": occ, "paired_draws": int(n)}
 
 

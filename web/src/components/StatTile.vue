@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Series } from '@/types/results'
+import type { Confidence, Series } from '@/types/results'
 import SparkLine from '@/components/charts/SparkLine.vue'
+import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
 
 const props = defineProps<{
   label: string
@@ -12,6 +13,9 @@ const props = defineProps<{
   format: (v: number | null | undefined) => string
   zero: boolean
   expanded: boolean
+  /** confidence classification (Phase 2) and the reference quarter it is reported at */
+  confidence?: Confidence
+  confidenceAt?: string
 }>()
 defineEmits<{ toggle: [] }>()
 
@@ -24,27 +28,34 @@ const band = computed(() => {
 </script>
 
 <template>
-  <button
-    class="tile card"
-    :class="{ expanded }"
-    :aria-expanded="expanded"
-    @click="$emit('toggle')"
-  >
-    <div class="head">
-      <span class="label">{{ label }}</span>
-      <span class="chev" aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
-    </div>
-    <div class="value">
-      {{ format(value) }}
-      <span v-if="band" class="band mono">{{ band }}</span>
-    </div>
-    <div class="unit">{{ unit }}</div>
-    <SparkLine :series="series" :q="q" :hue="hue" :zero="zero" />
-  </button>
+  <div class="tile card" :class="{ expanded }">
+    <button class="tile-btn" :aria-expanded="expanded" @click="$emit('toggle')">
+      <div class="head">
+        <span class="label">{{ label }}</span>
+        <span class="chev" aria-hidden="true">{{ expanded ? '▾' : '▸' }}</span>
+      </div>
+      <div class="value">
+        {{ format(value) }}
+        <span v-if="band" class="band mono">{{ band }}</span>
+      </div>
+      <div class="unit">{{ unit }}</div>
+      <SparkLine :series="series" :q="q" :hue="hue" :zero="zero" />
+    </button>
+    <ConfidenceGlyph
+      v-if="confidenceAt"
+      class="conf"
+      :confidence="confidence"
+      :at="confidenceAt"
+    />
+  </div>
 </template>
 
 <style scoped>
 .tile {
+  position: relative;
+  transition: border-color var(--t);
+}
+.tile-btn {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -52,7 +63,9 @@ const band = computed(() => {
   text-align: left;
   cursor: pointer;
   width: 100%;
-  transition: border-color var(--t);
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius);
 }
 .tile:hover,
 .tile.expanded {
@@ -88,5 +101,10 @@ const band = computed(() => {
   font-size: 14px;
   color: var(--muted);
   margin-bottom: 4px;
+}
+.conf {
+  position: absolute;
+  right: 34px;
+  top: 10px;
 }
 </style>

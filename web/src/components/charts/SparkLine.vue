@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { scaleLinear, line as d3line, area as d3area, extent } from 'd3'
+import { scaleLinear, extent } from 'd3'
 import type { Series } from '@/types/results'
 import { useSize } from '@/composables/useSize'
+import {
+  BAND_INNER_OPACITY,
+  BAND_OUTER_OPACITY,
+  bandPath,
+  hasCentral,
+  hasInnerBand,
+  hasOuterBand,
+  linePath,
+  seriesExtentValues,
+} from '@/lib/bands'
 
 const props = defineProps<{
   series: Series
@@ -24,31 +34,26 @@ const x = computed(() =>
     .range([pad.left, width.value - pad.right]),
 )
 const y = computed(() => {
-  const all = [...props.series.p50, ...(props.series.p10 ?? []), ...(props.series.p90 ?? [])]
+  const all = seriesExtentValues(props.series)
   if (props.zero) all.push(0)
   const [lo, hi] = extent(all) as [number, number]
   return scaleLinear()
     .domain([lo === hi ? lo - 1 : lo, lo === hi ? hi + 1 : hi])
     .range([height.value - pad.bottom, pad.top])
 })
-const hasBand = computed(() => !!(props.series.p10 && props.series.p90))
-const median = computed(
-  () =>
-    d3line<number>()
-      .x((_, i) => x.value(i))
-      .y((d) => y.value(d))(props.series.p50) ?? '',
+const outer = computed(() => hasOuterBand(props.series))
+const inner = computed(() => hasInnerBand(props.series))
+const central = computed(() => hasCentral(props.series))
+const median = computed(() => linePath(props.series.p50, x.value, y.value))
+const centralPath = computed(() =>
+  central.value ? linePath(props.series.central ?? [], x.value, y.value) : '',
 )
-const band = computed(() => {
-  if (!hasBand.value) return ''
-  const p10 = props.series.p10 ?? []
-  const p90 = props.series.p90 ?? []
-  return (
-    d3area<number>()
-      .x((_, i) => x.value(i))
-      .y0((_, i) => y.value(p10[i] ?? 0))
-      .y1((_, i) => y.value(p90[i] ?? 0))(props.series.p50) ?? ''
-  )
-})
+const outerPath = computed(() =>
+  outer.value ? bandPath(props.series.p10 ?? [], props.series.p90 ?? [], x.value, y.value) : '',
+)
+const innerPath = computed(() =>
+  inner.value ? bandPath(props.series.p25 ?? [], props.series.p75 ?? [], x.value, y.value) : '',
+)
 const marker = computed(() => ({
   x: x.value(props.q),
   y: y.value(props.series.p50[props.q] ?? 0),
@@ -58,8 +63,18 @@ const marker = computed(() => ({
 <template>
   <div ref="host" class="spark-host">
     <svg :width="width" :height="height" aria-hidden="true">
-      <path v-if="hasBand" :d="band" :fill="hue" fill-opacity="0.14" />
+      <path v-if="outer" :d="outerPath" :fill="hue" :fill-opacity="BAND_OUTER_OPACITY" />
+      <path v-if="inner" :d="innerPath" :fill="hue" :fill-opacity="BAND_INNER_OPACITY" />
       <line v-if="zero" class="zero" :x1="pad.left" :x2="width - pad.right" :y1="y(0)" :y2="y(0)" />
+      <path
+        v-if="central"
+        :d="centralPath"
+        fill="none"
+        :stroke="hue"
+        stroke-width="1"
+        stroke-dasharray="3 3"
+        stroke-opacity="0.9"
+      />
       <path
         :d="median"
         fill="none"

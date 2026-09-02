@@ -236,6 +236,7 @@ svg .axis-title {
   font-size: 14px;
   min-width: 160px;
   max-width: 280px;
+  width: max-content;
 }
 .tooltip .tt-title {
   font-weight: 600;

@@ -1,0 +1,206 @@
+[
+ {
+  "schema_version": "0.2",
+  "id": "baseline",
+  "name": "Consensus central",
+  "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
+  "parent": null,
+  "seed": 42,
+  "draws": 200,
+  "horizon": {
+   "start": "2024Q1",
+   "end": "2040Q4"
+  },
+  "levers": {
+   "capability": {
+    "doubling_months": 6,
+    "doubling_drift_per_year": 0,
+    "feedback_from_revenue": false,
+    "robotics_doubling_months": 24,
+    "ever_automatable_scale": 1,
+    "domain_transfer": {
+     "other_cognitive": 0.7,
+     "interpersonal": 0.5
+    },
+    "clock_saturation_doublings": 20
+   },
+   "cost": {
+    "price_decline_per_year": 10,
+    "open_weights_multiplier": 0.25,
+    "cost_floor_decline_per_year": 2,
+    "compute_capacity_constraint": true,
+    "capacity_price_exponent": 1,
+    "token_growth_per_doubling": 0.7
+   },
+   "regulation": {
+    "EU": {
+     "ai_act": "baseline",
+     "data_localization": "none"
+    },
+    "US": {
+     "regime": "state_patchwork"
+    },
+    "CN": {
+     "licensing": "baseline"
+    },
+    "export_controls": "2026_status_quo"
+   },
+   "adoption": {
+    "sector_friction_scale": 1,
+    "small_firm_friction_scale": 1,
+    "intensity_ceiling": 0.7,
+    "spillover_lag_quarters": 4,
+    "entrant_scale": 1
+   },
+   "labor": {
+    "reinstatement_ratio": 0.4,
+    "demand_elasticity_scale": 1,
+    "layoff_friction": 0.25,
+    "price_pass_through": 0.7,
+    "occupational_attrition_pct_per_quarter": 2.5,
+    "wage_pass_through": 0.3
+   },
+   "policy": {
+    "US": {
+     "retraining_subsidy_pct_wage": 0,
+     "wage_insurance_replacement": 0,
+     "wage_insurance_years": 0,
+     "ubi_monthly_usd": 0,
+     "ai_tax_pct_of_ai_spend": 0,
+     "work_week_hours": 40,
+     "immigration_scale": 1,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "ai_tax",
+      "work_week": "deficit"
+     }
+    }
+   },
+   "baseline": {
+    "bls_ai_adjustment": "restore_trend"
+   }
+  },
+  "shocks": [],
+  "overrides": {},
+  "ensemble": {
+   "mechanisms": "all",
+   "shapley": false
+  }
+ },
+ {
+  "schema_version": "0.2",
+  "id": "eu-delay-deepseek-2027",
+  "name": "EU AI Act delayed 2y + DeepSeek open frontier 2027",
+  "description": "Example what-if from the brief. Diff vs baseline: regulation.EU.ai_act, one shock.",
+  "parent": "baseline",
+  "levers": {
+   "regulation": {
+    "EU": {
+     "ai_act": "delayed_2y"
+    }
+   }
+  },
+  "shocks": [
+   {
+    "id": "deepseek-open-2027",
+    "type": "open_weights_release",
+    "actor": "deepseek",
+    "at": "2027Q1",
+    "frontier_lag_quarters": 0
+   }
+  ],
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
+  "schema_version": "0.2",
+  "id": "preset-acemoglu-2024",
+  "name": "Preset: Acemoglu 2024",
+  "description": "Report-replication preset (spec §8.4). Only directly exposed (E1) tasks within the decade, no reinstatement, no demand feedback, low intensity; targets TFP no more than +0.66% and GDP about +1% over ten years.",
+  "parent": "baseline",
+  "preset": true,
+  "levers": {
+   "capability": {
+    "ever_automatable_scale": 1
+   },
+   "adoption": {
+    "intensity_ceiling": 0.4
+   },
+   "labor": {
+    "reinstatement_ratio": 0,
+    "price_pass_through": 0.5
+   }
+  },
+  "overrides": {
+   "P.21": {
+    "central": 0
+   },
+   "P.22": {
+    "central": 0
+   },
+   "P.87": {
+    "central": 0
+   },
+   "P.40": {
+    "central": 0.1
+   }
+  },
+  "ensemble": {
+   "mechanisms": "central"
+  }
+ },
+ {
+  "schema_version": "0.2",
+  "id": "preset-goldman-2023",
+  "name": "Preset: Goldman Sachs 2023",
+  "description": "Report-replication preset (spec §8.4). Full exposure feasible, historical reinstatement, unit-elastic demand with full pass-through; targets GDP about +7% over ten years.",
+  "parent": "baseline",
+  "preset": true,
+  "levers": {
+   "capability": {
+    "ever_automatable_scale": 1.3,
+    "domain_transfer": {
+     "other_cognitive": 1,
+     "interpersonal": 0.8
+    }
+   },
+   "adoption": {
+    "intensity_ceiling": 0.9
+   },
+   "labor": {
+    "reinstatement_ratio": 0.6,
+    "demand_elasticity_scale": 1.25,
+    "price_pass_through": 1
+   }
+  },
+  "ensemble": {
+   "mechanisms": "central"
+  }
+ },
+ {
+  "schema_version": "0.2",
+  "id": "preset-imf-2024",
+  "name": "Preset: IMF 2024",
+  "description": "Report-replication preset (spec §8.4). Exposure with a complementarity split: about 60% of advanced-economy employment exposed, half of it complementary (augmentation-leaning). Targets the IMF's qualitative result: wide exposure, roughly half augmented, rising inequality.",
+  "parent": "baseline",
+  "preset": true,
+  "levers": {
+   "capability": {
+    "ever_automatable_scale": 1.1
+   },
+   "labor": {
+    "reinstatement_ratio": 0.4
+   }
+  },
+  "overrides": {
+   "P.16": {
+    "central": 0.35
+   }
+  },
+  "ensemble": {
+   "mechanisms": "central"
+  }
+ }
+]

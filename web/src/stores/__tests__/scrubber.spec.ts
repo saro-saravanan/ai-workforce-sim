@@ -22,6 +22,17 @@ describe('useScrubberStore', () => {
     expect(s.q).toBe(3)
   })
 
+  it('keeps a quarter requested before the length is known, then clamps it', () => {
+    const s = useScrubberStore()
+    s.applyQuery({ q: '40' })
+    expect(s.q).toBe(40)
+    s.setLength(68)
+    expect(s.q).toBe(40)
+    s.applyQuery({ q: '90' })
+    s.setLength(68)
+    expect(s.q).toBe(67)
+  })
+
   it('plays at 4 quarters per second and stops at the end', () => {
     const s = useScrubberStore()
     s.setLength(6)
@@ -59,11 +70,25 @@ describe('useScrubberStore', () => {
   it('serialises to a URL query, omitting defaults', () => {
     const s = useScrubberStore()
     s.setLength(68)
-    expect(s.toQuery()).toEqual({ q: undefined, metric: undefined, state: undefined })
+    expect(s.toQuery()).toEqual({
+      q: undefined,
+      metric: undefined,
+      state: undefined,
+      cohort: undefined,
+      cell: undefined,
+    })
     s.set(22)
     s.setMetric('real_wage_pct_vs_baseline')
     s.selectState('39')
-    expect(s.toQuery()).toEqual({ q: '22', metric: 'real_wage_pct_vs_baseline', state: '39' })
+    s.setCohort('income')
+    s.selectCell('bessen|historical|passthrough_mid')
+    expect(s.toQuery()).toEqual({
+      q: '22',
+      metric: 'real_wage_pct_vs_baseline',
+      state: '39',
+      cohort: 'income',
+      cell: 'bessen|historical|passthrough_mid',
+    })
   })
 
   it('applies a URL query and ignores invalid values', () => {
@@ -79,6 +104,12 @@ describe('useScrubberStore', () => {
     expect(s.state).toBeNull()
     s.applyQuery({})
     expect(s.q).toBe(0)
+    s.applyQuery({ cohort: 'education', cell: 'x|y|z' })
+    expect(s.cohort).toBe('education')
+    expect(s.cell).toBe('x|y|z')
+    s.applyQuery({ cohort: 'bogus', cell: 'bad value!' })
+    expect(s.cohort).toBe('age')
+    expect(s.cell).toBeNull()
   })
 
   it('round-trips through the query', () => {

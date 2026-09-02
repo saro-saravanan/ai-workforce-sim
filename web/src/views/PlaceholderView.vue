@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { VIEWS } from '@/router'
 
 const props = defineProps<{ view: string }>()
-const label = computed(() => VIEWS.find((v) => v.name === props.view)?.label ?? props.view)
+const def = computed(() => VIEWS.find((v) => v.name === props.view))
+const label = computed(() => def.value?.label ?? props.view)
+const phase = computed(() => def.value?.phase ?? 2)
 const blurb: Record<string, string> = {
   flows: 'Labor flow Sankey: where displaced workers went, cumulative to the scrubber quarter.',
   cohorts: 'Outcomes by age, education and income decile, with cross-filtering.',
@@ -16,12 +18,12 @@ const blurb: Record<string, string> = {
   <section class="view">
     <div class="view-header">
       <h2>{{ label }}</h2>
-      <span class="badge phase">Phase 2</span>
+      <span class="badge phase">Phase {{ phase }}</span>
     </div>
     <div class="card empty">
       <p>{{ blurb[view] }}</p>
       <p class="muted">
-        This view is scoped for Phase 2; the route exists so navigation matches the wireframe. The
+        This view is scoped for Phase {{ phase }}; the route exists so navigation matches the wireframe. The
         scrubber, scenario and URL state already apply here.
       </p>
     </div>

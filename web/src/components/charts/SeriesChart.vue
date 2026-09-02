@@ -1,11 +1,32 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { scaleLinear, line as d3line, area as d3area, extent } from 'd3'
+import { scaleLinear, extent } from 'd3'
 import type { Series } from '@/types/results'
 import { useSize } from '@/composables/useSize'
-import { useTooltip } from '@/composables/useTooltip'
+import { useTooltip, type TooltipRow } from '@/composables/useTooltip'
 import { quarterLabel, quarterYear } from '@/lib/format'
+import {
+  BAND_INNER_OPACITY,
+  BAND_OUTER_OPACITY,
+  bandPath,
+  bandRows,
+  hasCentral,
+  hasInnerBand,
+  hasOuterBand,
+  linePath,
+  seriesExtentValues,
+} from '@/lib/bands'
 import ChartTooltip from '@/components/ChartTooltip.vue'
+
+/** A thin comparison line drawn over the series (e.g. a mechanism cell's median). */
+export interface Overlay {
+  id: string
+  label: string
+  values: number[]
+  /** emphasized overlays are drawn in `color` at 2px; the rest are muted hairlines */
+  emphasized?: boolean
+  color?: string
+}
 
 const props = defineProps<{
   series: Series
@@ -16,11 +37,15 @@ const props = defineProps<{
   format: (v: number) => string
   axisFormat: (v: number) => string
   zero?: boolean
+  overlays?: Overlay[]
+  /** shared y-domain (compare view keeps both panels on one scale) */
+  yDomain?: [number, number]
+  height?: number
 }>()
-const emit = defineEmits<{ scrub: [q: number] }>()
+const emit = defineEmits<{ scrub: [q: number]; domain: [d: [number, number]] }>()
 
 const host = ref<HTMLElement | null>(null)
-const { width, height } = useSize(host, { width: 800, height: 300 })
+const { width, height } = useSize(host, { width: 800, height: props.height ?? 300 })
 const { tip, show, hide } = useTooltip()
 const m = { top: 16, right: 20, bottom: 40, left: 64 }
 const iw = computed(() => Math.max(100, width.value - m.left - m.right))
@@ -32,34 +57,37 @@ const x = computed(() =>
     .domain([0, Math.max(1, n.value - 1)])
     .range([0, iw.value]),
 )
-const y = computed(() => {
-  const all = [...props.series.p50, ...(props.series.p10 ?? []), ...(props.series.p90 ?? [])]
+/** natural domain of this series (+ overlays); exposed so a parent can share it */
+const naturalDomain = computed<[number, number]>(() => {
+  const all = seriesExtentValues(props.series)
+  for (const o of props.overlays ?? []) for (const v of o.values) all.push(v)
   if (props.zero) all.push(0)
   const [lo, hi] = extent(all) as [number, number]
   const padv = (hi - lo || 1) * 0.08
-  return scaleLinear()
-    .domain([lo - padv, hi + padv])
+  return [lo - padv, hi + padv]
+})
+const y = computed(() =>
+  scaleLinear()
+    .domain(props.yDomain ?? naturalDomain.value)
     .nice(5)
-    .range([ih.value, 0])
-})
-const hasBand = computed(() => !!(props.series.p10 && props.series.p90))
-const median = computed(
-  () =>
-    d3line<number>()
-      .x((_, i) => x.value(i))
-      .y((d) => y.value(d))(props.series.p50) ?? '',
+    .range([ih.value, 0]),
 )
-const band = computed(() => {
-  if (!hasBand.value) return ''
-  const p10 = props.series.p10 ?? []
-  const p90 = props.series.p90 ?? []
-  return (
-    d3area<number>()
-      .x((_, i) => x.value(i))
-      .y0((_, i) => y.value(p10[i] ?? 0))
-      .y1((_, i) => y.value(p90[i] ?? 0))(props.series.p50) ?? ''
-  )
-})
+const outer = computed(() => hasOuterBand(props.series))
+const inner = computed(() => hasInnerBand(props.series))
+const central = computed(() => hasCentral(props.series))
+const median = computed(() => linePath(props.series.p50, x.value, y.value))
+const centralPath = computed(() =>
+  central.value ? linePath(props.series.central ?? [], x.value, y.value) : '',
+)
+const outerPath = computed(() =>
+  outer.value ? bandPath(props.series.p10 ?? [], props.series.p90 ?? [], x.value, y.value) : '',
+)
+const innerPath = computed(() =>
+  inner.value ? bandPath(props.series.p25 ?? [], props.series.p75 ?? [], x.value, y.value) : '',
+)
+const overlayPaths = computed(() =>
+  (props.overlays ?? []).map((o) => ({ ...o, d: linePath(o.values, x.value, y.value) })),
+)
 const yTicks = computed(() => y.value.ticks(5))
 /** one tick per even year, labelled with the year at Q1 */
 const xTicks = computed(() =>
@@ -75,17 +103,16 @@ function onMove(e: PointerEvent) {
   const px = e.clientX - (rect?.left ?? 0) - m.left
   const i = Math.round(Math.min(n.value - 1, Math.max(0, x.value.invert(px))))
   hoverQ.value = i
-  const v = props.series.p50[i]
-  const lo = props.series.p10?.[i]
-  const hi = props.series.p90?.[i]
-  const rows = [{ label: props.label, value: v == null ? '—' : props.format(v), swatch: props.hue }]
-  if (lo != null && hi != null)
-    rows.push({
-      label: '10–90 band',
-      value: `${props.format(lo)} to ${props.format(hi)}`,
-      swatch: props.hue,
-    })
-  show(x.value(i) + m.left, y.value(v ?? 0) + m.top, quarterLabel(props.quarters[i]), rows)
+  const rows: TooltipRow[] = bandRows(props.series, i, props.label, props.format, props.hue)
+  for (const o of props.overlays ?? [])
+    if (o.emphasized && o.values[i] != null)
+      rows.push({ label: o.label, value: props.format(o.values[i]!), swatch: o.color })
+  show(
+    x.value(i) + m.left,
+    y.value(props.series.p50[i] ?? 0) + m.top,
+    quarterLabel(props.quarters[i]),
+    rows,
+  )
 }
 function onLeave() {
   hoverQ.value = null
@@ -94,10 +121,11 @@ function onLeave() {
 function onClick() {
   if (hoverQ.value != null) emit('scrub', hoverQ.value)
 }
+defineExpose({ naturalDomain })
 </script>
 
 <template>
-  <div ref="host" class="series-host">
+  <div ref="host" class="series-host" :style="{ height: (props.height ?? 300) + 'px' }">
     <svg :width="width" :height="height" role="img" :aria-label="`${label} over time`">
       <g :transform="`translate(${m.left},${m.top})`">
         <g class="grid">
@@ -115,8 +143,29 @@ function onClick() {
             <text :x="x(t.i)" :y="ih + 22" text-anchor="middle">{{ t.year }}</text>
           </g>
         </g>
-        <path v-if="hasBand" :d="band" :fill="hue" fill-opacity="0.14" />
+        <path v-if="outer" :d="outerPath" :fill="hue" :fill-opacity="BAND_OUTER_OPACITY" />
+        <path v-if="inner" :d="innerPath" :fill="hue" :fill-opacity="BAND_INNER_OPACITY" />
         <line v-if="zero" class="zero" x1="0" :x2="iw" :y1="y(0)" :y2="y(0)" />
+        <g class="overlays">
+          <path
+            v-for="o in overlayPaths"
+            :key="o.id"
+            :d="o.d"
+            fill="none"
+            :stroke="o.emphasized ? (o.color ?? 'var(--ink)') : 'var(--muted)'"
+            :stroke-width="o.emphasized ? 2 : 1"
+            :stroke-opacity="o.emphasized ? 1 : 0.7"
+            stroke-linejoin="round"
+          />
+        </g>
+        <path
+          v-if="central"
+          :d="centralPath"
+          fill="none"
+          :stroke="hue"
+          stroke-width="1.2"
+          stroke-dasharray="4 3"
+        />
         <path
           :d="median"
           fill="none"
@@ -158,7 +207,6 @@ function onClick() {
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: 300px;
 }
 svg {
   display: block;

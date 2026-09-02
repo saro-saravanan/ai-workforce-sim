@@ -1,7 +1,18 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { TooltipState } from '@/composables/useTooltip'
 
-defineProps<{ tip: TooltipState; width: number }>()
+const props = defineProps<{ tip: TooltipState; width: number }>()
+
+const W = 250 // nominal tooltip width incl. the 14px cursor offset
+/** Right of the cursor when it fits, else left of it, else pinned inside the host. */
+const pos = computed(() => {
+  const x = props.tip.x
+  const w = props.width
+  if (x + 14 + W <= w) return { left: x + 14 + 'px', right: 'auto' }
+  if (x - 14 - W >= 0) return { left: 'auto', right: w - x + 14 + 'px' }
+  return { left: Math.max(0, w - W) + 'px', right: 'auto' }
+})
 </script>
 
 <template>
@@ -10,8 +21,8 @@ defineProps<{ tip: TooltipState; width: number }>()
     class="tooltip"
     role="status"
     :style="{
-      left: tip.x + 14 + 180 > width ? 'auto' : tip.x + 14 + 'px',
-      right: tip.x + 14 + 180 > width ? width - tip.x + 14 + 'px' : 'auto',
+      left: pos.left,
+      right: pos.right,
       top: Math.max(0, tip.y - 12) + 'px',
     }"
   >

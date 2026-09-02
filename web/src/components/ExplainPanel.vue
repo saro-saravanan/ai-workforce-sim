@@ -1,9 +1,25 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useResultsStore } from '@/stores/results'
+import { useScrubberStore } from '@/stores/scrubber'
+import { HEADLINE_METRICS, type TraceKey } from '@/types/results'
+import { HEADLINE_LABELS, TRACE_LABELS } from '@/lib/metrics'
+import { fmtLeverValue } from '@/lib/levers'
+import { referenceQuarter } from '@/lib/confidence'
+import { quarterLabel } from '@/lib/format'
+import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
 
 const results = useResultsStore()
+const scrubber = useScrubberStore()
 defineProps<{ open: boolean }>()
 defineEmits<{ toggle: [] }>()
+
+const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
+const traceRows = computed(() => {
+  const t = results.trace.employment_pct_vs_baseline?.[refQ.value]
+  if (!t) return []
+  return (Object.keys(TRACE_LABELS) as TraceKey[]).map((k) => ({ k, label: TRACE_LABELS[k], v: t[k] }))
+})
 </script>
 
 <template>
@@ -22,13 +38,40 @@ defineEmits<{ toggle: [] }>()
         <h2>Explain</h2>
         <button class="btn" aria-label="Collapse Explain panel" @click="$emit('toggle')">›</button>
       </div>
-      <p class="muted small">
-        Notes generated from the mechanism trace. Chat and scenario diffs arrive in Phase 2.
-      </p>
+      <p class="muted small">Notes generated from the mechanism trace, no free text from an LLM.</p>
       <ol v-if="results.notes.length" class="notes">
         <li v-for="(n, i) in results.notes" :key="i">{{ n }}</li>
       </ol>
       <p v-else class="muted">No notes for this run.</p>
+
+      <h3 class="sub">Confidence at {{ quarterLabel(refQ) }}</h3>
+      <ul class="conf-list small">
+        <li v-for="m in HEADLINE_METRICS" :key="m">
+          <ConfidenceGlyph :confidence="results.confidenceAt(m, refQ)" :at="refQ" with-label />
+          <span>{{ HEADLINE_LABELS[m] }}</span>
+        </li>
+      </ul>
+
+      <h3 class="sub">Diff vs parent <span class="muted">({{ results.diff.length }})</span></h3>
+      <p v-if="!results.diff.length" class="muted small">No parent, or identical to it.</p>
+      <ul v-else class="diff small">
+        <li v-for="d in results.diff" :key="d.path">
+          <code>{{ d.path.replace(/^levers\./, '') }}</code>
+          <span class="mono">{{ fmtLeverValue(d.from) }} → <strong>{{ fmtLeverValue(d.to) }}</strong></span>
+          <span v-if="d.mechanism" class="muted">{{ d.mechanism }}</span>
+        </li>
+      </ul>
+
+      <template v-if="traceRows.length">
+        <h3 class="sub">Trace, net employment, {{ quarterLabel(refQ) }}</h3>
+        <dl class="meta small">
+          <template v-for="r in traceRows" :key="r.k">
+            <dt>{{ r.label }}</dt>
+            <dd class="mono">{{ r.v }}</dd>
+          </template>
+        </dl>
+      </template>
+      <h3 class="sub">Run</h3>
       <dl v-if="results.meta" class="meta small">
         <dt>Scenario</dt>
         <dd>{{ results.meta.scenario_id }}</dd>
@@ -112,5 +155,35 @@ defineEmits<{ toggle: [] }>()
 }
 .flag {
   display: block;
+}
+.sub {
+  margin: 12px 0 4px;
+  font-size: 14px;
+}
+.conf-list,
+.diff {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.conf-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.diff li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.diff code {
+  font-size: 13px;
+  background: var(--surface-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
 }
 </style>
