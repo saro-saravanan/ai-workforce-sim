@@ -117,6 +117,8 @@ aiwsim data status           # print provenance status per table
 aiwsim validate              # accounting identities, quiet-aggregate, preset tests
 ```
 
+`aiwsim data fetch [--force]` downloads the raw inputs listed in `sim/aiwsim/data/fetch.py` (openai/GPTs-are-GPTs at a pinned commit, Natural Earth at a pinned tag), verifying each SHA-256; `aiwsim data build` fetches whatever is missing unless `--no-fetch` is given. `data/raw/` is never committed.
+
 ## 6. Web state
 
 URL query carries `scenario`, `q` (quarter index), `view`, `metric`, `state`. Pinia store `useScenario` holds the loaded results; `useScrubber` holds the quarter and playback. Theme follows `prefers-color-scheme` with a manual toggle stored in `localStorage`.

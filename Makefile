@@ -10,6 +10,7 @@ setup:
 	cd web && pnpm install
 
 data:
+	uv run aiwsim data fetch
 	uv run aiwsim data build
 
 run:

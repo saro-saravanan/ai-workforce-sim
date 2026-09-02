@@ -10,7 +10,7 @@ An interactive, multi-region simulation of how AI models reshape the workforce a
 
 ```
 make setup        # uv sync (Python 3.12 workspace) and pnpm install
-make data         # build the canonical tables with provenance (aiwsim data build)
+make data         # fetch the pinned raw inputs (checksummed) and build the canonical tables with provenance
 make run          # 200-draw, ten-region baseline → data/cache/baseline.json (~20 s on 4 cores)
 make demo         # API on :8000 and the Vue app on :5173
 make test         # simulation core, API, and web suites

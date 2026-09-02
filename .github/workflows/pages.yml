@@ -20,6 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv sync --all-packages
+      - run: uv run aiwsim data fetch     # pinned, checksummed raw inputs (data/raw is not committed)
       - run: uv run aiwsim data build
       - run: uv run python -m aiwsim_api.export_static --out web/public/static --draws 200
       - uses: actions/upload-artifact@v4

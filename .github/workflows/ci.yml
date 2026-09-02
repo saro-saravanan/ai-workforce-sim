@@ -8,6 +8,7 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv sync --all-packages
       - run: uv run ruff check sim api
+      - run: uv run aiwsim data fetch     # pinned, checksummed raw inputs (data/raw is not committed)
       - run: uv run aiwsim data build
       - run: uv run pytest -q
   web:

@@ -64,7 +64,13 @@ def cmd_calibrate(args: argparse.Namespace) -> int:
 def cmd_data(args: argparse.Namespace) -> int:
     root = find_root()
     from .data import build as data_build
-    if args.action == "build":
+    from .data import fetch as data_fetch
+    if args.action == "fetch":
+        data_fetch.fetch_all(root, force=args.force)
+    elif args.action == "build":
+        if not args.no_fetch and data_fetch.missing(root):
+            print("raw inputs missing or stale; fetching pinned sources (aiwsim data fetch)")
+            data_fetch.fetch_all(root)
         status = data_build.build_all(root)
         for k, v in status.items():
             print(f"  {k:28s} {v}")
@@ -87,7 +93,9 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--ensemble", choices=["all", "central"], default=None); r.add_argument("--workers", type=int, default=None)
     r.add_argument("--no-channels", action="store_true"); r.add_argument("--no-tornado", action="store_true"); r.set_defaults(fn=cmd_run)
     c = sub.add_parser("calibrate"); c.set_defaults(fn=cmd_calibrate)
-    d = sub.add_parser("data"); d.add_argument("action", choices=["build", "status"]); d.set_defaults(fn=cmd_data)
+    d = sub.add_parser("data"); d.add_argument("action", choices=["fetch", "build", "status"])
+    d.add_argument("--force", action="store_true", help="fetch: re-download every raw file"); d.add_argument("--no-fetch", action="store_true", help="build: fail instead of fetching missing raw inputs")
+    d.set_defaults(fn=cmd_data)
     v = sub.add_parser("validate"); v.set_defaults(fn=cmd_validate)
     args = ap.parse_args(argv)
     return int(args.fn(args))

@@ -373,3 +373,12 @@ def test_geo_world_matches_members(built):
         assert set(pr) == {"iso3", "name", "region_id"}
         assert reg[pr["iso3"]] == pr["region_id"]
     assert "ATA" not in reg
+
+
+def test_raw_manifest_matches_local_inputs():
+    """The pinned fetch manifest describes exactly the raw files the shipped tables were built from."""
+    from aiwsim.data.fetch import MANIFEST, missing
+    assert len(MANIFEST) == 13 and len({f.dest for f in MANIFEST}) == 13
+    if not (ROOT / "data" / "raw" / "gpts_are_gpts" / "full_labelset.tsv").exists():
+        pytest.skip("raw inputs not present")
+    assert missing(ROOT) == []
