@@ -52,3 +52,7 @@ When a reference run is supplied, the ranker adds paired-delta findings and thes
 | Insight ranking / brief generation | < 50 ms, deterministic |
 
 Chat requires `ANTHROPIC_API_KEY` on the API server; `GET /api/chat/status` reports availability and the UI degrades to insight cards and briefs when it is absent.
+
+## Screenshots (mock mode)
+
+`docs/screenshots/phase4-ask-insights-{light,dark}.png` (Ask tab with insight cards), `phase4-proposal-{light,dark}.png` (proposal card with diff, Run and Edit), `phase4-export-menu-{light,dark}.png` (brief export).

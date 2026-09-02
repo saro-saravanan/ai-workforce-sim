@@ -13,6 +13,13 @@ import type {
   RegionRow,
   ActorsResponse,
 } from '@/types/results'
+import type {
+  BriefFormat,
+  ChatRequest,
+  ChatResponse,
+  ChatStatus,
+  InsightsResponse,
+} from '@/types/chat'
 import { pairedCompare } from '@/lib/compare'
 import { seriesFor } from '@/lib/world'
 
@@ -252,4 +259,87 @@ export async function fetchActors(doc?: ResultsDocument | null): Promise<ActorsR
     return { actors: [...seen.values()], releases }
   }
   return getJson<ActorsResponse>('/api/actors')
+}
+
+// ---------- Phase 4 endpoints (contracts §15–17) ----------
+
+/** FastAPI puts the reason in `detail`; surface it instead of the bare status line. */
+async function fetchOrDetail(url: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(url, init)
+  if (res.ok) return res
+  let detail = ''
+  try {
+    const body = (await res.json()) as { detail?: unknown }
+    detail = typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail ?? '')
+  } catch {
+    /* not JSON */
+  }
+  throw new Error(detail || `${init?.method ?? 'GET'} ${url} → ${res.status} ${res.statusText}`)
+}
+
+/** GET /api/chat/status → {available, model, reason}. Mock mode answers with canned replies. */
+export async function fetchChatStatus(): Promise<ChatStatus> {
+  if (USE_MOCK) return { available: true, model: 'mock' }
+  return getJson<ChatStatus>('/api/chat/status')
+}
+
+/**
+ * POST /api/chat. The optional `doc` is read only in mock mode, where the canned replies quote
+ * the current results document (lib/mockChat.ts); the server reads its own copy by hash.
+ */
+export async function sendChat(body: ChatRequest, doc?: ResultsDocument | null): Promise<ChatResponse> {
+  if (USE_MOCK) {
+    const { mockChat } = await import('@/lib/mockChat')
+    return mockChat(body, doc ?? null)
+  }
+  const res = await fetchOrDetail('/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  return (await res.json()) as ChatResponse
+}
+
+/** GET /api/insights/{hash}?region=&n= — deterministic, no model call. */
+export async function fetchInsights(
+  hash: string,
+  region = 'US',
+  n = 3,
+  doc?: ResultsDocument | null,
+): Promise<InsightsResponse> {
+  if (USE_MOCK) {
+    const { mockInsights } = await import('@/lib/insights')
+    return mockInsights(doc ?? null, region, n)
+  }
+  const qs = new URLSearchParams({ region, n: String(n) })
+  return getJson<InsightsResponse>(`/api/insights/${encodeURIComponent(hash)}?${qs}`)
+}
+
+/** URL of GET /api/brief/{hash}?format=&region=[&compare=] (contracts §16). */
+export function briefUrl(
+  hash: string,
+  format: BriefFormat = 'md',
+  region = 'US',
+  compareHash?: string | null,
+): string {
+  const qs = new URLSearchParams({ format, region })
+  if (compareHash) qs.set('compare', compareHash)
+  return `/api/brief/${encodeURIComponent(hash)}?${qs}`
+}
+
+/** The Markdown brief as text. In mock mode: built client-side from the documents (lib/insights.ts). */
+export async function fetchBriefMarkdown(
+  hash: string,
+  region = 'US',
+  compareHash?: string | null,
+  doc?: ResultsDocument | null,
+  docB?: ResultsDocument | null,
+): Promise<string> {
+  if (USE_MOCK) {
+    if (!doc) throw new Error('mock: no results document to brief')
+    const { mockBriefMarkdown } = await import('@/lib/insights')
+    return mockBriefMarkdown(doc, region, compareHash ? (docB ?? null) : null)
+  }
+  const res = await fetchOrDetail(briefUrl(hash, 'md', region, compareHash))
+  return res.text()
 }

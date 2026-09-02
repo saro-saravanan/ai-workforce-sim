@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
+import type { ScenarioDocument } from '@/types/results'
 import TopBar from '@/components/TopBar.vue'
 import ExplainPanel from '@/components/ExplainPanel.vue'
 import TimeScrubber from '@/components/TimeScrubber.vue'
@@ -28,6 +29,16 @@ const explainOpen = ref(
   })(),
 )
 const leversOpen = ref(false)
+/** a chat proposal handed to the levers drawer by its Edit button (Phase 4) */
+const leversPreset = shallowRef<ScenarioDocument | null>(null)
+function editProposal(doc: ScenarioDocument) {
+  leversPreset.value = doc
+  leversOpen.value = true
+}
+function closeLevers() {
+  leversOpen.value = false
+  leversPreset.value = null
+}
 function toggleExplain() {
   explainOpen.value = !explainOpen.value
   try {
@@ -89,10 +100,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
         <RouterView v-if="results.doc" />
         <p v-else-if="!results.error" class="muted loading">Loading results…</p>
       </main>
-      <ExplainPanel :open="explainOpen" @toggle="toggleExplain" />
+      <ExplainPanel :open="explainOpen" @toggle="toggleExplain" @edit="editProposal" />
     </div>
     <TimeScrubber />
-    <LeversDrawer :open="leversOpen" @close="leversOpen = false" />
+    <LeversDrawer :open="leversOpen" :preset="leversPreset" @close="closeLevers" />
     <ToastStack />
   </div>
 </template>

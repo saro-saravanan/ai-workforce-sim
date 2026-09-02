@@ -1,18 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
-import { HEADLINE_METRICS, type TraceKey } from '@/types/results'
+import { HEADLINE_METRICS, type ScenarioDocument, type TraceKey } from '@/types/results'
 import { HEADLINE_LABELS, TRACE_LABELS } from '@/lib/metrics'
 import { fmtLeverValue } from '@/lib/levers'
 import { referenceQuarter } from '@/lib/confidence'
 import { quarterLabel } from '@/lib/format'
 import ConfidenceGlyph from '@/components/ConfidenceGlyph.vue'
+import ChatPanel from '@/components/ChatPanel.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
 defineProps<{ open: boolean }>()
-defineEmits<{ toggle: [] }>()
+defineEmits<{ toggle: []; edit: [doc: ScenarioDocument] }>()
+
+/** The panel's mode (contracts §17: Explain · Ask), remembered per browser. */
+type PanelTab = 'explain' | 'ask'
+const TAB_KEY = 'aiwsim.panel'
+const tab = ref<PanelTab>(
+  (() => {
+    try {
+      return localStorage.getItem(TAB_KEY) === 'ask' ? 'ask' : 'explain'
+    } catch {
+      return 'explain'
+    }
+  })(),
+)
+function setTab(t: PanelTab) {
+  tab.value = t
+  try {
+    localStorage.setItem(TAB_KEY, t)
+  } catch {
+    /* ignore */
+  }
+}
 
 const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
 const traceRows = computed(() => {
@@ -23,21 +45,42 @@ const traceRows = computed(() => {
 </script>
 
 <template>
-  <aside class="explain" :class="{ open }" aria-label="Explain">
+  <aside class="explain" :class="{ open, ask: tab === 'ask' }" aria-label="Explain and Ask">
     <button
       v-if="!open"
       class="rail"
-      title="Open Explain"
-      aria-label="Open Explain panel"
+      title="Open the Explain · Ask panel"
+      aria-label="Open the Explain and Ask panel"
       @click="$emit('toggle')"
     >
-      <span class="rail-label">Explain</span>
+      <span class="rail-label">Explain · Ask</span>
     </button>
     <template v-else>
       <div class="head">
-        <h2>Explain</h2>
-        <button class="btn" aria-label="Collapse Explain panel" @click="$emit('toggle')">›</button>
+        <div class="seg" role="tablist" aria-label="Panel mode">
+          <button
+            class="btn"
+            role="tab"
+            :aria-selected="tab === 'explain'"
+            :aria-pressed="tab === 'explain'"
+            @click="setTab('explain')"
+          >
+            Explain
+          </button>
+          <button
+            class="btn"
+            role="tab"
+            :aria-selected="tab === 'ask'"
+            :aria-pressed="tab === 'ask'"
+            @click="setTab('ask')"
+          >
+            Ask
+          </button>
+        </div>
+        <button class="btn" aria-label="Collapse panel" @click="$emit('toggle')">›</button>
       </div>
+      <ChatPanel v-if="tab === 'ask'" @edit="$emit('edit', $event)" />
+      <template v-else>
       <p class="muted small">Notes generated from the mechanism trace, no free text from an LLM.</p>
       <ol v-if="results.notes.length" class="notes">
         <li v-for="(n, i) in results.notes" :key="i">{{ n }}</li>
@@ -88,6 +131,7 @@ const traceRows = computed(() => {
           >
         </dd>
       </dl>
+      </template>
     </template>
   </aside>
 </template>
@@ -107,6 +151,14 @@ const traceRows = computed(() => {
   width: 320px;
   padding: 12px 14px;
   overflow: auto;
+}
+/* the Ask tab scrolls its own transcript and keeps the composer at the bottom */
+.explain.open.ask {
+  width: 380px;
+  overflow: hidden;
+}
+.head .seg .btn {
+  padding: 5px 12px;
 }
 .rail {
   flex: 1;

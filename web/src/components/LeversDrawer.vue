@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useResultsStore } from '@/stores/results'
-import type { LeverDef } from '@/types/results'
+import type { LeverDef, ScenarioDocument } from '@/types/results'
 import {
   LEVER_GROUP_LABELS,
   LEVER_GROUP_ORDER,
   buildChildScenario,
   clampLever,
+  deepMerge,
   fmtLeverValue,
   leverDiff,
   leverValues,
   type LeverValues,
 } from '@/lib/levers'
 
-const props = defineProps<{ open: boolean }>()
+const props = defineProps<{
+  open: boolean
+  /** a child scenario to pre-fill the form with (Phase 4: a chat proposal's Edit button) */
+  preset?: ScenarioDocument | null
+}>()
 const emit = defineEmits<{ close: [] }>()
 const results = useResultsStore()
 
@@ -40,11 +45,22 @@ const changedByGroup = computed(() => {
 const parentName = computed(() => results.scenarioDoc?.name ?? results.scenarioName)
 
 function reset() {
+  const p = props.preset
+  if (p) {
+    // the preset's levers are a patch over its parent; lay them over the current scenario's values
+    const base = results.scenarioDoc
+    const merged: ScenarioDocument = base
+      ? { ...base, levers: deepMerge(base.levers ?? {}, p.levers ?? {}) }
+      : p
+    values.value = leverValues(results.levers, merged)
+    name.value = p.name
+    return
+  }
   values.value = { ...parentValues.value }
   name.value = `${parentName.value} · what-if`
 }
 watch(
-  () => [props.open, results.scenarioDoc, results.levers] as const,
+  () => [props.open, results.scenarioDoc, results.levers, props.preset] as const,
   ([open]) => {
     if (open) results.loadLevers()
     reset()

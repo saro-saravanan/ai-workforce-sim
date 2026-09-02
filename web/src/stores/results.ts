@@ -40,6 +40,10 @@ export const useResultsStore = defineStore('results', () => {
   // ----- levers (Phase 2) -----
   const levers = shallowRef<LeverDef[]>([])
 
+  // ----- child runs of this session (Phase 2 drawer, Phase 4 chat proposals) -----
+  /** child scenario documents run this session, by scenario id and by result hash */
+  const localDocs = new Map<string, ScenarioDocument>()
+
   const quarters = computed(() => doc.value?.meta.quarters ?? [])
   const meta = computed(() => doc.value?.meta ?? null)
   // ----- regions (Phase 3) -----
@@ -143,6 +147,11 @@ export const useResultsStore = defineStore('results', () => {
   }
 
   async function loadScenarioDoc(id: string) {
+    const local = localDocs.get(id)
+    if (local) {
+      scenarioDoc.value = local
+      return
+    }
     try {
       scenarioDoc.value = await api.fetchScenario(id)
     } catch {
@@ -174,22 +183,83 @@ export const useResultsStore = defineStore('results', () => {
     const toast = useToastStore()
     try {
       const next = await api.runScenarioDoc(child)
-      doc.value = next
-      scenarioId.value = child.id
-      scenarioDoc.value = child
-      if (!scenarios.value.some((s) => s.id === child.id))
-        scenarios.value = [
-          ...scenarios.value,
-          { id: child.id, name: child.name, parent: child.parent, description: child.description ?? '', user: true },
-        ]
+      await adoptRun(next, child, 'current')
       if (isMock)
         toast.push(`Mock mode: "${child.name}" re-used the parent's results (no engine).`, 'warn')
       else toast.push(`Ran ${child.name} (${next.meta.draws} draws).`)
-      if (compareId.value) void loadCompare()
     } catch (e) {
       error.value = (e as Error).message
     } finally {
       loading.value = false
+    }
+  }
+
+  function registerScenario(id: string, s: ScenarioDocument) {
+    localDocs.set(id, s)
+    if (!scenarios.value.some((x) => x.id === id))
+      scenarios.value = [
+        ...scenarios.value,
+        { id, name: s.name, parent: s.parent, description: s.description ?? '', user: true },
+      ]
+  }
+
+  /**
+   * Adopts a finished run as the current scenario (A) or as the compare scenario (B). B is keyed
+   * by its result hash so `compare=` in the URL resolves through GET /api/results/{hash}
+   * (contracts §10) even though the child scenario was never saved.
+   */
+  async function adoptRun(
+    next: ResultsDocument,
+    scenario: ScenarioDocument,
+    as: 'current' | 'compare',
+  ): Promise<ResultsDocument> {
+    const hash = next.meta.scenario_hash
+    localDocs.set(hash, scenario)
+    if (as === 'current') {
+      registerScenario(scenario.id, scenario)
+      doc.value = next
+      scenarioId.value = scenario.id
+      scenarioDoc.value = scenario
+      if (compareId.value === hash) setCompare(null)
+      else if (compareId.value) void loadCompare()
+      return next
+    }
+    registerScenario(hash, scenario)
+    docB.value = next
+    compareId.value = hash
+    const a = doc.value
+    if (a) {
+      compareLoading.value = true
+      try {
+        compare.value = await api.compareRuns(a, next, regionStore.region)
+      } catch (e) {
+        error.value = (e as Error).message
+      } finally {
+        compareLoading.value = false
+      }
+    }
+    return next
+  }
+
+  /** Runs a scenario document (a chat proposal, contracts §17) and adopts the result. */
+  async function runProposal(scenario: ScenarioDocument, as: 'current' | 'compare') {
+    error.value = null
+    const busy = as === 'current' ? loading : compareLoading
+    busy.value = true
+    try {
+      const next = await api.runScenarioDoc(scenario)
+      await adoptRun(next, scenario, as)
+      if (isMock)
+        useToastStore().push(
+          `Mock mode: "${scenario.name}" re-used the parent's results (no engine).`,
+          'warn',
+        )
+      return next
+    } catch (e) {
+      error.value = (e as Error).message
+      return null
+    } finally {
+      busy.value = false
     }
   }
 
@@ -221,7 +291,11 @@ export const useResultsStore = defineStore('results', () => {
     }
     compareLoading.value = true
     try {
-      const next = docB.value?.meta.scenario_id === b ? docB.value : await api.runScenario(b)
+      const have = docB.value
+      const next =
+        have && (have.meta.scenario_id === b || have.meta.scenario_hash === b)
+          ? have
+          : await api.runScenario(b)
       docB.value = next
       compare.value = await api.compareRuns(a, next, regionStore.region)
     } catch (e) {
@@ -300,6 +374,8 @@ export const useResultsStore = defineStore('results', () => {
     loadScenarioDoc,
     runScenario,
     runChild,
+    adoptRun,
+    runProposal,
     saveScenario,
     loadCompare,
     setCompare,
