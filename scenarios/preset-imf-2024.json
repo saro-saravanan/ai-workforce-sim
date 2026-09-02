@@ -2,13 +2,26 @@
   "schema_version": "0.2",
   "id": "preset-imf-2024",
   "name": "Preset: IMF 2024",
-  "description": "Report-replication preset (spec §8.4). Exposure with a complementarity split: about 60% of advanced-economy employment exposed, half of it complementary (augmentation-leaning). Targets the IMF's qualitative result: wide exposure, roughly half augmented, rising inequality.",
+  "description": "Report-replication preset (spec \u00a78.4). Exposure with a complementarity split: about 60% of advanced-economy employment exposed, half of it complementary (augmentation-leaning). Targets the IMF's qualitative result: wide exposure, roughly half augmented, rising inequality. The v0.3 application layer (embodied automation, output substitution, traded services) is switched off: the study modelled generative AI on tasks only.",
   "parent": "baseline",
   "preset": true,
   "levers": {
-    "capability": { "ever_automatable_scale": 1.1 },
-    "labor": { "reinstatement_ratio": 0.4 }
+    "capability": {
+      "ever_automatable_scale": 1.1
+    },
+    "labor": {
+      "reinstatement_ratio": 0.4
+    },
+    "applications": {
+      "enabled": false
+    }
   },
-  "overrides": { "P.16": { "central": 0.35 } },
-  "ensemble": { "mechanisms": "central" }
+  "overrides": {
+    "P.16": {
+      "central": 0.35
+    }
+  },
+  "ensemble": {
+    "mechanisms": "central"
+  }
 }

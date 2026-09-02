@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE",
   "notes": "POPULATION SHARE PROXY FOR EMPLOYMENT SHARE; replace with OEWS state ingest (ingest/oews.py). state_share = 2020 Census apportionment resident population / 331,449,281 (50 states + DC). Populations were transcribed from memory, not fetched: the total matches the published U.S. resident population exactly and each state is believed accurate to well within 5%, but the table has not been checked against the Census page in this sandbox. Same occupational mix in every state.",
-  "built_at": "2026-09-02T00:52:30+00:00",
+  "built_at": "2026-09-02T13:11:33+00:00",
   "output": "data/processed/occ_state.csv",
   "extra": {}
 }

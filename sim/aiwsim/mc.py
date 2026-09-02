@@ -174,6 +174,12 @@ class RegionOut:
     self_fte0: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [n_occ] self-employed FTE 2024Q1 (in N0)
     underemp_self: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q] self-employed FTE with hours cut, still attached
     cut_cum: np.ndarray = field(default_factory=lambda: np.zeros(0))       # [D, n_q] cumulative FTE lost through the self-employed margin
+    content_share: dict[str, np.ndarray] = field(default_factory=dict)     # category -> [D, n_q] AI-produced share of consumption (spec §A.4)
+    content_q: dict[str, np.ndarray] = field(default_factory=dict)         # category -> [D, n_q] category consumption ratio Q/Q0
+    ai_content_revenue: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] $bn/yr paid for AI-produced content
+    consumer_surplus: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] $bn/yr proxy (not welfare)
+    D_trade: np.ndarray = field(default_factory=lambda: np.zeros(0))       # [1, n_occ, n_q] traded-services displacement, central (spec §A.5.3)
+    trade_share: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] employment-weighted traded-services displacement
 
     @property
     def displaced_cum(self) -> np.ndarray:
@@ -222,7 +228,8 @@ class BatchOutput:
                     "laid_off_cum", "unhired_cum", "reemployed_cum", "retraining_cum", "retrained_cum", "exited_cum", "retired_cum",
                     "unemployed_stock", "retraining_stock", "wage_share_pp", "mu", "q_ratio", "dlnc", "nu_mean", "lost_by_age", "lost_by_edu",
                     "lost_by_dec", "lost_by_mg", "N0_age", "N0_edu", "N0_dec", "displaced_cum", "employment_pct", "real_wage_pct", "nominal_wage_pct",
-                    "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "self_fte0", "underemp_self", "cut_cum"):
+                    "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "self_fte0", "underemp_self", "cut_cum",
+                    "content_share", "content_q", "ai_content_revenue", "consumer_surplus", "D_trade", "trade_share"):
             return getattr(self.regions["US"], name)
         raise AttributeError(name)
 
@@ -331,7 +338,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     price_fixed = np.maximum(p_front * float(p["P.04"]) ** (-(np.arange(n_q) / 4.0)), floor)
 
     # ---- embodied channels setup (spec v0.3 §A.3) ----
-    emb_on = apps is not None and ch.embodied
+    apps_enabled = bool(p.flags.get("applications_enabled", True))       # lever applications.enabled (presets switch the v0.3 layer off)
+    emb_on = apps is not None and ch.embodied and apps_enabled
     emb: dict[str, dict[str, Any]] = {}
     C_emb: dict[str, np.ndarray] = {}
     lam_emb = bp.col("P.106", 0.5)
@@ -369,6 +377,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     for c, e in emb.items():
         automatable_emb += agg_sub(e["occ"], e["w"][None, :] * e["a"], n_occ)
     automatable = automatable_sw + automatable_emb
+
 
     # ---- adoption setup (spec §4) ----
     n_sec = inp.n_sec; n_size = len(SIZE_CLASSES)
@@ -470,6 +479,42 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             if s_.get("type") == "production_shock" and s_.get("cls") == c and s_.get("at") in quarters:
                 t0 = quarters.index(s_["at"]); e["cap_mult"][t0: t0 + int(s_.get("duration_quarters", 4))] = float(s_.get("cap_multiplier", 0.5))
         e["prod_share_vec"] = np.array([e["prod_share"].get(x, 0.0) for x in order])
+    # ---- output substitution setup (spec v0.3 §A.4) ----
+    cats = list(apps.categories) if (apps is not None and ch.output_substitution and apps_enabled) else []
+    gamma_s = bp.vec("P.125", 2.0); q0_s = bp.vec("P.126.q0", -2.0); q1_s = bp.vec("P.126.q1", 3.0)
+    alpha_lvl = bp.vec("P.127.level", 1.5); half_life = bp.vec("P.127.half_life_years", 8.0)
+    if p.flags.get("authenticity", "eroding") == "persistent":
+        half_life = np.full(D, 1e6)
+    lic = p.flags.get("licensing_regime", "permissive")
+    margin_s = bp.vec("P.128", 0.4) + {"permissive": 0.0, "licensed": 0.15, "restrictive": 0.3}.get(lic, 0.0)
+    q1_s = q1_s * {"permissive": 1.0, "licensed": 0.85, "restrictive": 0.6}.get(lic, 1.0)
+    alpha_scale = float(p.flags.get("authenticity_level_scale", 1.0))
+    gdp_rel = np.array([r.gdp_bn / US_GDP_2024_BN for r in reg_list])                                   # consumption scales with GDP (E)
+    cons_r = np.array([[c.us_consumption_bn * gdp_rel[k] for c in cats] for k in range(R)])            # [R, n_cat] $bn/yr at baseline prices
+    cat_occ = [c.occ_idx for c in cats]
+    cat_mask = np.zeros((len(cats), n_occ)); [cat_mask.__setitem__((i, idx), 1.0) for i, idx in enumerate(cat_occ)]
+    ln_ratio0 = np.array([np.log(c.ratio0) for c in cats]); eta_cat = np.array([c.eta for c in cats]); alpha0 = np.array([c.alpha0 for c in cats])
+    share0 = np.array([min(max(c.share0, 1e-4), 0.99) for c in cats]); cat_intercept = None      # solved at 2024Q1 so the anchored share holds (spec §A.4)
+    q_out = np.ones((1, R, n_occ))
+
+    # ---- traded services setup (spec v0.3 §A.5.3) ----
+    trade_rows = list(apps.trade) if (apps is not None and ch.traded_services and apps_enabled) else []
+    exp_scale = float(p.flags.get("services_exposure_scale", 1.0))
+    exp_share = np.zeros((R, n_occ)); imp_w = np.zeros((R, R))
+    ridx_ = {x: k for k, x in enumerate(order)}
+    for row in trade_rows:
+        if row.exporter not in ridx_ or len(row.occ_idx) == 0:
+            continue
+        k_ = ridx_[row.exporter]
+        n_exp = row.export_bn * 1000.0 * row.fte_per_musd * exp_scale
+        base = np.maximum(emp_base[k_, row.occ_idx], 1.0)
+        exp_share[k_, row.occ_idx] += n_exp * base / base.sum() / base
+        w_imp = {x: v for x, v in row.importers.items() if x in ridx_}
+        tot_w = sum(w_imp.values()) or 1.0
+        for x, v in w_imp.items():
+            imp_w[k_, ridx_[x]] += v / tot_w * n_exp
+    exp_share = np.clip(exp_share, 0.0, 0.9)
+    imp_w = np.where(imp_w.sum(axis=1, keepdims=True) > 0, imp_w / np.maximum(imp_w.sum(axis=1, keepdims=True), 1e-9), 0.0)   # [R exporter, R importer]
     Y0 = np.stack([r.gdp_bn * (1.0 + BASELINE_GDP_GROWTH.get(r.region_id, BASELINE_REAL_GROWTH)) ** (np.arange(n_q) / 4.0) for r in reg_list])    # [R, n_q]
     wage_r = np.stack([r.wage_mean for r in reg_list])                                                                          # [R, n_occ]
     W0_bill = (N0 * wage_r[:, :, None]).sum(axis=1) / 1e9                                                                       # [R, n_q]
@@ -546,6 +591,9 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw",
                                               "emb_share", "adj_jobs", "hw_capex", "underemp")}
     cum["cut"] = np.zeros((D, R)); hours_cut = np.zeros((D, R, n_occ))
+    rec.update({k: np.zeros((D, R, n_q)) for k in ("ai_content_rev", "cs", "trade_share")})
+    cat_share_rec = np.zeros((D, R, len(cats), n_q)); cat_q_rec = np.zeros((D, R, len(cats), n_q))
+    DT = np.zeros((R, n_occ, n_q), dtype=np.float32)
     rec_cum = {k: np.zeros((D, R, n_q)) for k in cum}
     DE = np.zeros((R, n_occ, n_q), dtype=np.float32)                                     # central-draw embodied displacement per region
     fleet_rec = {c: np.zeros((D, R, n_q)) for c in emb}; cov_rec = {c: np.zeros((D, R, n_q)) for c in emb}
@@ -695,8 +743,41 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             nu = np.zeros((D, R, n_occ))
         rec["nu"][:, :, t] = (nu * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
         D_sw = Dr if ch.automation else np.zeros_like(Dr); U_use = Ur if ch.augmentation else 0.0
-        D_use = np.minimum(D_sw + D_emb, 1.0)
-        N_star = N0t * q_occ * (1.0 - D_use) / (1.0 + psi[:, None, :] * U_use) * (1.0 + nu)
+        # ---- traded services (spec v0.3 §A.5.3): export-serving workers face the importers' displacement ----
+        D_trade = np.zeros_like(D_sw)
+        if trade_rows:
+            D_imp = np.einsum("ki,dio->dko", imp_w, D_sw)                                 # importer-weighted software displacement, [D, R, n_occ]
+            D_trade = exp_share[None] * np.maximum(D_imp - D_sw, 0.0)
+        D_use = np.minimum(D_sw + D_emb + D_trade, 1.0)
+        # ---- output substitution (spec v0.3 §A.4): AI-produced share of each content category ----
+        ai_rev = np.zeros((D, R)); cs_proxy = np.zeros((D, R)); dlnP_cat = np.zeros((D, R)); q_out = np.ones((D, R, n_occ)); Y_cat = np.zeros((D, R))
+        if cats:
+            feas = S + G                                                                   # [D, R, n_occ] feasible share of the software tasks
+            emp_w = N0t[:, :, None, :] * cat_mask[None, None, :, :]                        # [1, R, n_cat, n_occ] weights
+            Fbar = (emp_w * feas[:, :, None, :]).sum(axis=3) / np.maximum(emp_w.sum(axis=3), 1.0)            # [D, R, n_cat]
+            zbar = (emp_w * zetaR[:, :, None, :]).sum(axis=3) / np.maximum(emp_w.sum(axis=3), 1.0)
+            ln_pH = -pi_p[:, 0][:, None, None] * float(inp.labor_cost_share.mean()) * zbar                    # human price falls with AI-tool cost savings
+            # AI content price to consumers: distribution, curation and platform margin dominate, so it tracks the token price weakly (E: exponent 0.1) and never
+            # falls below half its 2024 ratio; the 2024 ratio itself is the category's ratio0 (spec §A.4, attack 8)
+            ln_pAI = np.maximum(ln_ratio0[None, None, :] + 0.1 * np.log(price_fixed[t] / price_fixed[0]), ln_ratio0[None, None, :] + np.log(0.5)) + np.log1p(margin_s)[:, None, None]
+            alpha_t = (alpha0[None, None, :] * alpha_scale) * (alpha_lvl / 1.5)[:, None, None] * 0.5 ** ((t / 4.0) / half_life)[:, None, None]
+            drive = -gamma_s[:, None, None] * (ln_pAI - ln_pH) + q1_s[:, None, None] * Fbar - alpha_t
+            if cat_intercept is None:                                                      # anchor: share at 2024Q1 equals share0 in every region and draw
+                cat_intercept = np.log(share0 / (1.0 - share0))[None, None, :] - drive
+            sAI = logistic(drive + cat_intercept)                                          # [D, R, n_cat]
+            dlnp_avg = sAI * (ln_pAI - ln_pH)                                              # share-weighted price change of the category
+            Qr = np.minimum(1.5, np.exp(-eta_cat[None, None, :] * pi_p[:, 0][:, None, None] * dlnp_avg))   # attention budget: a category's real consumption at most +50% (E)
+            qh = (1.0 - sAI) * Qr                                                          # human-produced output ratio
+            q_out = 1.0 + np.einsum("drc,co->dro", qh - 1.0, cat_mask)                     # multiplicative on the category's occupations
+            cons = cons_r[None]                                                            # [1, R, n_cat]
+            ai_rev = (cons * sAI * Qr * np.exp(ln_pAI)).sum(axis=2)
+            saving = (cons * sAI * Qr * (1.0 - np.exp(ln_pAI))).sum(axis=2)
+            cs_proxy = saving + 0.5 * (cons * (Qr - 1.0) * sAI * (1.0 - np.exp(ln_pAI))).sum(axis=2)
+            Y_cat = (cons * (Qr - 1.0)).sum(axis=2)
+            dlnP_cat = (cons * dlnp_avg).sum(axis=2) / (0.68 * Y0[None, :, t])
+            cat_share_rec[:, :, :, t] = sAI; cat_q_rec[:, :, :, t] = Qr
+        DT[:, :, t] = D_trade[0]
+        N_star = N0t * q_occ * q_out * (1.0 - D_use) / (1.0 + psi[:, None, :] * U_use) * (1.0 + nu)
 
         # ---- hiring channel, layoffs, transitions (spec §5.3–5.4); self-employed margin (spec v0.3 §A.3.6) ----
         gap = N - N_star
@@ -725,7 +806,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         XS = (searching + unhired) / np.maximum(N, 1.0)
         target = -0.1 * np.log1p(XS / 0.04) + beta_w[:, None, :] * psi[:, None, :] * Ur
         ln_w = np.clip(ln_w + eps_w[:, None, :] * (target - ln_w), -2.0, 2.0)
-        ln_P = pi_p[:, 0][:, None] * (dlnc @ W_cons)                                 # [D, R]
+        ln_P = pi_p[:, 0][:, None] * (dlnc @ W_cons) + pi_p[:, 0][:, None] * dlnP_cat   # [D, R]; content categories enter the price index (spec §A.4)
 
         # ---- cohorts (U.S. occupation-cohort structure applied to every region; flagged) ----
         lost_age += via_attr.sum(axis=2)[:, :, None] * ENTRANT_AGE[None, None, :] + (layoffs + cut) @ lay_age_w
@@ -751,7 +832,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         hw_jobs = HW_JOBS_PER_BN * hw_val
         y_ratio = Q_ratio @ wY
         Y_task = (Y0[None, :, t] * y_ratio + d_inv + jobs * AI_PRODUCTION_WAGE / 1e9 + hw_val * (1.0 - co[:, None])
-                  + adj_jobs * ADJACENT_WAGE / 1e9)
+                  + adj_jobs * ADJACENT_WAGE / 1e9 + Y_cat)
         tfp = -(dlnc @ wY)
         D_sp = Dr if ch.automation else np.zeros_like(Dr); U_sp = Ur if ch.augmentation else np.zeros_like(Ur)
         spend = ((N0t * HOURS_PER_YEAR * D_sp * kb).sum(axis=2) + (N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9))).sum(axis=2)) / 1e9   # [D, R]
@@ -759,7 +840,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         received_total = np.zeros((D, R))
         for i_s, stage in enumerate(stages):
             recv = (spend * stage_share[i_s]) @ alloc_m[stage]
+            if stage == "model":
+                recv = recv + (0.6 * ai_rev) @ alloc_m[stage]                               # AI-content revenue: model stage by market share (spec §A.4)
+            elif stage == "integration":
+                recv = recv + 0.4 * ai_rev                                                  # platform/integration stage stays domestic
             rents_out[stage][:, :, t] = recv; received_total += recv
+        spend = spend + ai_rev                                                              # consumers pay for AI-produced content
         hw_export = (inc * HARDWARE_SHARE_OF_CAPEX * hw_va[None, :]) if (ch.ai_investment and regional is not None) else 0.0
         net = received_total - spend + hw_export
         Y = Y_task + net
@@ -774,6 +860,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         disp_hist[:, :, t] = layoffs.sum(axis=2) + via_attr.sum(axis=2) + cut.sum(axis=2)
         rec["emb_share"][:, :, t] = (D_emb * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
         rec["adj_jobs"][:, :, t] = adj_jobs + hw_jobs; rec["hw_capex"][:, :, t] = hw_val; rec["underemp"][:, :, t] = hours_cut.sum(axis=2)
+        rec["ai_content_rev"][:, :, t] = ai_rev; rec["cs"][:, :, t] = cs_proxy
+        rec["trade_share"][:, :, t] = (D_trade * N0t).sum(axis=2) / np.maximum(N0t.sum(axis=2), 1.0)
         LNP[:, :, t] = ln_P
         rec["emp"][:, :, t] = N.sum(axis=2); rec["mlnw"][:, :, t] = (N * ln_w).sum(axis=2) / np.maximum(N.sum(axis=2), 1.0)
         for k in range(R):
@@ -805,6 +893,9 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         o.D_emb = DE[k][None].astype(np.float64); o.emb_share = rec["emb_share"][:, k]; o.adjacent_jobs = rec["adj_jobs"][:, k]; o.hw_capex_bn = rec["hw_capex"][:, k]
         o.underemp_self = rec["underemp"][:, k]; o.cut_cum = rec_cum["cut"][:, k]
         o.fleet = {c: fleet_rec[c][:, k] for c in emb}; o.coverage = {c: cov_rec[c][:, k] for c in emb}; o.approval = {c: emb[c]["J"][k] for c in emb}
+        o.content_share = {c.cat_id: cat_share_rec[:, k, i] for i, c in enumerate(cats)}; o.content_q = {c.cat_id: cat_q_rec[:, k, i] for i, c in enumerate(cats)}
+        o.ai_content_revenue = rec["ai_content_rev"][:, k]; o.consumer_surplus = rec["cs"][:, k]
+        o.D_trade = DT[k][None].astype(np.float64); o.trade_share = rec["trade_share"][:, k]
     return BatchOutput(quarters=quarters, cell_ids=list(draws.cell_ids) if draws else ["central"], C=C, regions=outs, order=order,
                        automatable=automatable, price_mult=price_mult, price_frontier=price_frontier, price_fixed=price_fixed,
                        market_share=market_share, availability=availability, major_groups=mg,
@@ -813,6 +904,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
                               "channels_task_hours": {c: float((tg.weight[tg.channel == i] * inp.emp0[tg.occ[tg.channel == i]]).sum() / (tg.weight * inp.emp0[tg.occ]).sum())
                                                       for i, c in enumerate(["software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none"])},
                               "self_employed_fte": {x: float(self0[k].sum()) for k, x in enumerate(order)}, "embodied_on": bool(emb_on),
+                              "content_categories": [c.cat_id for c in cats], "export_serving_fte": {x: float((exp_share[k] * emp_base[k]).sum()) for k, x in enumerate(order)},
                               "capex_annual_bn": cap.annual_bn, "access_lag": {x: int(lags[k]) for k, x in enumerate(order)},
                               "wage_tier": {x: tiers_r[k] for k, x in enumerate(order)}})
 
@@ -833,9 +925,9 @@ def _concat_region(outs: list[RegionOut]) -> RegionOut:
             merged[name] = v
         elif name in ("N", "ln_w", "D_", "U") and v.shape[0] == 1 and first.region_id != "US":
             merged[name] = v                      # central draw only outside the U.S.; chunk 0 holds it
-        elif name in ("D_emb", "self_fte0", "approval"):
+        elif name in ("D_emb", "D_trade", "self_fte0", "approval"):
             merged[name] = v                      # central draw only, or draw-independent; chunk 0 holds it
-        elif name in ("rents", "fleet", "coverage"):
+        elif name in ("rents", "fleet", "coverage", "content_share", "content_q"):
             merged[name] = {s: np.concatenate([getattr(o, name)[s] for o in outs], axis=0) for s in v}
         elif isinstance(v, np.ndarray):
             merged[name] = np.concatenate([getattr(o, name) for o in outs], axis=0)

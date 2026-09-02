@@ -5,7 +5,7 @@
   "license": "MIT",
   "pulled_at": "2026-09-02",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
-  "sha256": "b99a6eb2a13b5116e5c67ac81b90ef14706fcd9751ace7944cbe55bf1a80e3fb",
+  "sha256": "e25be744888cdbec2fb833952ad2d9909c976d0626a43de73f6c543f56daec86",
   "transformations": [
     "O*NET-SOC code -> 6-digit SOC -> OEWS May 2021 code (broad code where OEWS publishes the broad occupation; explicit crosswalk ONET_TO_OEWS_2021 for SOC-2010-era codes)",
     "weight = Core 2 / Supplemental 1 (Eloundou coreweight; missing Task Type -> 1), normalized within occ_code",
@@ -14,11 +14,12 @@
     "modality keyword-rules v1 (E)",
     "presence keyword-rules v1 (E)",
     "use_case (EU AI Act Annex III / Art. 50) keyword-rules v1 (E)",
-    "consequence_high keyword-rules v1 (E)"
+    "consequence_high keyword-rules v1 (E)",
+    "channel channel-rules v1 (E, spec v0.3 §A.2)"
   ],
   "status": "real",
-  "notes": "Labels and weights are real (status real); modality, presence, use_case and consequence_high are E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. Label source counts: {'human_labels': 19235}. Tasks dropped because the SOC is not published in OEWS: 30 (['45-3031']). Rows with missing Task Type given weight 1: 1310. Classifier distribution (row shares): {'modality': {'interpersonal': 0.2594, 'other_cognitive': 0.2332, 'physical': 0.2278, 'software': 0.2796}, 'use_case': {'high_risk': 0.0477, 'transparency': 0.0193, 'unregulated': 0.933}, 'consequence_high': {'0': 0.7697, '1': 0.2303}, 'presence': {'mean': 0.422, 'p10': 0.1, 'p50': 0.45, 'p90': 0.7}}",
-  "built_at": "2026-09-02T00:52:29+00:00",
+  "notes": "Labels and weights are real (status real); modality, presence, use_case and consequence_high are E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. Label source counts: {'human_labels': 19235}. Tasks dropped because the SOC is not published in OEWS: 30 (['45-3031']). Rows with missing Task Type given weight 1: 1310. Classifier distribution (row shares): {'modality': {'interpersonal': 0.2594, 'other_cognitive': 0.2332, 'physical': 0.2278, 'software': 0.2796}, 'use_case': {'high_risk': 0.0477, 'transparency': 0.0193, 'unregulated': 0.933}, 'consequence_high': {'0': 0.7697, '1': 0.2303}, 'channel': {'emb_aerial': 0.0001, 'emb_driving': 0.0113, 'emb_fixed': 0.024, 'emb_manip': 0.1875, 'none': 0.0145, 'software': 0.7628}, 'presence': {'mean': 0.422, 'p10': 0.1, 'p50': 0.45, 'p90': 0.7}}",
+  "built_at": "2026-09-02T13:11:33+00:00",
   "output": "data/processed/tasks.csv",
   "extra": {
     "classifier_distribution": {
@@ -36,6 +37,14 @@
       "consequence_high": {
         "0": 0.7697,
         "1": 0.2303
+      },
+      "channel": {
+        "emb_aerial": 0.0001,
+        "emb_driving": 0.0113,
+        "emb_fixed": 0.024,
+        "emb_manip": 0.1875,
+        "none": 0.0145,
+        "software": 0.7628
       },
       "presence": {
         "mean": 0.422,
@@ -59,6 +68,14 @@
       "consequence_high": {
         "0": 0.7745,
         "1": 0.2255
+      },
+      "channel": {
+        "emb_aerial": 0.0,
+        "emb_driving": 0.0129,
+        "emb_fixed": 0.0275,
+        "emb_manip": 0.2077,
+        "none": 0.0169,
+        "software": 0.735
       },
       "presence": {
         "mean": 0.422,

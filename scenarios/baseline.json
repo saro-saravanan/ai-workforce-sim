@@ -106,7 +106,17 @@
         "SG": "baseline",
         "RoA": "baseline"
       },
-      "platform_labor": "status_quo"
+      "platform_labor": "status_quo",
+      "content": {
+        "authenticity": "eroding",
+        "authenticity_level_scale": 1.0,
+        "licensing_regime": "permissive",
+        "price_sensitivity": 2.0
+      },
+      "trade": {
+        "services_exposure_scale": 1.0
+      },
+      "enabled": true
     }
   },
   "shocks": [],

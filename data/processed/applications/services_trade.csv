@@ -1,0 +1,6 @@
+exporter,category,export_bn,fte_per_musd,occ_codes,importers,anchor,source_tag
+IN,bpo,45.0,25.0,43-4051;43-9061;43-3021;43-4171;43-3031,US:0.6;EU:0.2;UK:0.15;RoA:0.05,NASSCOM BPM revenue and headcount,"E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"
+IN,it_services,200.0,15.0,15-1252;15-1232;15-1244;15-1211;15-1299,US:0.62;EU:0.2;UK:0.15;JP:0.03,NASSCOM IT services exports,"E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"
+RoA,bpo,40.0,28.0,43-4051;43-9061;43-3021;43-4171,US:0.7;EU:0.1;UK:0.1;SG:0.1,IBPAP (Philippines) revenue and headcount,"E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"
+RoA,it_services,15.0,15.0,15-1252;15-1232;15-1211,US:0.6;EU:0.2;JP:0.1;SG:0.1,Philippines and Vietnam IT exports,"E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"
+EU,bpo,15.0,12.0,43-4051;43-9061;43-3021,US:0.4;UK:0.4;CN:0.05;JP:0.05;RoA:0.1,"Eurostat ITS other business services (Poland, Romania, Portugal)","E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"

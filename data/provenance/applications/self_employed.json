@@ -13,7 +13,7 @@
   ],
   "status": "FIXTURE",
   "notes": "Replaced by ingest/cps_selfemp.py (IPUMS CPS class of worker, hours, multiple job holding) and Census Nonemployer Statistics. FTE by region: {'US': 11557131, 'EU': 17393461, 'UK': 2969319, 'CN': 95539859, 'JP': 3877988, 'KR': 3577982, 'IN': 135362767, 'TW': 974373, 'SG': 228497, 'RoA': 103923669}.",
-  "built_at": "2026-09-02T11:32:26+00:00",
+  "built_at": "2026-09-02T13:11:34+00:00",
   "output": "data/processed/applications/self_employed.csv",
   "extra": {
     "fte_by_region": {

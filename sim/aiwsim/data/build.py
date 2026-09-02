@@ -42,6 +42,7 @@ TABLES = [
     "regions/region_members", "regions/regions", "regions/occ_region", "regions/trade_weights",
     "regions/actors", "regions/actor_releases", "regions/value_chain", "geo/world",
     "applications/embodiment_classes", "applications/applications", "applications/approval_paths", "applications/self_employed",
+    "applications/content_categories", "applications/services_trade",
 ]
 NE_WORLD_50M = "ne_50m_admin_0_countries.geojson"
 
@@ -466,6 +467,18 @@ def build_applications(root: Path, occ: pl.DataFrame, log) -> dict[str, str]:
     write_provenance(root, "applications/approval_paths", p, source="spec v0.3 §A.3.4 approval baseline paths (E, V?)", source_url=spec_url, license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
                      transformations=["J rises linearly from j0 at start_year to j_full at full_year per class and region; lever states frozen/baseline/accelerated/moratorium"],
                      notes="No dataset of future permits exists; the baseline path is a dated judgement to be replaced by transcribed regulatory timetables (verification item).")
+    p = _write_csv(ap.content_categories_frame(), out / "content_categories.csv")
+    statuses["applications/content_categories"] = "FIXTURE (E)"
+    write_provenance(root, "applications/content_categories", p, source="spec v0.3 §A.4 output-substitution categories (authors' estimates, V?)", source_url=spec_url,
+                     license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
+                     transformations=["one row per category: target occupations, 2024 U.S. consumption at baseline prices, own-price elasticity, AI/human price ratio 2024, authenticity premium level, intermediate flag"],
+                     notes="Consumption, elasticities, price ratios and authenticity levels are E; replace with BEA PCE, CPI components, platform AI-share statements and willingness-to-pay surveys (§A.10).")
+    p = _write_csv(ap.services_trade_frame(), out / "services_trade.csv")
+    statuses["applications/services_trade"] = "FIXTURE (E)"
+    write_provenance(root, "applications/services_trade", p, source="spec v0.3 §A.5.3 traded services (authors' estimates, V?)", source_url=spec_url,
+                     license="n/a (estimates)", status="FIXTURE (E: authors' estimates, spec v0.3)",
+                     transformations=["one row per exporter × category: 2024 exports $bn, FTE per $m, export-serving occupations, importer weights"],
+                     notes="Replace with UNCTAD/WTO BPM6 services trade, NASSCOM, IBPAP and Eurostat ITS (§A.10).")
     regions_dir = root / PROCESSED / "regions"
     occ_region = pl.read_csv(regions_dir / "occ_region.csv", schema_overrides={"occ_code": pl.Utf8, "region_id": pl.Utf8}) if (regions_dir / "occ_region.csv").exists() else None
     se, notes = ap.self_employed_frame(occ, None, occ_region)

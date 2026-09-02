@@ -312,3 +312,27 @@ Static mode in the client: scenarios from the manifest; `runScenario(id or hash)
 ## 22. API and static export
 
 No new endpoints: `applications` is a section of the results document (`GET /api/results/{hash}/applications`), the levers catalogue lists the new levers with labels, and the static exporter carries the section through. Chat tools read it through `get_summary` and the results document.
+
+# Phase 7 additions (contracts v0.8): output substitution and traded services
+
+## 23. Input tables (`data/processed/applications/`)
+
+| Table | Key | Columns |
+|---|---|---|
+| `content_categories.csv` | `cat_id` | `name`, `occ_codes` (semicolon list), `us_consumption_bn` (2024 U.S. spending at baseline prices), `eta` (own-price elasticity), `ratio0` (AI/human price 2024), `alpha0` (authenticity premium level, logit units), `intermediate` (0/1), `anchor`, `source_tag` (E, V?) |
+| `services_trade.csv` | (`exporter`, `category`) | `export_bn`, `fte_per_musd`, `occ_codes`, `importers` (`REGION:weight;…`, renormalized over modelled regions), `anchor`, `source_tag` (E, V?) |
+
+The catalogue gains `output` rows (`cls` = category id, `occ_codes` = `*cat`), `traded` rows (`cls` = trade category) and `software` rows.
+
+## 24. Results document additions
+
+- `series[region]`: `ai_content_share` {cat: percentiles, %}, `content_consumption_ratio` {cat: percentiles, Q/Q0}, `ai_content_revenue_bn`, `consumer_surplus_proxy_bn` (accounting quantity at baseline prices, not welfare), `traded_services_displacement_share` (% of employment).
+- `applications[]` rows for output families report `displacement_share` as the share of the category's human-produced output lost vs baseline (`1 − (1 − s^AI)·Q/Q0`) and `coverage` as `s^AI`; traded rows report the traded-services displacement over target occupations; software rows report the software-channel displacement.
+- `channels` order is now ten entries: automation, augmentation, embodied, output_substitution, traded_services, demand_response, reinstatement, demand_feedback, ai_investment, adjacent.
+- `meta.cells`: 32 (demand × reinstatement × pass-through × hardware learning rate × authenticity {persistent, eroding}); default draws 256.
+- `meta.content_categories`, `meta.export_serving_fte` by region.
+- `explain.notes` gain an output-substitution note and a traded-services note.
+
+## 25. Levers and shocks
+
+`levers.applications.content.{authenticity: persistent|eroding, authenticity_level_scale: 0.2–3, licensing_regime: permissive|licensed|restrictive, price_sensitivity: 1–4}`, `levers.applications.trade.services_exposure_scale: 0–2`; shock `content_licensing_ruling` {at, regime} (recorded; applied in a later phase).

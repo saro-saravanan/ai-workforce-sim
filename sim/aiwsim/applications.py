@@ -32,19 +32,38 @@ class Application:
 
 
 @dataclass
+class ContentCategory:
+    cat_id: str; name: str; occ_idx: np.ndarray; us_consumption_bn: float; eta: float; ratio0: float; alpha0: float; intermediate: bool; anchor: str = ""
+    share0: float = 0.02
+
+
+@dataclass
+class ServicesTrade:
+    exporter: str; category: str; export_bn: float; fte_per_musd: float; occ_idx: np.ndarray; importers: dict[str, float]; anchor: str = ""
+
+
+@dataclass
 class AppInputs:
     classes: dict[str, EmbodimentClass]
     apps: list[Application]
     approval: dict[tuple[str, str], tuple[int, int, float, float]]      # (cls, region) -> (start_year, full_year, j0, j_full)
     self_fte: dict[str, np.ndarray]                                      # region -> [n_occ] self-employed FTE
     platform_share: dict[str, np.ndarray]                                # region -> [n_occ] share of that FTE that is platform-mediated
+    categories: list[ContentCategory] = field(default_factory=list)      # spec §A.4
+    trade: list[ServicesTrade] = field(default_factory=list)             # spec §A.5.3
     data_flags: dict[str, str] = field(default_factory=dict)
 
     def occ_mask(self, app: Application, inp: Inputs) -> np.ndarray:
-        """Boolean [n_occ] mask of an application's target occupations ('*manip' = every occupation with manipulation task-hours)."""
+        """Boolean [n_occ] mask of an application's target occupations ('*manip' = every occupation with manipulation task-hours; '*cat' = its category's)."""
         if app.occ_codes == ["*manip"]:
             m = np.zeros(inp.n_occ, dtype=bool)
             np.add.at(m, inp.task_occ[inp.task_channel == CHANNEL_OF_CLASS["manip"]], True)
+            return m
+        if app.occ_codes == ["*cat"]:
+            m = np.zeros(inp.n_occ, dtype=bool)
+            for c in self.categories:
+                if c.cat_id in app.classes:
+                    m[c.occ_idx] = True
             return m
         codes = set(app.occ_codes)
         return np.array([c in codes for c in inp.occ_codes])
@@ -109,5 +128,21 @@ def load_applications(root: Path, inp: Inputs, region_ids: list[str] | None = No
             continue
         self_fte.setdefault(rid, np.zeros(inp.n_occ)); plat.setdefault(rid, np.zeros(inp.n_occ))
         self_fte[rid][i] = float(r["fte"]); plat[rid][i] = float(r["platform_share"])
+    cats: list[ContentCategory] = []
+    cf = d / "content_categories.csv"
+    if cf.exists():
+        for r in pl.read_csv(cf, schema_overrides={"cat_id": pl.Utf8, "occ_codes": pl.Utf8}).fill_null("").iter_rows(named=True):
+            idx = np.array([occ_idx[c] for c in str(r["occ_codes"]).split(";") if c in occ_idx], dtype=np.int64)
+            cats.append(ContentCategory(cat_id=r["cat_id"], name=r["name"], occ_idx=idx, us_consumption_bn=float(r["us_consumption_bn"]), eta=float(r["eta"]),
+                                        ratio0=float(r["ratio0"]), alpha0=float(r["alpha0"]), intermediate=bool(int(r["intermediate"] or 0)), anchor=str(r.get("anchor", "")),
+                                        share0=float(r.get("share0", 0.02) or 0.02)))
+    trade: list[ServicesTrade] = []
+    tf = d / "services_trade.csv"
+    if tf.exists():
+        for r in pl.read_csv(tf, schema_overrides={"exporter": pl.Utf8, "category": pl.Utf8, "occ_codes": pl.Utf8, "importers": pl.Utf8}).fill_null("").iter_rows(named=True):
+            idx = np.array([occ_idx[c] for c in str(r["occ_codes"]).split(";") if c in occ_idx], dtype=np.int64)
+            imp = {kv.split(":")[0]: float(kv.split(":")[1]) for kv in str(r["importers"]).split(";") if ":" in kv}
+            trade.append(ServicesTrade(exporter=r["exporter"], category=r["category"], export_bn=float(r["export_bn"]), fte_per_musd=float(r["fte_per_musd"]),
+                                       occ_idx=idx, importers=imp, anchor=str(r.get("anchor", ""))))
     flags = {k: v for k, v in inp.data_flags.items() if k.startswith("applications/")}
-    return AppInputs(classes=classes, apps=apps, approval=approval, self_fte=self_fte, platform_share=plat, data_flags=flags)
+    return AppInputs(classes=classes, apps=apps, approval=approval, self_fte=self_fte, platform_share=plat, categories=cats, trade=trade, data_flags=flags)

@@ -20,7 +20,7 @@ from .sampling import draw_parameters, tornado_draws
 
 TORNADO_KEYS = ["P.01", "P.20", "P.21", "P.22", "P.23", "P.34.other_cognitive", "P.34.interpersonal", "P.16", "P.17", "P.40",
                 "P.50", "P.42", "P.60_scale", "P.61", "P.53", "P.74", "P.87", "P.63", "P.09", "P.73",
-                "P.100", "P.101", "P.108.driving", "P.113", "P.115.driving", "P.117"]
+                "P.100", "P.101", "P.108.driving", "P.113", "P.115.driving", "P.117", "P.125", "P.127.level", "P.126.q1"]
 from .scenario import diff as scenario_diff
 from .scenario import find_scenario, load_scenario_file, resolve, scenario_hash, validate
 

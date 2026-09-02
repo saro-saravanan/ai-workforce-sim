@@ -569,6 +569,50 @@
                 "status_quo",
                 "employee_reclassification"
               ]
+            },
+            "content": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "authenticity": {
+                  "enum": [
+                    "persistent",
+                    "eroding"
+                  ]
+                },
+                "authenticity_level_scale": {
+                  "type": "number",
+                  "minimum": 0.2,
+                  "maximum": 3.0
+                },
+                "licensing_regime": {
+                  "enum": [
+                    "permissive",
+                    "licensed",
+                    "restrictive"
+                  ]
+                },
+                "price_sensitivity": {
+                  "type": "number",
+                  "minimum": 1.0,
+                  "maximum": 4.0
+                }
+              }
+            },
+            "trade": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "services_exposure_scale": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 2.0
+                }
+              }
+            },
+            "enabled": {
+              "type": "boolean",
+              "default": true
             }
           }
         }
@@ -587,6 +631,7 @@
           "type": {
             "enum": [
               "approval_change",
+              "content_licensing_ruling",
               "frontier_breakthrough",
               "hardware_recall",
               "lab_exit",
@@ -657,6 +702,13 @@
             "type": "number",
             "minimum": 0,
             "maximum": 2
+          },
+          "regime": {
+            "enum": [
+              "permissive",
+              "licensed",
+              "restrictive"
+            ]
           }
         }
       }

@@ -91,10 +91,76 @@ APPLICATIONS: list[dict] = [
     {"app_id": "construction_robotics", "name": "Construction robotics", "family": "embodied", "cls": "manip", "platform": 0,
      "occ_codes": "47-2061;47-2021;47-2081;47-2171;47-2031", "sectors": "", "regions_first": "JP;US", "anchor": "pilot counts",
      "constraints": "site variability; codes", "provisional_profitable": "2030-35", "provisional_deployed50": "beyond 2040"},
+    # ---- output substitution (Phase 7, spec §A.4) ----
+    {"app_id": "generative_video", "name": "Generative video", "family": "output", "cls": "video", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "global", "anchor": "AI-generated share of new uploads and releases; guild agreements", "constraints": "quality gap; authenticity premium; licensing regime",
+     "provisional_profitable": "2027-30", "provisional_deployed50": "2032-38"},
+    {"app_id": "generative_music", "name": "Generative music", "family": "output", "cls": "music", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "global", "anchor": "AI-generated share of streams and uploads", "constraints": "authenticity premium; licensing",
+     "provisional_profitable": "2026-28", "provisional_deployed50": "2030-36"},
+    {"app_id": "generative_text", "name": "Generative text", "family": "output", "cls": "text", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "US;UK;EU", "anchor": "AI-generated share of new titles and articles", "constraints": "authenticity premium; discoverability",
+     "provisional_profitable": "2025-27", "provisional_deployed50": "2029-34"},
+    {"app_id": "generative_image_design", "name": "Generative image and design", "family": "output", "cls": "image_design", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "global", "anchor": "stock-image revenue and AI share", "constraints": "quality gap", "provisional_profitable": "2024-26", "provisional_deployed50": "2028-32"},
+    {"app_id": "machine_translation_voice", "name": "Machine translation and voice", "family": "output", "cls": "translation_voice", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "global", "anchor": "translation industry revenue mix", "constraints": "quality gap in high-stakes domains",
+     "provisional_profitable": "2024-26", "provisional_deployed50": "2027-31"},
+    {"app_id": "generative_advertising", "name": "Generative advertising creative", "family": "output", "cls": "advertising", "platform": 0, "occ_codes": "*cat", "sectors": "",
+     "regions_first": "global", "anchor": "agency disclosures", "constraints": "quality gap; brand risk", "provisional_profitable": "2025-27", "provisional_deployed50": "2029-33"},
+    # ---- traded services and software applications (Phase 7, spec §A.5.3 and §A.8) ----
+    {"app_id": "ai_customer_service", "name": "AI customer service and back office", "family": "traded", "cls": "bpo", "platform": 0,
+     "occ_codes": "43-4051;43-9061;43-3021;43-4171;43-3031", "sectors": "", "regions_first": "IN;RoA;US", "anchor": "BPO revenue growth and headcount; deflection disclosures",
+     "constraints": "deflection rates; regulation of automated decisions", "provisional_profitable": "2025-27", "provisional_deployed50": "2029-33"},
+    {"app_id": "ai_it_services", "name": "AI coding agents in IT services", "family": "traded", "cls": "it_services", "platform": 0,
+     "occ_codes": "15-1252;15-1232;15-1244;15-1211;15-1299", "sectors": "", "regions_first": "IN;US", "anchor": "IT services export growth and headcount",
+     "constraints": "client acceptance; contract structures", "provisional_profitable": "2025-27", "provisional_deployed50": "2029-33"},
+    {"app_id": "ai_tutoring_education", "name": "AI tutoring", "family": "software", "cls": "", "platform": 0, "occ_codes": "25-3041;25-9042;25-9045;25-3021", "sectors": "",
+     "regions_first": "US;IN;CN", "anchor": "adoption in districts and platforms", "constraints": "procurement; evidence of efficacy",
+     "provisional_profitable": "2026-29", "provisional_deployed50": "2032-38"},
+    {"app_id": "ai_diagnostics", "name": "AI diagnostics", "family": "software", "cls": "", "platform": 0, "occ_codes": "29-2034;29-2035;31-9094;29-1224", "sectors": "",
+     "regions_first": "US;EU;CN", "anchor": "cleared devices counts; deployment", "constraints": "regulatory clearance; liability",
+     "provisional_profitable": "2026-29", "provisional_deployed50": "2032-38"},
+    {"app_id": "ai_legal_research", "name": "AI legal research", "family": "software", "cls": "", "platform": 0, "occ_codes": "23-2011;23-1011;23-2093", "sectors": "",
+     "regions_first": "US;UK", "anchor": "firm adoption surveys", "constraints": "professional rules", "provisional_profitable": "2025-27", "provisional_deployed50": "2029-33"},
     {"app_id": "retail_checkout_shelf", "name": "Retail checkout and shelf automation", "family": "embodied", "cls": "fixed;manip", "platform": 0,
      "occ_codes": "41-2011;53-7065;41-2031", "sectors": "", "regions_first": "US;UK;EU;JP", "anchor": "retailer disclosures",
      "constraints": "shrink and customer acceptance", "provisional_profitable": "2025-27", "provisional_deployed50": "2030-34"},
 ]
+
+# ---- output-substitution categories (spec §A.4; registry P.125–P.129); all E, V? ----------------------------------------------
+# share0: AI-produced share of category spending in 2024Q1 (anchor, E V?); us_consumption_bn: 2024 U.S. spending at baseline prices; eta: own-price elasticity; ratio0: AI/human price 2024;
+# alpha0: authenticity premium 2025 level (logit units); intermediate: category is an input to other sectors' costs
+CONTENT_CATEGORIES: list[dict] = [
+    {"cat_id": "video", "share0": 0.005, "name": "Motion picture and video", "occ_codes": "27-2011;27-2012;27-4011;27-4031;27-4032;27-1014;27-4012",
+     "us_consumption_bn": 150.0, "eta": 0.8, "ratio0": 0.2, "alpha0": 1.5, "intermediate": 0, "anchor": "AI-generated share of new uploads and releases; guild agreements"},
+    {"cat_id": "music", "share0": 0.01, "name": "Sound recording and music", "occ_codes": "27-2042;27-2041;27-4014", "us_consumption_bn": 20.0, "eta": 0.8, "ratio0": 0.15,
+     "alpha0": 1.8, "intermediate": 0, "anchor": "AI-generated share of streams and uploads"},
+    {"cat_id": "text", "share0": 0.02, "name": "Book, periodical and news publishing", "occ_codes": "27-3043;27-3041;27-3023;27-3042", "us_consumption_bn": 40.0, "eta": 0.6,
+     "ratio0": 0.1, "alpha0": 1.2, "intermediate": 0, "anchor": "AI-generated share of new titles and articles"},
+    {"cat_id": "image_design", "share0": 0.05, "name": "Graphic design, illustration and photography", "occ_codes": "27-1024;27-1013;27-4021;27-1021;27-1012",
+     "us_consumption_bn": 30.0, "eta": 1.0, "ratio0": 0.1, "alpha0": 0.8, "intermediate": 1, "anchor": "stock-image marketplace revenue and AI share"},
+    {"cat_id": "translation_voice", "share0": 0.15, "name": "Translation, interpretation and voice", "occ_codes": "27-3091;27-3011;27-3012", "us_consumption_bn": 10.0, "eta": 1.2,
+     "ratio0": 0.05, "alpha0": 0.5, "intermediate": 1, "anchor": "translation industry revenue mix"},
+    {"cat_id": "advertising", "share0": 0.03, "name": "Advertising creative", "occ_codes": "27-1011;11-2011", "us_consumption_bn": 40.0, "eta": 1.0, "ratio0": 0.15,
+     "alpha0": 0.6, "intermediate": 1, "anchor": "agency disclosures; creative production spend"},
+]
+
+# ---- traded services (spec §A.5.3; registry P.124); E, V? ---------------------------------------------------------------------
+# exporter region, category, 2024 exports $bn, FTE per $m of exports, export-serving occupations, importer weights (renormalized over modelled regions)
+SERVICES_TRADE: list[dict] = [
+    {"exporter": "IN", "category": "bpo", "export_bn": 45.0, "fte_per_musd": 25.0, "occ_codes": "43-4051;43-9061;43-3021;43-4171;43-3031",
+     "importers": "US:0.6;EU:0.2;UK:0.15;RoA:0.05", "anchor": "NASSCOM BPM revenue and headcount"},
+    {"exporter": "IN", "category": "it_services", "export_bn": 200.0, "fte_per_musd": 15.0, "occ_codes": "15-1252;15-1232;15-1244;15-1211;15-1299",
+     "importers": "US:0.62;EU:0.2;UK:0.15;JP:0.03", "anchor": "NASSCOM IT services exports"},
+    {"exporter": "RoA", "category": "bpo", "export_bn": 40.0, "fte_per_musd": 28.0, "occ_codes": "43-4051;43-9061;43-3021;43-4171",
+     "importers": "US:0.7;EU:0.1;UK:0.1;SG:0.1", "anchor": "IBPAP (Philippines) revenue and headcount"},
+    {"exporter": "RoA", "category": "it_services", "export_bn": 15.0, "fte_per_musd": 15.0, "occ_codes": "15-1252;15-1232;15-1211",
+     "importers": "US:0.6;EU:0.2;JP:0.1;SG:0.1", "anchor": "Philippines and Vietnam IT exports"},
+    {"exporter": "EU", "category": "bpo", "export_bn": 15.0, "fte_per_musd": 12.0, "occ_codes": "43-4051;43-9061;43-3021",
+     "importers": "US:0.4;UK:0.4;CN:0.05;JP:0.05;RoA:0.1", "anchor": "Eurostat ITS other business services (Poland, Romania, Portugal)"},
+]
+
 
 # ---- self-employed and platform workforce (spec §A.5.1; FIXTURE until the CPS / Nonemployer ingest runs) ------------------
 # share of an occupation's workers who are self-employed (incorporated + unincorporated), by SOC major group; E, V? (CPS-based recollection)
@@ -139,6 +205,14 @@ def approval_paths_frame() -> pl.DataFrame:
 
 def applications_frame() -> pl.DataFrame:
     return pl.DataFrame([{**a, "source_tag": "spec v0.3 §A.8 catalogue (provisional timings are E, V?)"} for a in APPLICATIONS])
+
+
+def content_categories_frame() -> pl.DataFrame:
+    return pl.DataFrame([{**c, "source_tag": "E (spec v0.3 §A.4, V? pending §A.10 verification)"} for c in CONTENT_CATEGORIES])
+
+
+def services_trade_frame() -> pl.DataFrame:
+    return pl.DataFrame([{**r, "source_tag": "E (spec v0.3 §A.5.3, V?: BPM6 and industry statistics pending)"} for r in SERVICES_TRADE])
 
 
 def self_employed_frame(occ: pl.DataFrame, regions: pl.DataFrame | None, occ_region: pl.DataFrame | None) -> tuple[pl.DataFrame, dict]:

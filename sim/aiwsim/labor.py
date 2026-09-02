@@ -14,3 +14,5 @@ class Channels:
     ai_investment: bool = True
     embodied: bool = True      # spec v0.3 §A.3 embodied channels
     adjacent: bool = True      # spec v0.3 §A.3.5 adjacent and hardware-production employment
+    output_substitution: bool = True   # spec v0.3 §A.4
+    traded_services: bool = True       # spec v0.3 §A.5.3

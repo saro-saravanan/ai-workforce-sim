@@ -2,12 +2,23 @@
   "schema_version": "0.2",
   "id": "preset-goldman-2023",
   "name": "Preset: Goldman Sachs 2023",
-  "description": "Report-replication preset (spec §8.4). Default feasibility, near-unit-elastic output demand with high pass-through of cost savings to prices, historical reinstatement, slightly higher intensity; reproduces GDP about +7% over ten years with employment roughly flat, which is the report's narrative.",
+  "description": "Report-replication preset (spec \u00a78.4). Default feasibility, near-unit-elastic output demand with high pass-through of cost savings to prices, historical reinstatement, slightly higher intensity; reproduces GDP about +7% over ten years with employment roughly flat, which is the report's narrative. The v0.3 application layer (embodied automation, output substitution, traded services) is switched off: the study modelled generative AI on tasks only.",
   "parent": "baseline",
   "preset": true,
   "levers": {
-    "adoption": { "intensity_ceiling": 0.75 },
-    "labor": { "reinstatement_ratio": 0.6, "demand_elasticity_scale": 1.1, "price_pass_through": 0.9 }
+    "adoption": {
+      "intensity_ceiling": 0.75
+    },
+    "labor": {
+      "reinstatement_ratio": 0.6,
+      "demand_elasticity_scale": 1.1,
+      "price_pass_through": 0.9
+    },
+    "applications": {
+      "enabled": false
+    }
   },
-  "ensemble": { "mechanisms": "central" }
+  "ensemble": {
+    "mechanisms": "central"
+  }
 }

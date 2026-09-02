@@ -17,6 +17,7 @@ BLOCKS: dict[str, tuple[list[str], float]] = {
     "friction": (["P.09", "P.49.small", "P.49.mid", "P.50", "P.51"], 0.6),
     "labor_institutions": (["P.73", "P.74", "P.69", "P.63", "P.64"], 0.4),
     "hardware_economics": (["P.113", "P.115.driving", "P.117", "P.108.driving", "P.108.manip"], 0.6),   # spec v0.3 §A.7
+    "product_preferences": (["P.125", "P.127.level", "P.126.q1"], 0.6),                                 # spec v0.3 §A.7
 }
 NEGATIVE_PAIRS = [("P.01", "P.04")]   # faster capability, faster price decline (spec §7.1)
 
@@ -26,6 +27,7 @@ SAMPLED: list[str] = [
     "P.29", "P.34.other_cognitive", "P.34.interpersonal", "P.35", "P.40", "P.42", "P.49.small", "P.49.mid",
     "P.50", "P.51", "P.53", "P.60_scale", "P.61", "P.62", "P.63", "P.64", "P.69", "P.73", "P.74", "P.83", "P.87", "P.56",
     "P.100", "P.101", "P.107", "P.108.driving", "P.108.manip", "P.113", "P.115.driving", "P.117", "P.121",
+    "P.125", "P.126.q1", "P.127.level", "P.128",
 ]
 
 ENSEMBLE_AXES: dict[str, dict[str, dict[str, float]]] = {
@@ -33,6 +35,7 @@ ENSEMBLE_AXES: dict[str, dict[str, dict[str, float]]] = {
     "reinstatement": {"acemoglu_low": {"P.61": 0.15}, "historical": {"P.61": 0.6}},
     "passthrough": {"low": {"P.74": 0.15, "P.53": 0.4}, "mid": {"P.74": 0.4, "P.53": 0.8}},
     "hardware": {"automotive": {"P.113": 0.08}, "electronics": {"P.113": 0.20}},     # spec v0.3 §A.7 learning-rate axis
+    "authenticity": {"persistent": {"P.127.half_life_years": 1e6}, "eroding": {"P.127.half_life_years": 8.0}},   # spec v0.3 §A.4, §A.7
 }
 
 
@@ -42,7 +45,8 @@ def cells() -> list[dict[str, Any]]:
         for r, rv in ENSEMBLE_AXES["reinstatement"].items():
             for pth, pv in ENSEMBLE_AXES["passthrough"].items():
                 for hw, hv in ENSEMBLE_AXES["hardware"].items():
-                    out.append({"id": f"{d}|{r}|{pth}|{hw}", "values": {**dv, **rv, **pv, **hv}})
+                    for au, av in ENSEMBLE_AXES["authenticity"].items():
+                        out.append({"id": f"{d}|{r}|{pth}|{hw}|{au}", "values": {**dv, **rv, **pv, **hv, **av}})
     return out
 
 
@@ -163,8 +167,10 @@ def draw_parameters(p: Params, n: int, seed: int, ensemble: str = "all", correla
         for i in range(1, n):
             for k, val in cs[(i - 1) % len(cs)]["values"].items():
                 if k not in values:
-                    base = p.get(k, 1.0)
-                    values[k] = np.full(n, float(base) if not isinstance(base, dict) else 1.0)
+                    base = _current(p, k)
+                    if base is None:
+                        b0 = p.get(k, 1.0); base = float(b0) if not isinstance(b0, dict) else 1.0
+                    values[k] = np.full(n, float(base))
                 values[k][i] = val
     else:
         cell_ids = ["central"] * n

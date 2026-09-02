@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE",
   "notes": "Replaced by the OEWS occupation x industry matrix (ingest/oews.py) mapped to the 20 sectors of spec §1.2 listed in data/fixtures/sectors_20.csv; labor_cost_share from BEA I-O, consumption_share from CPI relative importance.",
-  "built_at": "2026-09-02T00:52:29+00:00",
+  "built_at": "2026-09-02T13:11:33+00:00",
   "output": "data/processed/sectors.csv",
   "extra": {}
 }

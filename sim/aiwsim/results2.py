@@ -199,6 +199,17 @@ def explain_notes(inp: Inputs, o: BatchOutput, conf: dict[str, Any]) -> list[str
     tot_lost = max(lay + unh + cut, 1.0)
     notes.append(f"Of {tot_lost/1e6:.1f}M FTE jobs below baseline by {q[t_end]}, {100*unh/tot_lost:.0f}% come through positions not refilled after attrition, "
                  f"{100*lay/tot_lost:.0f}% through layoffs, and {100*cut/tot_lost:.0f}% through hours cut for self-employed and platform workers.")
+    if o.content_share:
+        shares = {c: 100 * v[0, t_end] for c, v in o.content_share.items()}
+        top = sorted(shares.items(), key=lambda kv: -kv[1])[:3]
+        notes.append("Output substitution (spec v0.3): AI-produced content takes " + ", ".join(f"{100*v/100:.0f}% of {c}" for c, v in top)
+                     + f" spending by {q[t_end]} at the central authenticity premium; consumer-surplus proxy ${o.consumer_surplus[0, t_end]:.0f}bn/yr, AI-content revenue ${o.ai_content_revenue[0, t_end]:.0f}bn/yr.")
+    if o.trace.get("export_serving_fte"):
+        ex = {x: v for x, v in o.trace["export_serving_fte"].items() if v > 0}
+        if ex and len(o.order) > 1:
+            hit = {x: 100 * o.regions[x].trade_share[0, t_end] for x in ex if x in o.regions}
+            notes.append("Traded services (spec v0.3): export-serving employment " + ", ".join(f"{x} {v/1e6:.1f}M" for x, v in ex.items())
+                         + "; displacement through importers' automation by " + q[t_end] + ": " + ", ".join(f"{x} {v:.2f}% of employment" for x, v in hit.items()) + ".")
     if o.emb_share.size and o.emb_share[0, t_end] > 1e-4:
         fl = {c: float(v[0, t_end]) for c, v in o.fleet.items()}
         notes.append(f"Embodied AI (spec v0.3) displaces {100*o.emb_share[0, t_end]:.1f}% of U.S. task-hours by {q[t_end]} ({100*o.emb_share[0, i30]:.1f}% by {q[i30]}); "
@@ -278,6 +289,12 @@ def region_series(ro) -> dict[str, Any]:
         "fleet_stock": {c: pct(v, 1.0, 0) for c, v in ro.fleet.items()},
         "coverage": {c: pct(v, 1.0, 3) for c, v in ro.coverage.items()},
         "approval_share": {c: pct(np.repeat(v[None, :], 2, axis=0), 1.0, 3) for c, v in ro.approval.items()},   # draw-independent: all percentiles equal
+        # ---- Phase 7: output substitution and traded services (spec §A.4, §A.5.3) ----
+        "ai_content_share": {c: pct(v, 100.0, 2) for c, v in ro.content_share.items()},
+        "content_consumption_ratio": {c: pct(v, 1.0, 3) for c, v in ro.content_q.items()},
+        "ai_content_revenue_bn": pct(ro.ai_content_revenue, 1.0, 2) if ro.ai_content_revenue.size else {},
+        "consumer_surplus_proxy_bn": pct(ro.consumer_surplus, 1.0, 2) if ro.consumer_surplus.size else {},
+        "traded_services_displacement_share": pct(ro.trade_share, 100.0, 3) if ro.trade_share.size else {},
     }
 
 
@@ -330,11 +347,20 @@ def applications_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[st
             if not ro.D_emb.size:
                 continue
             N0m = ro.N0[mask]                                                             # [n_m, n_q]
-            De = ro.D_emb[0][mask]                                                        # [n_m, n_q]
+            if app.family == "embodied":
+                De = ro.D_emb[0][mask]
+            elif app.family == "traded":
+                De = ro.D_trade[0][mask] if ro.D_trade.size else np.zeros_like(N0m)
+            elif app.family == "output":
+                cid = app.classes[0]
+                sh = ro.content_share.get(cid); qq = ro.content_q.get(cid)
+                De = np.repeat((1.0 - (1.0 - sh[0]) * qq[0])[None, :], N0m.shape[0], axis=0) if sh is not None else np.zeros_like(N0m)   # human output lost vs baseline
+            else:
+                De = ro.D_[0][mask]                                                       # software channel (central)
             tot = np.maximum(N0m.sum(axis=0), 1.0)
             disp = (De * N0m).sum(axis=0) / tot
             primary = next((c for c in app.classes if c in ro.coverage), None)          # gates of the primary (first-listed) class
-            cov = ro.coverage[primary][0] if primary else np.zeros(len(q))
+            cov = ro.coverage[primary][0] if primary else (ro.content_share[app.classes[0]][0] if app.family == "output" and app.classes[0] in ro.content_share else np.zeros(len(q)))
             appr = ro.approval[primary] if primary and primary in ro.approval else np.zeros(len(q))
             def first(arr: np.ndarray, thr: float) -> str | None:
                 idx = np.flatnonzero(arr >= thr)
@@ -363,7 +389,7 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "fitted": o.trace.get("fitted"), "task_groups": o.trace.get("task_groups"), "validity": validity(o),
             "headline_definition": "FTE jobs including self-employed and platform workers (spec v0.3 §A.5.1); payroll-only employment is not separately tracked",
             "channels_task_hours": o.trace.get("channels_task_hours"), "self_employed_fte": o.trace.get("self_employed_fte"),
-            "embodied_on": o.trace.get("embodied_on")}
+            "embodied_on": o.trace.get("embodied_on"), "content_categories": o.trace.get("content_categories"), "export_serving_fte": o.trace.get("export_serving_fte")}
     series = {x: region_series(o.regions[x]) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})

@@ -182,6 +182,25 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
                 "coverage binds until fleets catch up with profitable-feasible hours (spec v0.3 §A.3.3–A.3.4).",
                 "medium", 0.35 + min(0.5, (e40 - e30) / 8), {"share_2030": e30, "share_2040": e40, "fleet_2040": fleets}, "employment_pct_vs_baseline")
 
+    # 8c. Output substitution (Phase 7): where AI-made content takes the market.
+    cs = blk.get("ai_content_share") or {}
+    if cs:
+        shares = {c: _at(v, t_end) for c, v in cs.items()}
+        top = max(shares.items(), key=lambda kv: kv[1])
+        cs_bn = _at(blk.get("consumer_surplus_proxy_bn", {}), t_end) if blk.get("consumer_surplus_proxy_bn") else 0.0
+        add("output_substitution", "AI-made content takes market share where authenticity matters least",
+            f"By {q_end}, AI-produced output holds {top[1]:.0f}% of {top[0]} spending in {region} (highest category); " + ", ".join(f"{c} {v:.0f}%" for c, v in shares.items() if c != top[0])
+            + f". Consumer-surplus proxy ${cs_bn:.0f}bn/yr (an accounting quantity at baseline prices, not welfare).",
+            "A logit share in relative price and quality with an authenticity premium that persists or erodes (structural axis); human-produced output shrinks by the share, "
+            "and creators' own AI tools cut hours per unit on top (spec v0.3 §A.4).",
+            "low" if doc["meta"].get("ensemble") == "all" else "medium", 0.3 + min(0.5, top[1] / 80), {"shares_pct": shares, "consumer_surplus_bn": cs_bn}, "employment_pct_vs_baseline")
+    ts = blk.get("traded_services_displacement_share")
+    if ts and _at(ts, t_end) > 0.05:
+        add("traded_services", "Automation abroad lands on exporters' workers",
+            f"Automation in importing regions displaces {_at(ts, t_end):.2f}% of {region} employment by {q_end} through exported business and IT services.",
+            "Export-serving workers face the importers' task displacement instead of the local one (spec v0.3 §A.5.3); the channel reaches low-wage exporters before robots do.",
+            "medium", 0.4 + min(0.4, _at(ts, t_end) / 2), {"traded_share_pct": _at(ts, t_end)}, "employment_pct_vs_baseline")
+
     # 9. Sign confidence.
     conf = doc.get("confidence", {}).get("employment_pct_vs_baseline", {}).get(q_end)
     if conf:

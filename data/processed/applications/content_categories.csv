@@ -1,0 +1,7 @@
+cat_id,share0,name,occ_codes,us_consumption_bn,eta,ratio0,alpha0,intermediate,anchor,source_tag
+video,0.005,Motion picture and video,27-2011;27-2012;27-4011;27-4031;27-4032;27-1014;27-4012,150.0,0.8,0.2,1.5,0,AI-generated share of new uploads and releases; guild agreements,"E (spec v0.3 §A.4, V? pending §A.10 verification)"
+music,0.01,Sound recording and music,27-2042;27-2041;27-4014,20.0,0.8,0.15,1.8,0,AI-generated share of streams and uploads,"E (spec v0.3 §A.4, V? pending §A.10 verification)"
+text,0.02,"Book, periodical and news publishing",27-3043;27-3041;27-3023;27-3042,40.0,0.6,0.1,1.2,0,AI-generated share of new titles and articles,"E (spec v0.3 §A.4, V? pending §A.10 verification)"
+image_design,0.05,"Graphic design, illustration and photography",27-1024;27-1013;27-4021;27-1021;27-1012,30.0,1.0,0.1,0.8,1,stock-image marketplace revenue and AI share,"E (spec v0.3 §A.4, V? pending §A.10 verification)"
+translation_voice,0.15,"Translation, interpretation and voice",27-3091;27-3011;27-3012,10.0,1.2,0.05,0.5,1,translation industry revenue mix,"E (spec v0.3 §A.4, V? pending §A.10 verification)"
+advertising,0.03,Advertising creative,27-1011;11-2011,40.0,1.0,0.15,0.6,1,agency disclosures; creative production spend,"E (spec v0.3 §A.4, V? pending §A.10 verification)"

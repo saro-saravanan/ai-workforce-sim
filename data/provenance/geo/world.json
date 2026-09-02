@@ -13,7 +13,7 @@
   ],
   "status": "real",
   "notes": "241 features, 2.16 MB. 1:50m used because Singapore is absent at 1:110m (contracts §13 says 110m; deviation recorded here).",
-  "built_at": "2026-09-02T00:52:30+00:00",
+  "built_at": "2026-09-02T13:11:34+00:00",
   "output": "data/processed/geo/world.geojson",
   "extra": {
     "extra_urls": [

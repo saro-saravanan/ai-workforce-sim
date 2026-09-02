@@ -1,0 +1,17 @@
+{
+  "table": "applications/content_categories",
+  "source": "spec v0.3 §A.4 output-substitution categories (authors' estimates, V?)",
+  "source_url": "docs/model-spec-v0.3-applications.md",
+  "license": "n/a (estimates)",
+  "pulled_at": "2026-09-02",
+  "commit": "",
+  "sha256": "bda6c074d1adc4213a44f891041aee8f92c205c7639ed265da5eee6b94431aa1",
+  "transformations": [
+    "one row per category: target occupations, 2024 U.S. consumption at baseline prices, own-price elasticity, AI/human price ratio 2024, authenticity premium level, intermediate flag"
+  ],
+  "status": "FIXTURE (E: authors' estimates, spec v0.3)",
+  "notes": "Consumption, elasticities, price ratios and authenticity levels are E; replace with BEA PCE, CPI components, platform AI-share statements and willingness-to-pay surveys (§A.10).",
+  "built_at": "2026-09-02T13:11:34+00:00",
+  "output": "data/processed/applications/content_categories.csv",
+  "extra": {}
+}

@@ -49,6 +49,12 @@ LEVER_LABELS: dict[str, tuple[str, str, str, str]] = {
     "levers.applications.hardware.utilization_scale": ("Hardware utilization (scale)", "×", "P.115", "cost per task-unit (spec v0.3 §A.3.2)"),
     "levers.applications.hardware.unit_price_scale": ("Hardware unit price 2025 (scale)", "×", "P.110", "cost per task-unit (spec v0.3 §A.3.2)"),
     "levers.applications.hardware.ramp_max_growth_per_year": ("Production ramp cap", "/yr", "P.117", "deployment speed (spec v0.3 §A.3.3)"),
+    "levers.applications.enabled": ("Application layer (v0.3) on", "", "", "embodied, output-substitution and traded-services channels (spec v0.3)"),
+    "levers.applications.content.authenticity": ("Authenticity premium", "", "P.127", "output substitution (spec v0.3 §A.4)"),
+    "levers.applications.content.authenticity_level_scale": ("Authenticity premium level (scale)", "×", "P.127", "output substitution (spec v0.3 §A.4)"),
+    "levers.applications.content.licensing_regime": ("Content licensing regime", "", "P.128", "AI content price and quality growth (spec v0.3 §A.4)"),
+    "levers.applications.content.price_sensitivity": ("Content price sensitivity γ", "", "P.125", "output substitution (spec v0.3 §A.4)"),
+    "levers.applications.trade.services_exposure_scale": ("Services-trade exposure (scale)", "×", "P.124", "traded services (spec v0.3 §A.5.3)"),
     "levers.applications.platform_labor": ("Platform labor classification", "", "P.123", "self-employed margin (spec v0.3 §A.3.6)"),
 }
 POLICY_LABELS = {
