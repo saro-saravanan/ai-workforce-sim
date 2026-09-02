@@ -40,7 +40,7 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 | [docs/contracts.md](docs/contracts.md) | Contracts between packages: input tables, results document, API, CLI, web state, chat, insights, briefs, static export |
 | [docs/data-inventory.md](docs/data-inventory.md) | Every dataset with source, license, coverage, access method, and gaps |
 | [docs/risks.md](docs/risks.md) | Risks and assumptions ranked by how much they could change conclusions, with their status after the build |
-| [docs/findings-phase1.md](docs/findings-phase1.md) … [phase5](docs/findings-phase5.md) | What the model said after each phase, what surprised us, what we do not trust yet |
+| [docs/findings-phase1.md](docs/findings-phase1.md) … [phase7](docs/findings-phase7.md) | What the model said after each phase, what surprised us, what we do not trust yet |
 | [docs/wireframes.md](docs/wireframes.md) | The wireframes the views were built from |
 | [scenarios/](scenarios/) | `schema.json`, `baseline.json`, presets (Acemoglu 2024, Goldman Sachs 2023, IMF 2024), and the example what-if |
 
@@ -74,5 +74,7 @@ The build sandbox could reach only GitHub, so occupation tasks, exposure, employ
 3. EU and Asia, AI supply-side actors, cross-region spillover
 4. Chat interface, insight generation, shareable briefs
 5. Polish, public demo, methodology write-up
+6. v0.3: embodied automation (robotaxis, robots), self-employed and platform workers
+7. v0.3: output substitution (AI-made content), traded services, full application catalogue
 
 Each phase ended with a "findings so far" note.
