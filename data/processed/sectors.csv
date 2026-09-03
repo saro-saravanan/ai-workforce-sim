@@ -1,21 +1,21 @@
 sector_code,title,labor_cost_share,labor_share_va,demand_elasticity,tradable,friction,consumption_share,source_tag
-11,"Agriculture, Forestry, Fishing and Hunting",0.2,0.35,0.5,1,1.0,0.00877,E (authors' estimate; BEA use table pending)
-21,"Mining, Quarrying, and Oil and Gas Extraction",0.15,0.25,0.5,1,1.0,0.00877,E (authors' estimate; BEA use table pending)
-22,Utilities,0.15,0.3,0.3,0,1.0,0.02632,E (authors' estimate; BEA use table pending)
-23,Construction,0.35,0.65,0.8,0,1.0,0.00877,E (authors' estimate; BEA use table pending)
-31-33,Manufacturing,0.2,0.55,1.0,1,1.0,0.19298,E (authors' estimate; BEA use table pending)
-42,Wholesale Trade,0.4,0.55,0.8,0,1.0,0.04386,E (authors' estimate; BEA use table pending)
-44-45,Retail Trade,0.45,0.6,0.8,0,1.0,0.08772,E (authors' estimate; BEA use table pending)
-48-49,Transportation and Warehousing,0.35,0.65,0.8,0,1.0,0.03509,E (authors' estimate; BEA use table pending)
-51,Information,0.25,0.4,1.2,1,1.0,0.04386,E (authors' estimate; BEA use table pending)
-52,Finance and Insurance,0.3,0.45,0.8,1,1.0,0.07895,E (authors' estimate; BEA use table pending)
-53,Real Estate and Rental and Leasing,0.1,0.1,0.5,0,1.0,0.14035,E (authors' estimate; BEA use table pending)
-54,"Professional, Scientific, and Technical Services",0.5,0.7,1.0,1,1.0,0.02632,E (authors' estimate; BEA use table pending)
-55,Management of Companies and Enterprises,0.6,0.75,0.6,0,1.0,0.0,E (authors' estimate; BEA use table pending)
-56,Administrative and Support and Waste Management and Remediation Services,0.55,0.75,0.9,0,1.0,0.01754,E (authors' estimate; BEA use table pending)
-61,Educational Services,0.65,0.85,0.4,0,1.0,0.01754,E (authors' estimate; BEA use table pending)
-62,Health Care and Social Assistance,0.55,0.75,0.4,0,1.0,0.14035,E (authors' estimate; BEA use table pending)
-71,"Arts, Entertainment, and Recreation",0.4,0.6,1.0,0,1.0,0.01754,E (authors' estimate; BEA use table pending)
-72,Accommodation and Food Services,0.35,0.65,0.9,0,1.0,0.05263,E (authors' estimate; BEA use table pending)
-81,Other Services (except Public Administration),0.45,0.65,0.8,0,1.0,0.03509,E (authors' estimate; BEA use table pending)
-92,Public Administration,0.6,0.75,0.2,0,1.0,0.01754,E (authors' estimate; BEA use table pending)
+11,"Agriculture, Forestry, Fishing and Hunting",0.1251,0.2904,0.5,1,1.0,0.01143,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+21,"Mining, Quarrying, and Oil and Gas Extraction",0.135,0.2416,0.5,1,1.0,0.00002,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+22,Utilities,0.1713,0.2493,0.3,0,1.0,0.01623,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+23,Construction,0.3186,0.6137,0.8,0,1.0,0.02007,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+31-33,Manufacturing,0.1912,0.4761,1.0,1,1.0,0.23777,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+42,Wholesale Trade,0.2788,0.525,0.8,0,1.0,0.0,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+44-45,Retail Trade,0.3348,0.5487,0.8,0,1.0,0.00071,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+48-49,Transportation and Warehousing,0.3222,0.6029,0.8,0,1.0,0.01844,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+51,Information,0.2244,0.3831,1.2,1,1.0,0.03791,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+52,Finance and Insurance,0.2712,0.5106,0.8,1,1.0,0.06836,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+53,Real Estate and Rental and Leasing,0.038,0.0551,0.5,0,1.0,0.14278,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+54,"Professional, Scientific, and Technical Services",0.4657,0.694,1.0,1,1.0,0.01358,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+55,Management of Companies and Enterprises,0.5642,0.8905,0.6,0,1.0,0.0,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+56,Administrative and Support and Waste Management and Remediation Services,0.4243,0.709,0.9,0,1.0,0.0062,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+61,Educational Services,0.5421,0.8039,0.4,0,1.0,0.02086,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+62,Health Care and Social Assistance,0.4956,0.8069,0.4,0,1.0,0.1683,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+71,"Arts, Entertainment, and Recreation",0.3147,0.5737,1.0,0,1.0,0.01823,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+72,Accommodation and Food Services,0.3489,0.676,0.9,0,1.0,0.06139,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+81,Other Services (except Public Administration),0.4074,0.7213,0.8,0,1.0,0.04099,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+92,Public Administration,0.4724,0.7737,0.2,0,1.0,0.11674,"real:BEA_use_2024 (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"

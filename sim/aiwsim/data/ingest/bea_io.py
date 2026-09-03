@@ -100,7 +100,10 @@ def parse_use_table_api(path: Path) -> dict[str, Any]:
     rows are {RowCode, ColCode, DataValue, ...}; commodity rows by industry columns, value-added rows V001/T018 and the final-use column F010."""
     import json
     payload = json.loads(Path(path).read_text())
-    data = payload.get("BEAAPI", {}).get("Results", {}).get("Data", [])
+    res = payload.get("BEAAPI", {}).get("Results", {})
+    if isinstance(res, list):                       # the API wraps a single result set in a list
+        res = res[0] if res else {}
+    data = res.get("Data", [])
     if not data:
         raise ValueError(f"no Data rows in {path}: {str(payload)[:200]}")
     codes20 = ["11", "21", "22", "23", "31-33", "42", "44-45", "48-49", "51", "52", "53", "54", "55", "56", "61", "62", "71", "72", "81", "92"]
@@ -123,7 +126,7 @@ def parse_use_table_api(path: Path) -> dict[str, Any]:
                 continue
             if sec_j:
                 use[sec_i][sec_j] += v
-            elif cc.upper() == "F010":
+            elif cc.upper() == "F010" or cc.upper().startswith("F10"):      # personal consumption expenditures (F010, or its F10x components)
                 pce[sec_i] += v
     lcs = {s: (comp[s] / out[s] if out[s] > 0 else None) for s in codes20}
     pce_tot = sum(x for x in pce.values() if x > 0) or 1.0

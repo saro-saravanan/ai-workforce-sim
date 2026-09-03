@@ -1,0 +1,17 @@
+{
+  "table": "io_direct_requirements",
+  "source": "BEA summary use table 2024, producer values",
+  "source_url": "https://www.bea.gov/industry/input-output-accounts-data",
+  "license": "public domain (U.S. government work)",
+  "pulled_at": "2026-09-03",
+  "commit": "",
+  "sha256": "dce09d171d489fbbc27fead15cd141b1c0a3121e18fccf2987256a40289da9b7",
+  "transformations": [
+    "intermediate use of commodity i by industry j / total industry output of j, commodities and industries mapped to the 20 NAICS sectors"
+  ],
+  "status": "real",
+  "notes": "a_ij used by the engine's input-output cost propagation (lever macro.io_propagation)",
+  "built_at": "2026-09-03T22:28:10+00:00",
+  "output": "data/processed/io_direct_requirements.csv",
+  "extra": {}
+}
