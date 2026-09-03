@@ -30,7 +30,7 @@ jobs:
           BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
         run: |
           set -e
-          mkdir -p data/external/bea
+          mkdir -p data/external/bea && rm -f data/external/bea/*
           UA="Mozilla/5.0 (X11; Linux x86_64) aiwsim-data-fetch"
           is_xlsx() { [ -s "$1" ] && [ "$(stat -c %s "$1")" -gt 100000 ] && file "$1" | grep -qiE "zip|excel|microsoft"; }
           echo "== Internet Archive index of the BEA io-annual directory (real file names)"
@@ -49,18 +49,7 @@ jobs:
               if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live $f"; break; fi; rm -f "data/external/bea/$f"
             done
           fi
-          # 3. the names the archive index lists, live first then the archived copy (id_ returns the raw file)
-          if [ "$ok" = "0" ] && [ -s /tmp/cdx.txt ]; then
-            for line in $(awk '{print $2"|"$3}' /tmp/cdx.txt | grep -iE "use.*(sum|summary).*xlsx" | grep -viE "detail|_det|sector" | sort -u | tail -12); do
-              ts="${line%%|*}"; u="${line##*|}"; f=$(basename "$u")
-              curl -sS -L -A "$UA" -o "data/external/bea/$f" "$u" || true
-              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live (indexed name) $u"; break; fi
-              curl -sS -L -A "$UA" -o "data/external/bea/$f" "http://web.archive.org/web/${ts}id_/$u" || true
-              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "archived copy $ts of $u" > data/external/bea/USE_TABLE_SOURCE; echo "fetched archived $u @ $ts"; break; fi
-              rm -f "data/external/bea/$f"
-            done
-          fi
-          # 4. the BEA API, when a key is configured (repository secret BEA_API_KEY): pick the summary use table at producer prices by its
+          # 3. the BEA API, when a key is configured (repository secret BEA_API_KEY): pick the summary use table at producer prices by its
           #    description, then fetch the latest year the dataset offers
           if [ "$ok" = "0" ] && [ -n "$BEA_API_KEY" ]; then
             curl -sS -A "$UA" "https://apps.bea.gov/api/data/?UserID=$BEA_API_KEY&method=GetParameterValues&DataSetName=InputOutput&ParameterName=TableID&ResultFormat=json" -o /tmp/bea_tables.json || true
@@ -93,6 +82,17 @@ jobs:
                 rm -f "data/external/bea/use_summary_${Y}_api.json"
               done
             fi
+          fi
+          # 4. the names the archive index lists (1997 onward), live first then the archived copy (id_ returns the raw file)
+          if [ "$ok" = "0" ] && [ -s /tmp/cdx.txt ]; then
+            for line in $(awk '{print $2"|"$3}' /tmp/cdx.txt | grep -iE "use.*(1997-20|2017-20).*(sum|summary).*xlsx" | grep -viE "detail|_det|sector|1963" | sort -u | tail -12); do
+              ts="${line%%|*}"; u="${line##*|}"; f=$(basename "$u")
+              curl -sS -L -A "$UA" -o "data/external/bea/$f" "$u" || true
+              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live (indexed name) $u"; break; fi
+              curl -sS -L -A "$UA" -o "data/external/bea/$f" "http://web.archive.org/web/${ts}id_/$u" || true
+              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "archived copy $ts of $u" > data/external/bea/USE_TABLE_SOURCE; echo "fetched archived $u @ $ts"; break; fi
+              rm -f "data/external/bea/$f"
+            done
           fi
           [ "$ok" = "1" ] || echo "no BEA use table found"
           ls -la data/external/bea || true
