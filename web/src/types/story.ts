@@ -132,6 +132,27 @@ export interface StoryNumbers {
 }
 
 /** GET /api/story/{hash}?region= (contracts §26) */
+export interface InvestmentRow {
+  year: number
+  capex_model_bn: number
+  capex_observed_bn: number | null
+  producer_revenue_bn: number
+  ai_spend_bn: number
+  gdp_gain_bn: number
+  productivity_gain_bn: number
+  investment_in_gdp_bn: number
+}
+
+export interface StoryInvestment {
+  paragraphs: string[]
+  rows: InvestmentRow[]
+  cumulative: Record<string, number>
+  payback_year_revenue: number | null
+  payback_year_productivity: number | null
+  chart: BarsChart & { title?: string }
+  definition: string
+}
+
 export interface StoryDocument {
   scenario_hash: string
   scenario_id: string | null
@@ -144,6 +165,7 @@ export interface StoryDocument {
   policies: StoryPolicy[]
   /** the run the policy differences are read against */
   policies_against: string | null
+  investment?: StoryInvestment | null
   caveats: string[]
   forecasts: ForecastRow[]
   glossary: Record<string, string>

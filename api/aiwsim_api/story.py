@@ -247,10 +247,11 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                   "sureness": _sure("low"), "what_changes_it": "See the futures and the policy runs below.", "chart": {"type": "futures", "items": futures}})
 
     policies = policy_runs(policy_base or doc, policy_docs or {}, region)
+    investment = investment_story(doc)
     caveats = _caveats(doc)
     return {"scenario_hash": doc["meta"]["scenario_hash"], "scenario_id": doc["meta"].get("scenario_id"), "scenario_name": doc["meta"].get("scenario_name"),
             "region": region, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
-            "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "caveats": caveats,
+            "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "investment": investment, "caveats": caveats,
             "forecasts": doc.get("forecasts", []), "glossary": GLOSSARY}
 
 
@@ -323,6 +324,48 @@ def _sources_sentence(src: dict[str, float], groups: list[tuple[str, float]], st
 
 
 STAGE_WORDS = {"model": "the model makers", "compute": "the cloud and data-centre operators", "chips": "the chip makers", "integration": "local integrators and platforms", "fabs": "the fabs", "energy": "energy suppliers"}
+
+
+def investment_story(doc: dict[str, Any]) -> dict[str, Any] | None:
+    """Investment versus returns: the capex being poured into data centres and power against what the model says AI earns and
+    what it adds to the economy. World totals, central run, from the results document's `investment` section."""
+    inv = doc.get("investment")
+    if not inv or not inv.get("rows"):
+        return None
+    rows = {r["year"]: r for r in inv["rows"]}; years = inv["years"]; y0, yN = years[0], years[-1]
+    r26 = rows.get(2026) or rows[y0]; r30 = rows.get(2030) or r26; rN = rows[yN]
+    obs = [(y, r["capex_observed_bn"]) for y, r in rows.items() if r.get("capex_observed_bn")]
+    cum = inv["cumulative_2024_to_horizon"]
+    payback = next((y for y in years if sum(rows[k]["producer_revenue_bn"] for k in years if k <= y) >= sum(rows[k]["capex_model_bn"] for k in years if k <= y)), None)
+    econ_payback = next((y for y in years if sum(rows[k]["productivity_gain_bn"] for k in years if k <= y) >= sum(rows[k]["capex_model_bn"] for k in years if k <= y)), None)
+    ratio_rev = cum["producer_revenue_bn"] / max(cum["capex_model_bn"], 1.0); ratio_prod = cum["productivity_gain_bn"] / max(cum["capex_model_bn"], 1.0)
+    def money(v: float) -> str:
+        return f"${v/1000:,.1f} trillion" if abs(v) >= 1000 else f"${v:,.0f} billion"
+    para = [
+        (f"The money going in. The four largest cloud companies spent about {money(obs[-2][1] if len(obs) > 1 else r26['capex_model_bn'])} on data centres, chips and power in {obs[-2][0] if len(obs) > 1 else y0} and have guided to about "
+        f"{money(obs[-1][1])} for {obs[-1][0]}. The model takes that path as given: {money(r26['capex_model_bn'])} in 2026, rising to {money(r30['capex_model_bn'])} a year by 2030 and flat after, "
+        f"about {money(cum['capex_model_bn'])} over {y0}–{yN}."),
+        (f"The money coming back to AI producers. In the model, employers and consumers spend {money(r26['producer_revenue_bn'])} a year on AI in 2026, {money(r30['producer_revenue_bn'])} by 2030 and "
+        f"{money(rN['producer_revenue_bn'])} by {yN}: {money(cum['producer_revenue_bn'])} over the period, {100*ratio_rev:.0f}% of the capital spent. "
+        + (f"Producers' cumulative revenue passes cumulative capex in {payback}." if payback else f"Producers' cumulative revenue never catches up with cumulative capex by {yN}.")
+        + " This is revenue for replacing and speeding up work and for AI-made content, priced at what the tokens cost; it is not the whole AI industry's sales (consumer subscriptions, advertising, search, coding assistants used as experiments, and internal use are outside the model)."),
+        (f"The return to the economy. The same AI adds about {money(r30['productivity_gain_bn'])} a year of productivity gain by 2030 and {money(rN['productivity_gain_bn'])} by {yN} across the modelled regions "
+        f"({money(cum['productivity_gain_bn'])} cumulative, {ratio_prod:.1f} times the capital spent" + (f"; the productivity gain alone repays the capex by {econ_payback}" if econ_payback else "") + "). "
+        f"Counting the data-centre build itself as output, the GDP effect is {money(rN['gdp_gain_bn'])} a year by {yN}. Most of that gain goes to the firms that adopt AI and, through lower prices, to their customers, not to the companies that built the capacity."),
+        ("How the two fit together. The investment is a bet that revenue will grow into the capacity: the capex path is front-loaded and the model's revenue follows adoption, so by construction the first years look like a bubble on a revenue-to-capex basis. "
+        "Three things can close the gap: AI revenue far above what labour substitution alone justifies (consumer and advertising businesses, or prices held well above token cost); adoption faster than the model's central pace (the Seba presets are that case); "
+        "or investors accepting that, as with railways, electricity and fibre, society earns most of the return and the builders earn a normal or poor one. The model cannot say which; it can say that the productivity return is real and large, that it lands with adopters, and that it arrives a decade after the capital."),
+    ]
+    chart_years = [y for y in (2025, 2026, 2028, 2030, 2035, 2040) if y in rows]
+    items = []
+    for y in chart_years:
+        r = rows[y]
+        items.append([f"{y} capex", r["capex_observed_bn"] if r.get("capex_observed_bn") else r["capex_model_bn"]])
+        items.append([f"{y} AI producers' revenue", r["producer_revenue_bn"]])
+        items.append([f"{y} productivity gain", r["productivity_gain_bn"]])
+    return {"paragraphs": para, "rows": [rows[y] for y in chart_years], "cumulative": cum, "payback_year_revenue": payback, "payback_year_productivity": econ_payback,
+            "chart": {"type": "bars", "title": "Per year, $bn: capital spent (observed where reported, else the model's path), AI producers' revenue, productivity gain", "items": items, "unit": "$bn"},
+            "definition": "AI producers' revenue (called AI rents by value-chain stage in the technical documents) is what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive: in the model it is exactly what employers and consumers spend on AI, split across those four stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense."}
 
 
 def _age_employment_shares(doc: dict[str, Any]) -> list[float]:
@@ -419,7 +462,7 @@ GLOSSARY = {
     "versus no AI": "compared with a world in which AI stopped improving in 2023; population and normal growth are the same in both",
     "likely range": "the middle 80% of the model's runs; one run in ten falls above it and one in ten below",
     "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
-    "AI income": "money flowing to the makers of models, computing, and chips, and to integrators",
+    "AI income (AI producers' revenue)": "what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive; in the model this equals what employers and consumers spend on AI, split by stage and allocated to the regions whose companies hold the market share; gross revenue, not profit and not economic rent in the textbook sense",
     "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",
     "jobs ledger / people ledger": "positions that exist versus people whose job was affected; a person who finds other work takes a position someone else would have had, so the two do not add up to each other",
 }
@@ -488,6 +531,14 @@ def executive_brief_md(st: dict[str, Any]) -> str:
     else:
         L.append("- Policy runs are not available for this document; the technical brief lists the levers.")
     L.append("")
+    if st.get("investment"):
+        L.append("## Investment versus returns"); L.append("")
+        for para in st["investment"]["paragraphs"]:
+            L.append(para); L.append("")
+        L.append("| Year | Capex ($bn) | AI producers' revenue ($bn) | Productivity gain ($bn) | GDP effect ($bn) |"); L.append("|---|---|---|---|---|")
+        for r in st["investment"]["rows"]:
+            L.append(f"| {r['year']} | {r['capex_observed_bn'] if r.get('capex_observed_bn') else r['capex_model_bn']:,.0f}{' (reported)' if r.get('capex_observed_bn') else ''} | {r['producer_revenue_bn']:,.0f} | {r['productivity_gain_bn']:,.0f} | {r['gdp_gain_bn']:,.0f} |")
+        L.append(""); L.append(f"*{st['investment']['definition']}*"); L.append("")
     if st.get("forecasts"):
         L.append("## How the model compares with named forecasts"); L.append("")
         L.append("| Who | Claim | Model (this run) | Verdict |"); L.append("|---|---|---|---|")
@@ -635,6 +686,12 @@ def executive_brief_html(st: dict[str, Any]) -> str:
         parts.append("<ul>" + "".join(f"<li>{e(p['sentence'])}</li>" for p in st["policies"]) + "</ul>")
     else:
         parts.append("<p>Policy runs are not available for this document.</p>")
+    if st.get("investment"):
+        inv = st["investment"]
+        parts.append("<h2>Investment versus returns</h2>" + "".join(f"<p>{e(x)}</p>" for x in inv["paragraphs"]) + chart_svg(inv["chart"]))
+        parts.append("<table><tr><th>Year</th><th>Capex ($bn)</th><th>AI producers' revenue ($bn)</th><th>Productivity gain ($bn)</th><th>GDP effect ($bn)</th></tr>"
+                     + "".join(f"<tr><td>{r['year']}</td><td>{(r['capex_observed_bn'] if r.get('capex_observed_bn') else r['capex_model_bn']):,.0f}{' (reported)' if r.get('capex_observed_bn') else ''}</td><td>{r['producer_revenue_bn']:,.0f}</td><td>{r['productivity_gain_bn']:,.0f}</td><td>{r['gdp_gain_bn']:,.0f}</td></tr>" for r in inv["rows"])
+                     + f"</table><p style='font-size:13px;color:#666'>{e(inv['definition'])}</p>")
     if st.get("forecasts"):
         parts.append("<h2>How the model compares with named forecasts</h2><table><tr><th>Who</th><th>Claim</th><th>Model (this run)</th><th>Verdict</th></tr>")
         for f in st["forecasts"]:

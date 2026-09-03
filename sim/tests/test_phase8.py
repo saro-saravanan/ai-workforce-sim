@@ -147,3 +147,18 @@ def test_employment_levels_and_layoff_reality_rows(ctx):
     t30 = q.index("2030Q4")
     assert vs["laid_off_cum"]["central"][t30] > 1.5 * us["laid_off_cum"]["central"][t30]
     assert abs(vs["employment_pct_vs_baseline"]["central"][-1] - e[-1]) < 1.0
+
+
+def test_investment_section_and_capex_rows(ctx):
+    """Investment versus returns: the capex path, the observed hyperscaler sums, producers' revenue and the economy-wide gain are all present and consistent."""
+    scen = ctx.resolve(load_scenario_by_path_or_id(ctx, "baseline"))
+    d, _ = run_scenario(ctx, scen, draws=1, with_channels=False, with_tornado=False)
+    inv = d["investment"]; rows = {r["year"]: r for r in inv["rows"]}
+    assert rows[2024]["capex_observed_bn"] and rows[2026]["capex_observed_bn"] and rows[2030]["capex_observed_bn"] is None
+    assert abs(rows[2025]["capex_model_bn"] - 400.0) < 1e-6 and rows[2026]["capex_model_bn"] > rows[2025]["capex_model_bn"]
+    assert rows[2040]["producer_revenue_bn"] > rows[2030]["producer_revenue_bn"] > rows[2026]["producer_revenue_bn"] > 0
+    assert rows[2040]["gdp_gain_bn"] >= rows[2040]["productivity_gain_bn"] > 0
+    cum = inv["cumulative_2024_to_horizon"]; assert cum["capex_model_bn"] > cum["producer_revenue_bn"] and cum["productivity_gain_bn"] > cum["capex_model_bn"]
+    shorts = {f["short"]: f for f in d["forecasts"]}
+    assert shorts["Hyperscaler capex 2026 guidance"]["model_central"] == rows[2026]["capex_model_bn"]
+    assert shorts["Frontier labs' revenue run rate, mid-2026"]["model_central"] is not None and shorts["Frontier labs' revenue run rate, mid-2026"]["verdict"] == "model lower"

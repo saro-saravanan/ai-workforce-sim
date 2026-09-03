@@ -53,6 +53,8 @@ def test_story_beats_numbers_and_forecasts(run):
     money = next(b for b in st["beats"] if b["id"] == "money")
     assert money["extra_chart"]["type"] == "bars" and len(money["extra_chart"]["items"]) >= 4 and "paid by" in money["sentence"]
     assert st["policies"] == [] and any("AI stopped improving in 2023" in c for c in st["caveats"])
+    inv = st["investment"]; assert inv and len(inv["paragraphs"]) == 4 and inv["paragraphs"][0].startswith("The money going in") and inv["chart"]["items"]
+    assert inv["payback_year_productivity"] is not None and "AI producers' revenue" in inv["definition"]
 
 
 def test_futures_and_policy_runs_from_companions(run):

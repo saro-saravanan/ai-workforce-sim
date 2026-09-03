@@ -1,5 +1,5 @@
 {
- "scenario_hash": "sha256:01373cfe2c1604915e0f1057",
+ "scenario_hash": "sha256:4b9bc62d20894c2e3a6cdcf2",
  "scenario_id": "baseline",
  "scenario_name": "Baseline: central assumptions",
  "region": "US",
@@ -1311,6 +1311,164 @@
   }
  ],
  "policies_against": "Baseline: central assumptions",
+ "investment": {
+  "paragraphs": [
+   "The money going in. The four largest cloud companies spent about $413 billion on data centres, chips and power in 2025 and have guided to about $732 billion for 2026. The model takes that path as given: $720 billion in 2026, rising to $1.1 trillion a year by 2030 and flat after, about $15.6 trillion over 2024\u20132040.",
+   "The money coming back to AI producers. In the model, employers and consumers spend $21 billion a year on AI in 2026, $155 billion by 2030 and $260 billion by 2040: $2.7 trillion over the period, 17% of the capital spent. Producers' cumulative revenue never catches up with cumulative capex by 2040. This is revenue for replacing and speeding up work and for AI-made content, priced at what the tokens cost; it is not the whole AI industry's sales (consumer subscriptions, advertising, search, coding assistants used as experiments, and internal use are outside the model).",
+   "The return to the economy. The same AI adds about $1.5 trillion a year of productivity gain by 2030 and $4.2 trillion by 2040 across the modelled regions ($36.0 trillion cumulative, 2.3 times the capital spent; the productivity gain alone repays the capex by 2032). Counting the data-centre build itself as output, the GDP effect is $4.5 trillion a year by 2040. Most of that gain goes to the firms that adopt AI and, through lower prices, to their customers, not to the companies that built the capacity.",
+   "How the two fit together. The investment is a bet that revenue will grow into the capacity: the capex path is front-loaded and the model's revenue follows adoption, so by construction the first years look like a bubble on a revenue-to-capex basis. Three things can close the gap: AI revenue far above what labour substitution alone justifies (consumer and advertising businesses, or prices held well above token cost); adoption faster than the model's central pace (the Seba presets are that case); or investors accepting that, as with railways, electricity and fibre, society earns most of the return and the builders earn a normal or poor one. The model cannot say which; it can say that the productivity return is real and large, that it lands with adopters, and that it arrives a decade after the capital."
+  ],
+  "rows": [
+   {
+    "year": 2025,
+    "capex_model_bn": 400.0,
+    "capex_observed_bn": 413.4,
+    "producer_revenue_bn": 11.3,
+    "ai_spend_bn": 11.3,
+    "gdp_gain_bn": 340.0,
+    "productivity_gain_bn": 43.4,
+    "investment_in_gdp_bn": 296.7
+   },
+   {
+    "year": 2026,
+    "capex_model_bn": 720.0,
+    "capex_observed_bn": 732.5,
+    "producer_revenue_bn": 21.3,
+    "ai_spend_bn": 21.3,
+    "gdp_gain_bn": 781.2,
+    "productivity_gain_bn": 116.2,
+    "investment_in_gdp_bn": 665.0
+   },
+   {
+    "year": 2028,
+    "capex_model_bn": 871.2,
+    "capex_observed_bn": null,
+    "producer_revenue_bn": 96.1,
+    "ai_spend_bn": 96.1,
+    "gdp_gain_bn": 1148.5,
+    "productivity_gain_bn": 488.5,
+    "investment_in_gdp_bn": 660.0
+   },
+   {
+    "year": 2030,
+    "capex_model_bn": 1054.2,
+    "capex_observed_bn": null,
+    "producer_revenue_bn": 155.0,
+    "ai_spend_bn": 155.0,
+    "gdp_gain_bn": 1988.4,
+    "productivity_gain_bn": 1467.0,
+    "investment_in_gdp_bn": 521.4
+   },
+   {
+    "year": 2035,
+    "capex_model_bn": 1054.2,
+    "capex_observed_bn": null,
+    "producer_revenue_bn": 222.9,
+    "ai_spend_bn": 222.9,
+    "gdp_gain_bn": 3642.4,
+    "productivity_gain_bn": 3265.1,
+    "investment_in_gdp_bn": 377.3
+   },
+   {
+    "year": 2040,
+    "capex_model_bn": 1054.2,
+    "capex_observed_bn": null,
+    "producer_revenue_bn": 259.9,
+    "ai_spend_bn": 259.9,
+    "gdp_gain_bn": 4497.9,
+    "productivity_gain_bn": 4203.2,
+    "investment_in_gdp_bn": 294.7
+   }
+  ],
+  "cumulative": {
+   "capex_model_bn": 15587.7,
+   "producer_revenue_bn": 2686.2,
+   "gdp_gain_bn": 43282.6,
+   "productivity_gain_bn": 35982.0
+  },
+  "payback_year_revenue": null,
+  "payback_year_productivity": 2032,
+  "chart": {
+   "type": "bars",
+   "title": "Per year, $bn: capital spent (observed where reported, else the model's path), AI producers' revenue, productivity gain",
+   "items": [
+    [
+     "2025 capex",
+     413.4
+    ],
+    [
+     "2025 AI producers' revenue",
+     11.3
+    ],
+    [
+     "2025 productivity gain",
+     43.4
+    ],
+    [
+     "2026 capex",
+     732.5
+    ],
+    [
+     "2026 AI producers' revenue",
+     21.3
+    ],
+    [
+     "2026 productivity gain",
+     116.2
+    ],
+    [
+     "2028 capex",
+     871.2
+    ],
+    [
+     "2028 AI producers' revenue",
+     96.1
+    ],
+    [
+     "2028 productivity gain",
+     488.5
+    ],
+    [
+     "2030 capex",
+     1054.2
+    ],
+    [
+     "2030 AI producers' revenue",
+     155.0
+    ],
+    [
+     "2030 productivity gain",
+     1467.0
+    ],
+    [
+     "2035 capex",
+     1054.2
+    ],
+    [
+     "2035 AI producers' revenue",
+     222.9
+    ],
+    [
+     "2035 productivity gain",
+     3265.1
+    ],
+    [
+     "2040 capex",
+     1054.2
+    ],
+    [
+     "2040 AI producers' revenue",
+     259.9
+    ],
+    [
+     "2040 productivity gain",
+     4203.2
+    ]
+   ],
+   "unit": "$bn"
+  },
+  "definition": "AI producers' revenue (called AI rents by value-chain stage in the technical documents) is what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive: in the model it is exactly what employers and consumers spend on AI, split across those four stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense."
+ },
  "caveats": [
   "Every number is a difference from a world in which AI stopped improving in 2023, not a forecast of the level of jobs or output.",
   "The headline counts jobs as full-time equivalents and includes gig and freelance work.",
@@ -1445,6 +1603,60 @@
    "verdict": "model higher"
   },
   {
+   "source_tag": "company 10-K/10-Q figures transcribed in capex.csv (real; secondary confirmation)",
+   "source": "Company reports and guidance (Alphabet, Amazon, Meta, Microsoft), calendar 2025",
+   "short": "Hyperscaler capex 2025",
+   "region": "US",
+   "year": 2025,
+   "metric": "hyperscaler_capex_bn",
+   "proxy": 0,
+   "preset_id": "",
+   "claimed": 413.0,
+   "unit": "$bn capital expenditure, four hyperscalers",
+   "note": "calendar-2025 capex of the four largest hyperscalers (data/processed/series/capex.csv); the model's capex path is a parameter (P.80), so agreement here is by construction; model quantity: the U.S. hyperscaler capex path the model assumes (P.80-P.82), central only",
+   "quarter": "2025Q4",
+   "model_central": 400.0,
+   "model_p10": 400.0,
+   "model_p90": 400.0,
+   "verdict": "model lower"
+  },
+  {
+   "source_tag": "Jul 2026 guidance via press summaries (V: page summaries 2026-09-03)",
+   "source": "Company guidance (Jul 2026 earnings calls), calendar 2026",
+   "short": "Hyperscaler capex 2026 guidance",
+   "region": "US",
+   "year": 2026,
+   "metric": "hyperscaler_capex_bn",
+   "proxy": 0,
+   "preset_id": "",
+   "claimed": 725.0,
+   "unit": "$bn capital expenditure, four hyperscalers",
+   "note": "Amazon ~200, Microsoft ~190, Alphabet 175-205, Meta 125-145; the model's 2026 capex is P.80 x (1 + P.81); model quantity: the U.S. hyperscaler capex path the model assumes (P.80-P.82), central only",
+   "quarter": "2026Q4",
+   "model_central": 720.0,
+   "model_p10": 720.0,
+   "model_p90": 720.0,
+   "verdict": "within band"
+  },
+  {
+   "source_tag": "press summaries of reported run rates (V: page summaries 2026-09-03; company figures not audited)",
+   "source": "Reported annualized revenue run rates: OpenAI ~$40bn (Jul 2026), Anthropic ~$47bn gross (Aug 2026)",
+   "short": "Frontier labs' revenue run rate, mid-2026",
+   "region": "US",
+   "year": 2026,
+   "metric": "ai_producer_revenue_bn",
+   "proxy": 1,
+   "preset_id": "",
+   "claimed": 85.0,
+   "unit": "$bn/yr revenue run rate, OpenAI and Anthropic combined (reported range 70-100)",
+   "note": "the two labs' run rates in mid-2026, before cloud, chip and integrator revenue; compared with the model's AI producers' revenue across every stage and region, which counts only what employers and consumers spend to replace or speed up work; model quantity: AI producers' value-chain revenue summed over all regions (what employers and consumers spend on AI in the model)",
+   "quarter": "2026Q2",
+   "model_central": 14.99,
+   "model_p10": 10.83,
+   "model_p90": 27.63,
+   "verdict": "model lower"
+  },
+  {
    "source_tag": "challengergray.com monthly reports (V: page summaries 2026-09-03; report PDFs not fetched)",
    "source": "Challenger, Gray & Christmas, job cut announcement reports (2025 annual; monthly through June 2026)",
    "short": "Challenger 2025, AI-cited job cuts",
@@ -1575,7 +1787,7 @@
   "versus no AI": "compared with a world in which AI stopped improving in 2023; population and normal growth are the same in both",
   "likely range": "the middle 80% of the model's runs; one run in ten falls above it and one in ten below",
   "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
-  "AI income": "money flowing to the makers of models, computing, and chips, and to integrators",
+  "AI income (AI producers' revenue)": "what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive; in the model this equals what employers and consumers spend on AI, split by stage and allocated to the regions whose companies hold the market share; gross revenue, not profit and not economic rent in the textbook sense",
   "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",
   "jobs ledger / people ledger": "positions that exist versus people whose job was affected; a person who finds other work takes a position someone else would have had, so the two do not add up to each other"
  }

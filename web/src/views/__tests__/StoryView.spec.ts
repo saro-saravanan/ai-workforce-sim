@@ -80,6 +80,14 @@ describe('StoryView', () => {
     }
   })
 
+  it('renders the investment-versus-returns section when the story carries it', async () => {
+    const { w } = await mountStory()
+    const sec = w.find('[aria-labelledby="investment-h"]')
+    expect(sec.exists()).toBe(true)
+    expect(sec.text()).toContain('The money going in')
+    expect(sec.findAll('tbody tr').length).toBe(story.investment!.rows.length)
+  })
+
   it('fills the sureness dots per beat', async () => {
     const { w } = await mountStory()
     const filled = (id: string) => w.find(`[data-beat="${id}"]`).findAll('.dot.on').length
@@ -155,7 +163,11 @@ describe('StoryView', () => {
       expect(row.find('td').attributes('title')).toBe(f.source)
       const claimed = pyFixed(f.claimed, Number.isInteger(f.claimed) ? 0 : 1)
       expect(row.text()).toContain(`${claimed} ${f.unit} by ${f.year} (${f.region})`)
-      expect(row.text()).toContain(f.model_central != null ? pyFixed(f.model_central, 1) : 'n/a')
+      expect(row.text()).toContain(
+        f.model_central != null
+          ? pyFixed(f.model_central, Number.isInteger(f.model_central) ? 0 : 1)
+          : 'n/a',
+      )
       expect(row.find('.chip').text()).toBe(f.verdict)
       expect(row.find('.chip').classes()).toContain(f.verdict === 'within band' ? 'within' : 'off')
       expect(row.find('.star').exists()).toBe(!!f.proxy)

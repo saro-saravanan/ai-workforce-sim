@@ -87,6 +87,25 @@ The sector table is still a single-sector fixture, so the breakdown is by occupa
 
 Two lessons. Targeted labour-market policies barely move the headline because the headline is set by labour demand, not by frictions; they move who bears it. Large transfers move the headline a lot in a model with no inflation, interest-rate or debt response, and the run says so in every sentence it applies to. The work-week result is arithmetic: the same hours over more heads.
 
+## 4b. Investment versus returns: how $700 billion a year of capex squares with modest AI revenue
+
+The four largest cloud companies spent about $413 billion on data centres, chips and power in 2025 and have guided to about $725 billion for 2026. The model takes that path as an input (P.80–P.82: $720 billion in 2026, rising 10% a year to about $1.05 trillion in 2029 and flat after, $15.6 trillion over 2024–2040) and uses it for compute capacity and for the construction and operations jobs of the investment channel. It never asks whether the capital earns a return. Phase 8 adds a section that puts the three quantities side by side, on every run:
+
+| Year | Capex ($bn) | AI producers' revenue ($bn) | Productivity gain ($bn) | GDP effect ($bn) |
+|---|---|---|---|---|
+| 2025 | 413 (reported) | 11 | 43 | 340 |
+| 2026 | 732 (guidance) | 21 | 116 | 781 |
+| 2030 | 1,054 (model path) | 155 | 1,467 | 1,988 |
+| 2040 | 1,054 (model path) | 260 | 4,203 | 4,498 |
+
+Three readings, in the order the section gives them.
+
+- **AI producers earn a fraction of the capital.** In the model, employers and consumers spend $21 billion a year on AI in 2026 and $260 billion by 2040: $2.7 trillion over the period, 17% of the capital spent, and producers' cumulative revenue never catches up with cumulative capex by 2040. This is revenue for replacing and speeding up work and for AI-made content, priced at what the tokens cost. It is not the AI industry's sales: consumer subscriptions, advertising, search, coding assistants used as experiments and internal use are outside the model, which is why the frontier labs' mid-2026 run rate (about $85 billion for two companies) already exceeds the model's producer revenue for the whole world in 2026 ($15 billion at 2026Q2, "model lower" on the scoreboard). The model's revenue is the labour-substitution floor, not the industry's ceiling.
+- **The economy earns the return, and early.** The same AI adds $1.5 trillion a year of productivity gain by 2030 and $4.2 trillion by 2040 across the modelled regions, $36 trillion cumulative, 2.3 times the capital; the productivity gain alone repays the capex by 2032. Counting the data-centre build itself as output, the GDP effect is $781 billion already in 2026, most of it the construction rather than productivity. That gain lands with the firms that adopt AI and, through lower prices (−4% by 2040), with their customers, not with the companies that built the capacity.
+- **What closes the gap.** The build-out is a bet that revenue grows into the capacity; the capex path is front-loaded and revenue follows adoption, so on a revenue-to-capex basis the first years look like a bubble by construction. Three things can close it: AI revenue far above what labour substitution justifies (consumer and advertising businesses, or prices held well above token cost); adoption faster than the central pace (the Seba presets); or investors accepting that, as with railways, electricity and fibre, society earns most of the return and the builders earn a normal or poor one. The model cannot say which. It can say that the productivity return is real and large, that it lands with adopters, and that it arrives about a decade after the capital.
+
+What "AI income" or "AI rents" means in these documents: the revenue of AI producers by value-chain stage (models, cloud and data centres, chips, integration), which in the model equals what employers and consumers spend on AI, split across the stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense; the story now calls it "AI producers' revenue" and the glossary says so. Risk #39 records that the model has no channel through which a poor return cuts the build-out.
+
 ## 5. Your outlook
 
 ![Your outlook](screenshots/phase8-outlook-light.png)

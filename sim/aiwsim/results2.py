@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import datetime as dt
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+import polars as pl
 
 from . import SPEC_VERSION
 from .inputs import Inputs
@@ -418,6 +420,58 @@ def _spend_groups(ro: Any, mg: list[str], top: int = 8) -> dict[str, Any]:
     return out
 
 
+def _observed_capex_by_year(inp: Inputs) -> dict[int, float]:
+    """Sum of the four hyperscalers' capex by calendar year from data/processed/series/capex.csv (calendar basis preferred, then
+    fiscal, then guidance), $bn. Empty when the series is not built."""
+    path = Path(inp.root) / "data" / "processed" / "series" / "capex.csv"
+    if not path.exists():
+        return {}
+    f = pl.read_csv(path, schema_overrides={"company": pl.Utf8, "basis": pl.Utf8})
+    pref = {"calendar": 0, "fiscal": 1, "guidance": 2}
+    best: dict[tuple[str, int], tuple[int, float]] = {}
+    for r in f.iter_rows(named=True):
+        key = (str(r["company"]), int(r["year"])); rank = pref.get(str(r.get("basis")), 3)
+        if key not in best or rank < best[key][0]:
+            best[key] = (rank, float(r["capex_bn_usd"]))
+    out: dict[int, float] = {}
+    for (_, y), (_, v) in best.items():
+        out[y] = out.get(y, 0.0) + v
+    return dict(sorted(out.items()))
+
+
+def investment_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, Any]:
+    """Investment versus returns (central run, world, annual at Q4): the capex path the model assumes, the observed hyperscaler
+    capex, what AI producers earn, what employers and consumers spend, and the economy-wide gain split into productivity and the
+    investment spending itself; with cumulative sums."""
+    q = o.quarters; years = sorted({int(x[:4]) for x in q})
+    idx = {y: max(i for i, x in enumerate(q) if int(x[:4]) == y) for y in years}
+    gdp = {}
+    if regional is not None:
+        gdp = {x: float(r.gdp_bn) for x, r in regional.regions.items()}
+    else:
+        gdp = {"US": float(getattr(inp, "gdp_2024_bn", 21433.0))}
+    cap_raw = o.trace.get("capex_annual_bn")
+    cap = np.asarray(cap_raw, dtype=float) if cap_raw is not None else np.zeros(len(q))
+    rev = np.zeros(len(q)); spend = np.zeros(len(q)); gain = np.zeros(len(q)); prod = np.zeros(len(q))
+    for x, ro in o.regions.items():
+        rev += sum(ro.rents.values())[0] if ro.rents else 0.0
+        spend += ro.ai_spend[0]
+        g = gdp.get(x, 0.0); gain += g * ro.gdp_pct[0]; prod += g * ro.tfp_pct[0]
+    obs = _observed_capex_by_year(inp)
+    rows = []
+    for y in years:
+        t = idx[y]
+        rows.append({"year": y, "capex_model_bn": round(float(cap[t]), 1), "capex_observed_bn": (round(obs[y], 1) if y in obs else None),
+                     "producer_revenue_bn": round(float(rev[t]), 1), "ai_spend_bn": round(float(spend[t]), 1),
+                     "gdp_gain_bn": round(float(gain[t]), 1), "productivity_gain_bn": round(float(prod[t]), 1),
+                     "investment_in_gdp_bn": round(float(max(gain[t] - prod[t], 0.0)), 1)})
+    cum = {k: round(float(sum((r[k] if r[k] is not None else r.get("capex_model_bn", 0.0)) for r in rows)), 1) for k in ("capex_model_bn", "producer_revenue_bn", "gdp_gain_bn", "productivity_gain_bn")}
+    return {"years": years, "rows": rows, "cumulative_2024_to_horizon": cum, "gdp_2024_bn": {k: round(v) for k, v in gdp.items()},
+            "notes": ["capex_model_bn is the U.S. hyperscaler capex path the model assumes (P.80-P.82); capex_observed_bn sums the four hyperscalers from data/processed/series/capex.csv",
+                      "producer_revenue_bn is the value-chain revenue of AI producers (model, compute, chips, integration) summed over all regions; it equals what employers and consumers spend on AI in the model",
+                      "gdp_gain_bn is the GDP effect versus the frozen-AI path at 2024 GDP; productivity_gain_bn is its TFP part; investment_in_gdp_bn is the rest, mostly the data-centre build itself counted as output"]}
+
+
 def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, Any]]:
     """Forecaster scoreboard: each named claim against the model's central value and 10–90 band for the same quantity (spec v0.3 §A.16)."""
     if apps is None or not getattr(apps, "forecasts", None):
@@ -446,6 +500,11 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
         elif m == "ai_layoffs_in_year":
             t0 = q.index(f"{int(f['year']) - 1}Q4") if f"{int(f['year']) - 1}Q4" in q else 0
             arr = ro.laid_off_cum[:, t] - ro.laid_off_cum[:, t0]; note = "model quantity: layoffs attributed to AI during the calendar year (heads)"
+        elif m == "hyperscaler_capex_bn":
+            cap = o.trace.get("capex_annual_bn"); arr = np.full(1, float(cap[t])) if cap is not None else None; note = "model quantity: the U.S. hyperscaler capex path the model assumes (P.80-P.82), central only"
+        elif m == "ai_producer_revenue_bn":
+            arr = sum(sum(r_.rents.values()) for r_ in o.regions.values() if r_.rents)[:, t] if any(r_.rents for r_ in o.regions.values()) else None
+            note = "model quantity: AI producers' value-chain revenue summed over all regions (what employers and consumers spend on AI in the model)"
         elif m == "physical_work_share":
             phys = sum(v for k, v in (o.trace.get("channels_task_hours") or {}).items() if k.startswith("emb_"))
             arr = 100 * ro.emb_share[:, t] / max(phys, 1e-6) if ro.emb_share.size and phys > 0 else None
@@ -463,7 +522,8 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
             out.append({**f, "model_central": None, "model_p10": None, "model_p90": None, "verdict": "not comparable", "note": (f.get("note", "") + "; " + note).strip("; ")}); continue
         arr = np.asarray(arr, dtype=float); central = float(arr[0]); lo = float(np.percentile(arr[1:], 10)) if arr.size > 1 else central; hi = float(np.percentile(arr[1:], 90)) if arr.size > 1 else central
         claimed = float(f["claimed"])
-        verdict = "within band" if lo - 1e-9 <= claimed <= hi + 1e-9 else ("model lower" if claimed > hi else "model higher")
+        close = abs(claimed - central) <= 0.03 * abs(claimed)                       # a central-only quantity (an input path) counts as agreement within 3%
+        verdict = "within band" if (lo - 1e-9 <= claimed <= hi + 1e-9 or close) else ("model lower" if claimed > hi else "model higher")
         out.append({**f, "quarter": yq, "model_central": round(central, 2), "model_p10": round(lo, 2), "model_p90": round(hi, 2), "verdict": verdict,
                     "note": (f.get("note", "") + ("; " + note if note else "")).strip("; ")})
     return out
@@ -544,5 +604,5 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
     return {"meta": meta, "series": series, "occupations": occs, "states": states, "regions": regions_meta, "world": world, "supply": supply,
             "channels": channels or {},
             "structural": structural(o, q) if cells else {}, "confidence": conf, "tornado": torn or {},
-            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps), "forecasts": forecasts_section(inp, o, apps),
+            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps), "forecasts": forecasts_section(inp, o, apps), "investment": investment_section(inp, o, regional),
             "explain": {"notes": explain_notes(inp, o, conf), "trace": trace(o, q), "diff": annotate_diff(diff or [])}}

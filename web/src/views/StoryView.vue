@@ -17,6 +17,7 @@ import StoryRegions from '@/components/story/StoryRegions.vue'
 import StoryFutures from '@/components/story/StoryFutures.vue'
 import PolicyCards from '@/components/story/PolicyCards.vue'
 import ForecastTable from '@/components/story/ForecastTable.vue'
+import StoryInvestment from '@/components/story/StoryInvestment.vue'
 
 const results = useResultsStore()
 const theme = useThemeStore()
@@ -153,6 +154,11 @@ function openScenario(id: string) {
           :current-id="results.scenarioId"
           @open="openScenario"
         />
+      </section>
+
+      <section v-if="story.investment" class="card block" aria-labelledby="investment-h">
+        <h3 id="investment-h">Investment versus returns</h3>
+        <StoryInvestment :investment="story.investment" :mode="theme.mode" />
       </section>
 
       <section class="card block" aria-labelledby="forecasts-h">
