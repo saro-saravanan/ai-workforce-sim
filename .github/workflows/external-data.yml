@@ -19,42 +19,49 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
-      - name: Discover BEA input-output files
+      - name: Fetch BEA summary use table (Supply-Use framework, producer values)
+        env:
+          BEA_URLS: ${{ github.event.inputs.bea_urls }}
+          BEA_API_KEY: ${{ secrets.BEA_API_KEY }}
         run: |
           set -e
           mkdir -p data/external/bea
           UA="Mozilla/5.0 (X11; Linux x86_64) aiwsim-data-fetch"
-          echo "== probe one candidate and show what came back"
-          curl -sS -L -A "$UA" -o /tmp/probe.bin -w "code %{http_code} type %{content_type} size %{size_download}\n" "https://apps.bea.gov/industry/xls/io-annual/Use_SUT_Framework_2017-2023_SUM.xlsx" || true
-          head -c 1500 /tmp/probe.bin; echo
-          echo "== links on the input-output accounts data page"
-          curl -sS -L -A "$UA" "https://www.bea.gov/industry/input-output-accounts-data" -o /tmp/io.html -w "code %{http_code} size %{size_download}\n" || true
-          grep -oiE 'href="[^"]*"' /tmp/io.html | grep -iE 'xls|io-annual|itable|industry/|release|\.zip|\.csv' | sort -u | head -150 || true
-          echo "== other BEA pages that may carry the files"
-          for pg in https://www.bea.gov/data/industries/input-output-accounts-data https://www.bea.gov/industry/io-annual https://apps.bea.gov/industry/Release/XLS/; do
-            curl -sS -L -A "$UA" "$pg" -o /tmp/pg.html -w "$pg code %{http_code} size %{size_download}\n" || true
-            grep -oiE 'href="[^"]*"' /tmp/pg.html | grep -iE 'xls|io-annual|\.zip|\.csv' | sort -u | head -60 || true
-          done
-          echo "== links on the io-annual directory"
-          curl -sS -L -A "$UA" "https://apps.bea.gov/industry/xls/io-annual/" -o /tmp/dir.html -w "code %{http_code} size %{size_download}\n" || true
-          grep -oiE 'href="[^"]*"' /tmp/dir.html | sort -u | head -120 || true
-      - name: Fetch BEA summary use table (Supply-Use framework, producer values)
-        run: |
-          set -e
-          UA="Mozilla/5.0 (X11; Linux x86_64) aiwsim-data-fetch"
+          is_xlsx() { [ -s "$1" ] && [ "$(stat -c %s "$1")" -gt 100000 ] && file "$1" | grep -qiE "zip|excel|microsoft"; }
+          echo "== Internet Archive index of the BEA io-annual directory (real file names)"
+          curl -sS -A "$UA" "http://web.archive.org/cdx/search/cdx?url=apps.bea.gov/industry/xls/io-annual/*&output=txt&filter=statuscode:200&collapse=urlkey&limit=400" -o /tmp/cdx.txt || true
+          awk '{print $2, $3}' /tmp/cdx.txt | sort -u | head -150 || true
           ok=0
-          for u in ${BEA_URLS:-https://apps.bea.gov/industry/xls/io-annual/Use_SUT_Framework_2017-2024_SUM.xlsx https://apps.bea.gov/industry/xls/io-annual/Use_SUT_Framework_2017-2023_SUM.xlsx https://apps.bea.gov/industry/xls/io-annual/Use_Tables_Supply-Use_Framework_2017-2023_SUM.xlsx}; do
-            f=$(basename "$u")
-            code=$(curl -sS -L -A "$UA" -o "data/external/bea/$f" -w "%{http_code}" "$u" || true)
-            sz=$(stat -c %s "data/external/bea/$f" 2>/dev/null || echo 0)
-            echo "$f -> $code ($sz bytes)"
-            if [ "$code" = "200" ] && [ "$sz" -gt 100000 ] && file "data/external/bea/$f" | grep -qi "zip\|excel\|Microsoft"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; break; fi
-            rm -f "data/external/bea/$f"
+          # 1. explicit URLs passed to the workflow
+          for u in $BEA_URLS; do
+            f=$(basename "$u"); curl -sS -L -A "$UA" -o "data/external/bea/$f" "$u" || true
+            if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched $u"; break; fi; rm -f "data/external/bea/$f"
           done
-          [ "$ok" = "1" ] || { echo "no BEA use table found (continuing so the discovery output is kept)"; }
+          # 2. live BEA candidates (the site redirects unknown paths to its home page, hence the content check)
+          if [ "$ok" = "0" ]; then
+            for f in Use_SUT_Framework_2017-2024_SUM.xlsx Use_SUT_Framework_2017-2023_SUM.xlsx IOUse_Before_Redefinitions_PRO_1997-2024_Summary.xlsx IOUse_Before_Redefinitions_PRO_1997-2023_Summary.xlsx Use_Tables_Supply-Use_Framework_2017-2023_SUM.xlsx; do
+              curl -sS -L -A "$UA" -o "data/external/bea/$f" "https://apps.bea.gov/industry/xls/io-annual/$f" || true
+              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live $f"; break; fi; rm -f "data/external/bea/$f"
+            done
+          fi
+          # 3. the names the archive index lists, live first then the archived copy (id_ returns the raw file)
+          if [ "$ok" = "0" ] && [ -s /tmp/cdx.txt ]; then
+            for line in $(awk '{print $2"|"$3}' /tmp/cdx.txt | grep -iE "use.*(sum|summary).*xlsx" | grep -viE "detail|_det|sector" | sort -u | tail -12); do
+              u="${line%%|*}"; ts="${line##*|}"; f=$(basename "$u")
+              curl -sS -L -A "$UA" -o "data/external/bea/$f" "$u" || true
+              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live (indexed name) $u"; break; fi
+              curl -sS -L -A "$UA" -o "data/external/bea/$f" "http://web.archive.org/web/${ts}id_/$u" || true
+              if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "archived copy $ts of $u" > data/external/bea/USE_TABLE_SOURCE; echo "fetched archived $u @ $ts"; break; fi
+              rm -f "data/external/bea/$f"
+            done
+          fi
+          # 4. the BEA API, when a key is configured (InputOutput dataset, TableID 259 = summary use table, producer prices)
+          if [ "$ok" = "0" ] && [ -n "$BEA_API_KEY" ]; then
+            curl -sS -A "$UA" "https://apps.bea.gov/api/data/?UserID=$BEA_API_KEY&method=GetData&DataSetName=InputOutput&TableID=259&Year=2023&ResultFormat=json" -o data/external/bea/use_summary_2023_api.json || true
+            if [ "$(stat -c %s data/external/bea/use_summary_2023_api.json)" -gt 100000 ]; then ok=1; echo "use_summary_2023_api.json" > data/external/bea/USE_TABLE_FILE; echo "fetched via API"; fi
+          fi
+          [ "$ok" = "1" ] || echo "no BEA use table found"
           ls -la data/external/bea || true
-        env:
-          BEA_URLS: ${{ github.event.inputs.bea_urls }}
       - name: Fetch BLS OEWS national industry (sector level) and national cross-industry files
         run: |
           set -e
