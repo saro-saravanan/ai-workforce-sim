@@ -126,7 +126,8 @@ def test_ai_spend_sources_add_up(ctx):
     d = _doc(ctx, "baseline")
     us = d["series"]["US"]; src = us["ai_spend_by_source_bn"]; groups = us["ai_spend_by_occupation_group_bn"]
     tot = src["total"]["central"][-1]
-    assert tot > 10 and abs(src["automation"]["central"][-1] + src["augmentation"]["central"][-1] + src["content"]["central"][-1] - tot) < 0.05 * tot + 0.5
+    parts = src["automation"]["central"][-1] + src["augmentation"]["central"][-1] + src["content"]["central"][-1] + src["consumer"]["central"][-1]
+    assert tot > 10 and abs(parts - tot) < 0.05 * tot + 0.5 and src["consumer"]["central"][-1] > 0
     soft = sum(v["central"][-1] for v in groups.values())
     assert abs(soft - (src["automation"]["central"][-1] + src["augmentation"]["central"][-1])) < 0.02 * tot + 0.5
     assert "Other groups" in groups and len(groups) <= 9 and all("p50" in v for v in groups.values())
