@@ -398,19 +398,20 @@ def _spend_sources(ro: Any) -> dict[str, Any]:
     return {"automation": pct(auto, 1.0, 2), "augmentation": pct(ro.spend_aug, 1.0, 2), "content": pct(content, 1.0, 2), "total": pct(ro.ai_spend, 1.0, 2)}
 
 
-def _spend_groups(ro: Any, mg: list[str], top: int = 8) -> list[dict[str, Any]]:
-    """Software AI spend by the occupation group whose work it replaces or speeds up, $bn/yr; the largest groups at the horizon plus 'other'."""
+def _spend_groups(ro: Any, mg: list[str], top: int = 8) -> dict[str, Any]:
+    """Software AI spend by the occupation group whose work it replaces or speeds up, $bn/yr, keyed by group title:
+    the largest groups at the horizon plus 'Other groups' (percentile dicts like every other series)."""
     if not ro.spend_by_mg.size:
-        return []
+        return {}
     tot = ro.spend_by_mg[0, :, -1]
     order = np.argsort(-tot)
-    out = []; other = np.zeros_like(ro.spend_by_mg[:, 0, :])
+    out: dict[str, Any] = {}; other = np.zeros_like(ro.spend_by_mg[:, 0, :])
     for rank, k in enumerate(order):
         if rank < top and tot[k] > 0.05:
-            out.append({"major_group": mg[k], "title": MG_TITLES.get(mg[k], mg[k]), "spend_bn": pct(ro.spend_by_mg[:, k, :], 1.0, 2)})
+            out[MG_TITLES.get(mg[k], mg[k])] = pct(ro.spend_by_mg[:, k, :], 1.0, 2)
         else:
             other = other + ro.spend_by_mg[:, k, :]
-    out.append({"major_group": "other", "title": "Other groups", "spend_bn": pct(other, 1.0, 2)})
+    out["Other groups"] = pct(other, 1.0, 2)
     return out
 
 

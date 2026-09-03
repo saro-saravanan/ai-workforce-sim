@@ -236,9 +236,9 @@ def _income_sources(doc: dict[str, Any], region: str, regions: list[str], t: int
         for k, v in (blk.get("ai_spend_by_source_bn") or {}).items():
             if k != "total":
                 src[k] = src.get(k, 0.0) + _p(v, t)
-        for g in blk.get("ai_spend_by_occupation_group_bn") or []:
-            if g["major_group"] != "other":
-                groups[g["title"]] = groups.get(g["title"], 0.0) + _p(g["spend_bn"], t)
+        for title, v in (blk.get("ai_spend_by_occupation_group_bn") or {}).items():
+            if title != "Other groups":
+                groups[title] = groups.get(title, 0.0) + _p(v, t)
     rb = doc["series"].get(region) or doc["series"]["US"]
     stages = {k: _p(v, t) for k, v in (rb.get("ai_rents_received_bn") or {}).items() if k != "total"}
     src = {k: round(v, 1) for k, v in src.items()}; stages = {k: round(v, 1) for k, v in stages.items()}
