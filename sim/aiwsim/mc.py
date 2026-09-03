@@ -77,7 +77,9 @@ def _hash_unit(keys: list[str]) -> np.ndarray:
     return out
 
 
-def build_task_groups(inp: Inputs) -> TaskGroups:
+def build_task_groups(inp: Inputs, threshold_seed: int = 0) -> TaskGroups:
+    """Task groups with their threshold hash. ``threshold_seed`` (lever capability.threshold_seed; review §2.4) re-derives ``hash_u``
+    by hashing the group key with the seed appended; 0 keeps the v0.2 hash byte for byte."""
     pres = np.round(inp.task_presence / 0.05) * 0.05
     key = np.stack([inp.task_occ, inp.task_label, inp.task_modality, inp.task_use_case, inp.task_consequence.astype(int), np.round(pres * 20).astype(int),
                     inp.task_channel], axis=1)
@@ -89,6 +91,8 @@ def build_task_groups(inp: Inputs) -> TaskGroups:
     occ = uniq[:, 0].astype(np.int64)
     starts = np.flatnonzero(np.r_[True, occ[1:] != occ[:-1]])
     keys = [f"{r[0]}|{r[1]}|{r[2]}|{r[3]}|{r[4]}|{r[5]}|{r[6]}" for r in uniq]
+    if int(threshold_seed):
+        keys = [f"{k}|seed{int(threshold_seed)}" for k in keys]
     return TaskGroups(occ=occ, weight=weight, label=uniq[:, 1].astype(np.int64), modality=uniq[:, 2].astype(np.int64), presence=uniq[:, 5] / 20.0,
                       use_case=uniq[:, 3].astype(np.int64), consequence=uniq[:, 4].astype(DTYPE), hash_u=_hash_unit(keys), seg_starts=starts,
                       seg_occ=occ[starts], n_occ=inp.n_occ, channel=uniq[:, 6].astype(np.int64))
@@ -262,7 +266,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     quarters = make_quarters(hz.get("start", "2024Q1"), hz.get("end", "2040Q4"))
     n_q = len(quarters)
     shocks = scenario.get("shocks", [])
-    tg = build_task_groups(inp)
+    tg = build_task_groups(inp, int(p.flags.get("threshold_seed", 0) or 0))
     n_occ = inp.n_occ
     levers = scenario.get("levers", {})
 
@@ -361,6 +365,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     g_emb = bp.vec("P.107", 0.3)
     i_rate = float(p.get("P.112", 0.06)); LR = bp.vec("P.113", 0.12); b_learn = -np.log2(np.clip(1.0 - LR, 1e-6, 0.999))
     g_max = bp.vec("P.117", 0.7); price_scale = float(p.flags.get("unit_price_scale", 1.0)); util_scale = float(p.flags.get("utilization_scale", 1.0))
+    floor_scale = float(p.flags.get("cost_floor_scale", 1.0))          # lever applications.hardware.cost_floor_scale (review §2.8)
     trend_scale = 1.5 - 0.5 * float(p.get("P.104", 1.0))              # baseline automation trend (spec §A.6.2): larger trend, smaller increment
     a_emb_id = {"driving": "P.100", "manip": "P.101", "fixed": "P.102", "aerial": "P.103"}
     if apps is not None:
@@ -389,7 +394,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             emb[c] = {"ik": ik, "occ": tg.occ[ik], "w": tg.weight[ik].astype(TDTYPE), "a": a_k, "theta": theta_k, "crf": crf, "price0": price0,
                       "u": u_c, "tu": tu_c, "o": o_c, "integ": integ_unit, "beta_adj": beta_adj, "L": L_c, "q0": q0,
                       "cum": np.full(D, ec.cum_production_2025 * 0.5), "prod_prev": np.full(D, q0),
-                      "R": None, "J": None, "prod_share": ec.prod_share, "cap_unit": u_c * HOURS_PER_UNIT_YEAR * tu_c}
+                      "R": None, "J": None, "prod_share": ec.prod_share, "cap_unit": u_c * HOURS_PER_UNIT_YEAR * tu_c,
+                      "floor": ec.cost_floor * floor_scale}
     automatable_emb = np.zeros((D, n_occ))
     for c, e in emb.items():
         automatable_emb += agg_sub(e["occ"], e["w"][None, :] * e["a"], n_occ)
@@ -428,6 +434,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     hazard_self = bp.col("P.121", 0.3) / 4.0; lay_conv = bp.col("P.122", 0.6)
     eps_w = bp.col("P.73", 0.3); beta_w = bp.col("P.74", 0.3)
     rho_new = bp.vec("P.61", 0.4); lag_new = int(p.get("P.62", 8))
+    eps_ent = bp.col("P.146", 0.5)[:, :, None]; lag_ent = max(1, int(p.get("P.147", 8)))   # entrant supply response (review §2.7; Phase 9)
     m_mult = bp.vec("P.87", 0.6); co = bp.vec("P.56", 0.3); jlag = int(p.get("P.84", 4))
     if p.flags.get("closure", "demand") == "no_demand_feedback":                       # Phase 9 (review §2.1): the household demand multiplier is switched off
         m_mult = np.zeros_like(m_mult)
@@ -442,6 +449,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     week_hours = float(pol.get("work_week_hours", 40) or 40); immig = float(pol.get("immigration_scale", 1.0) or 1.0)
     fin = dict(pol.get("financing") or {})
     retr_entry = retr_entry * (1.0 + 2.0 * subsidy); retr_success = min(0.95, retr_success + 0.1 * subsidy)      # E: subsidy raises entry and completion
+    mpc_by_dec = p.get("P.86"); mpc_uni = float(np.mean([float(v) for v in (mpc_by_dec.values() if isinstance(mpc_by_dec, dict) else mpc_by_dec)])) if mpc_by_dec else 0.65
     policy_on = any([subsidy > 0, wi_repl > 0, ubi_month > 0, ai_tax > 0, week_hours < 40, abs(immig - 1.0) > 1e-9])
     scarring = float(p.get("P.69", 0.15))
     reemp_rate = 0.35; exit_rate = 0.05
@@ -581,7 +589,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     N = np.repeat(N0[None, :, :, 0], D, axis=0)                                                                                  # [D, R, n_occ]
     ln_w = np.zeros((D, R, n_occ)); searching = np.zeros((D, R, n_occ)); unhired = np.zeros((D, R, n_occ)); retraining = np.zeros((D, R, retr_dur))
     lost_age = np.zeros((D, R, 4)); lost_edu = np.zeros((D, R, 4)); lost_dec = np.zeros((D, R, 10)); lost_mg = np.zeros((D, R, len(mg)))
-    disp_hist = np.zeros((D, R, n_q)); zeta_hist: list[np.ndarray] = []; U_hist: list[np.ndarray] = []
+    disp_hist = np.zeros((D, R, n_q)); zeta_hist: list[np.ndarray] = []; U_hist: list[np.ndarray] = []; lnw_hist: list[np.ndarray] = []
     cum = {k: np.zeros((D, R)) for k in ("laid", "unhired", "reemp", "retr_in", "retr_done", "exit", "retired")}
     dC_prev = np.zeros((D, R)); capex_dom = np.zeros((D, R, n_q))
     us_k = order.index("US") if "US" in order else 0
@@ -720,8 +728,10 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             price_t = e["price0"] * (e["cum"] / max(apps.classes[c].cum_production_2025, 1.0)) ** (-b_learn)               # [D]
             price_rec[c][:, t] = price_t
             annual = price_t[:, None] * e["crf"] * (1.0 + e["o"][:, None]) + e["integ"]                                   # [D, nk] $/unit-year
-            kappa_h = annual / e["cap_unit"][:, None]                                                                      # $ per worker-hour equivalent
-            kappa_rec[c][:, t] = (price_t * e["crf"] * (1.0 + e["o"])) / e["cap_unit"]
+            # cost floor (embodiment_classes.csv cost_floor_usd_per_hour × lever cost_floor_scale; review §2.8): energy, maintenance, insurance and the
+            # capital charge at scale do not learn away, so neither the cost the firm tests nor the recorded series falls below the class floor
+            kappa_h = np.maximum(annual / e["cap_unit"][:, None], e["floor"])                                              # $ per worker-hour equivalent
+            kappa_rec[c][:, t] = np.maximum((price_t * e["crf"] * (1.0 + e["o"])) / e["cap_unit"], e["floor"])
             H = np.zeros((D, R)); Rstar = np.zeros((D, R)); occPi_r = []; occZ_r = []
             for k in range(R):
                 m = tiers_r[k]
@@ -859,6 +869,14 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         shed = np.maximum(gap, 0.0)
         lay_first = phi_lay * shed * (1.0 - self_share)                              # employers who cut ahead of attrition (lever labor.layoff_first_share)
         via_attr = np.minimum(shed - lay_first, attr[:, None, :] * N * (1.0 - self_share))
+        # entrant supply response (P.146 ε, P.147 lag; review §2.7, Phase 9): the share of an occupation's attrition cut that lands on its entrant
+        # cohort is s_ent = min(1, clip(w_o(t−lag)/w_o^0, 0.5, 1.5)^ε), with w_o/w_o^0 = exp(ln_w) the occupation's wage index relative to its
+        # frozen-AI baseline at the lagged quarter (the price level is common to all occupations, so this is the relative wage that field-of-study
+        # choice responds to). Positions still close through attrition (N, unhired_cum), but fewer entrants were queued for them, so only
+        # s_ent × via_attr enters the searching pool and the cohort ledgers; the rest of the cut falls on nobody. ε = 0 reproduces the Phase 8 rule.
+        ln_w_lag = lnw_hist[-lag_ent] if len(lnw_hist) >= lag_ent else np.zeros_like(ln_w)
+        s_ent = np.minimum(np.clip(np.exp(ln_w_lag), 0.5, 1.5) ** eps_ent, 1.0)
+        ent_lost = via_attr * s_ent
         rest = shed - lay_first - via_attr
         frac_emb = np.where(D_use > 1e-9, D_emb / np.maximum(D_use, 1e-9), 0.0)
         lay_eff = (lay[:, None, :] * (1.0 - frac_emb) + lay_conv[:, None, :] * frac_emb) * epl
@@ -880,16 +898,19 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             keep = np.where(total_search > 0, np.maximum(0.0, 1.0 - (reemployed + exits + to_retrain) / np.maximum(total_search, 1e-9)), 0.0)
         N = N - via_attr - layoffs - cut + hires
         searching = searching * keep[:, :, None] + layoffs + exits_self + retrained_fail[:, :, None] * compl[None, None, :]
-        unhired = unhired * keep[:, :, None] + via_attr
+        unhired = unhired * keep[:, :, None] + ent_lost
         XS = (searching + unhired) / np.maximum(N, 1.0)
         target = -0.1 * np.log1p(XS / 0.04) + beta_w[:, None, :] * psi[:, None, :] * Ur
         ln_w = np.clip(ln_w + eps_w[:, None, :] * (target - ln_w), -2.0, 2.0)
+        lnw_hist.append(ln_w.copy())                                                 # wage index history for the entrant response lag (P.147)
+        if len(lnw_hist) > lag_ent:
+            lnw_hist.pop(0)
         ln_P = pi_p[:, 0][:, None] * (dlnc @ W_cons) + pi_p[:, 0][:, None] * dlnP_cat   # [D, R]; content categories enter the price index (spec §A.4)
 
         # ---- cohorts (U.S. occupation-cohort structure applied to every region; flagged) ----
-        lost_age += via_attr.sum(axis=2)[:, :, None] * ENTRANT_AGE[None, None, :] + (layoffs + cut) @ lay_age_w
-        lost_edu += (via_attr + layoffs + cut) @ edu_sh
-        lost_dec += via_attr @ entry_dec + (layoffs + cut) @ dec_sh
+        lost_age += ent_lost.sum(axis=2)[:, :, None] * ENTRANT_AGE[None, None, :] + (layoffs + cut) @ lay_age_w
+        lost_edu += (ent_lost + layoffs + cut) @ edu_sh
+        lost_dec += ent_lost @ entry_dec + (layoffs + cut) @ dec_sh
         back = reemployed + retrained_ok
         age_w = lost_age * REEMP_AGE_HAZARD[None, None, :]; age_w = age_w / np.maximum(age_w.sum(axis=2, keepdims=True), 1e-9)
         lost_age -= back[:, :, None] * age_w
@@ -899,7 +920,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         moved = lost_age * AGING_RATE[None, None, :]; lost_age = lost_age - moved; lost_age[:, :, 1:] += moved[:, :, :-1]
         ex_w = lost_age * EXIT_AGE_HAZARD[None, None, :]; ex_w = ex_w / np.maximum(ex_w.sum(axis=2, keepdims=True), 1e-9)
         retired = exits * ex_w[:, :, 3]
-        lost_mg += (via_attr + layoffs + cut) @ MG
+        lost_mg += (ent_lost + layoffs + cut) @ MG
 
         # ---- macro (spec §6): investment by data-center location, spend, rents, net AI trade ----
         inc = max(cap.annual_bn[t] - cap.trend_bn[t], 0.0)
@@ -936,13 +957,14 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         Wt = (N * wage_r[None] * np.exp(ln_w)).sum(axis=2) / 1e9 + jobs * AI_PRODUCTION_WAGE / 1e9 + (adj_jobs + hw_jobs) * ADJACENT_WAGE / 1e9
         dW = Wt - W0_bill[None, :, t]; dPi = (Y - Y0[None, :, t]) - dW
         # ---- policy transfers and financing (spec §6.5, minimal) ----
-        transfers = np.zeros((D, R)); cost = np.zeros((D, R))
+        transfers = np.zeros((D, R)); cost = np.zeros((D, R)); transfers_uni = np.zeros((D, R))
         mean_wage_r = wage_r[None] @ (N0t[0] / np.maximum(N0t[0].sum(axis=1, keepdims=True), 1.0)).T if False else (wage_r * N0t[0]).sum(axis=1) / np.maximum(N0t[0].sum(axis=1), 1.0)   # [R]
         if wi_repl > 0 and wi_years > 0:
             wi_stock = wi_stock * (1.0 - 1.0 / max(4.0 * wi_years, 1.0)) + reemployed                 # newly re-employed enter; leave after wi_years
             transfers += wi_repl * scarring * mean_wage_r[None, :] * wi_stock / 1e9
         if ubi_month > 0:
-            transfers += ubi_month * 12.0 * (N0t[0].sum(axis=1) / 0.6)[None, :] / 1e9                 # adults ≈ employment / 0.6 (E)
+            transfers_uni = ubi_month * 12.0 * (N0t[0].sum(axis=1) / 0.6)[None, :] / 1e9            # adults ≈ employment / 0.6 (E)
+            transfers += transfers_uni
         if subsidy > 0:
             cost += subsidy * mean_wage_r[None, :] * retraining.sum(axis=2) / 1e9
         cost += transfers
@@ -952,8 +974,10 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         for item, base_ in (("ubi", ubi_month > 0), ("wage_insurance", wi_repl > 0), ("retraining", subsidy > 0)):
             if base_ and fin.get(item) == "income_tax_surcharge":
                 surcharge += cost if item != "retraining" else subsidy * mean_wage_r[None, :] * retraining.sum(axis=2) / 1e9
-        fiscal = tax_rev - cost
-        dC_prev = (0.7 * dW + 0.4 * dPi + 0.9 * transfers - 0.7 * surcharge - 0.4 * tax_rev) / (0.68 * Y0[None, :, t])   # transfers spent at MPC 0.9; tax falls on profits
+        fiscal = tax_rev + surcharge - cost                                          # the surcharge is revenue: a surcharge-financed item is balanced-budget (review §2.10)
+        # targeted transfers (wage insurance to displaced workers) are spent at MPC 0.9 (E); a universal payment reaches every decile, so it is spent at the
+        # population-average MPC of P.86 (0.65); the surcharge falls on income-tax payers at 0.7 (E); the AI tax falls on profits at 0.4 (E). Phase 9, review §2.1
+        dC_prev = (0.7 * dW + 0.4 * dPi + 0.9 * (transfers - transfers_uni) + mpc_uni * transfers_uni - 0.7 * surcharge - 0.4 * tax_rev) / (0.68 * Y0[None, :, t])
         rec["transfers"][:, :, t] = transfers; rec["policy_cost"][:, :, t] = cost; rec["tax_rev"][:, :, t] = tax_rev; rec["fiscal"][:, :, t] = fiscal
 
         # ---- record ----

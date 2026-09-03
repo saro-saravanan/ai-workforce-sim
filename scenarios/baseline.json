@@ -21,7 +21,8 @@
         "other_cognitive": 0.7,
         "interpersonal": 0.5
       },
-      "clock_saturation_doublings": 20
+      "clock_saturation_doublings": 20,
+      "threshold_seed": 0
     },
     "cost": {
       "price_decline_per_year": 10,
@@ -93,7 +94,8 @@
         "learning_rate": 0.12,
         "utilization_scale": 1.0,
         "unit_price_scale": 1.0,
-        "ramp_max_growth_per_year": 0.5
+        "ramp_max_growth_per_year": 0.5,
+        "cost_floor_scale": 1.0
       },
       "approval": {
         "US": "baseline",

@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.3",
+  "id": "variant-market-clearing-wages",
+  "name": "Variant: market-clearing wages",
+  "description": "The same AI, with wages that absorb excess supply at the top of the elasticity range: wage adjustment toward the wage-curve target at the top of its range (P.73 = 0.6 per quarter), productivity pass-through to wages at the top of its range (P.74 = 0.6), reinstatement of displaced work in new tasks at the top of its range (P.61 = 0.8) and the output demand response to lower costs at the top of the P.60 range (scale 1.5). Read beside the baseline for the wage effect and the under-25 share of jobs lost (review §2.7).",
+  "parent": "baseline",
+  "levers": {
+    "labor": {
+      "wage_pass_through": 0.6,
+      "reinstatement_ratio": 0.8,
+      "demand_elasticity_scale": 1.5
+    }
+  },
+  "overrides": {
+    "P.73": {
+      "central": 0.6
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

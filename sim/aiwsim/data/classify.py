@@ -48,7 +48,7 @@ import polars as pl
 MODALITIES = ("software", "other_cognitive", "interpersonal", "physical")
 USE_CASES = ("high_risk", "transparency", "unregulated")
 CLASSIFIER_VERSION = "keyword-rules v1 (E)"
-CHANNEL_VERSION = "channel-rules v1 (E, spec v0.3 §A.2)"
+CHANNEL_VERSION = "channel-rules v2 (E, spec v0.3 §A.2; trades cap, Phase 9)"
 CHANNELS = ("software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none")
 
 _F = re.IGNORECASE
@@ -208,6 +208,48 @@ def classify_channel(text: str, modality: str) -> str:
     if any(r.search(t) for r in _CH_FIX):
         return "emb_fixed"
     return "emb_manip"
+
+
+# ----------------------------------------------------------------------------------------------
+# Installation and repair trades (Phase 9; review §2.4 "electricians land in the robot targets").
+# The per-task rules put every physical task of the construction trades (SOC 47-2xxx) and the installation, maintenance and repair
+# occupations (49-xxxx) on the manipulation channel (electricians 78% of task-hours, HVAC mechanics 71%), although their work is one-off
+# jobs at customer sites and in occupied buildings: unstructured, code-governed, every site different, which the mobile-manipulation
+# class does not reach at central (spec §A.2 rule 5 extended). Guarded rule, applied per occupation after the per-task rules:
+#   a physical task of these occupations stays on emb_manip only if the statement explicitly names assembly-line, warehouse or repetitive
+#   handling (TRADES_MANIP_KEEP); the other manipulation tasks are demoted to `none` in descending weight (then task_id) order until the
+#   occupation's manipulation task-hours are at most TRADES_MANIP_CAP. Driving, aerial and fixed assignments are untouched. Tagged E.
+# ----------------------------------------------------------------------------------------------
+TRADES_MANIP_CAP = 0.30
+TRADES_SOC_PREFIXES = ("47-2", "49-")
+TRADES_MANIP_KEEP = [
+    (r"\b(assembly[- ]lines?|production lines?|warehous\w*|distribution cent(er|re)s?|repetitive|palletiz\w*|pick(s|ing)? and pack\w*|"
+     r"sort\w* (packages|parcels|items|products)|load\w* and unload\w*|stack\w* (boxes|cartons|pallets|crates))\b"),
+]
+_TR_KEEP = [re.compile(p, _F) for p in TRADES_MANIP_KEEP]
+
+
+def cap_trades_manipulation(df: pl.DataFrame, occ_col: str = "occ_code", weight_col: str = "weight", text_col: str = "task_text",
+                            id_col: str = "task_id") -> pl.DataFrame:
+    """Apply the trades rule above to a classified task frame (needs occ_code, weight and channel; otherwise returned unchanged)."""
+    if not {occ_col, weight_col, "channel"} <= set(df.columns):
+        return df
+    ch = df["channel"].to_list(); occ = df[occ_col].to_list(); w = [float(x or 0.0) for x in df[weight_col].to_list()]
+    txt = df[text_col].to_list() if text_col in df.columns else [""] * len(ch)
+    tid = [str(x) for x in df[id_col].to_list()] if id_col in df.columns else [str(i) for i in range(len(ch))]
+    by_occ: dict[str, list[int]] = {}
+    for i, o in enumerate(occ):
+        if str(o).startswith(TRADES_SOC_PREFIXES):
+            by_occ.setdefault(str(o), []).append(i)
+    for idx in by_occ.values():
+        tot = sum(w[i] for i in idx) or 1.0
+        manip = sum(w[i] for i in idx if ch[i] == "emb_manip") / tot
+        movable = sorted((i for i in idx if ch[i] == "emb_manip" and not any(r.search(txt[i] or "") for r in _TR_KEEP)), key=lambda i: (-w[i], tid[i]))
+        for i in movable:
+            if manip <= TRADES_MANIP_CAP + 1e-9:
+                break
+            ch[i] = "none"; manip -= w[i] / tot
+    return df.with_columns(pl.Series("channel", ch, dtype=pl.Utf8))
 
 # ----------------------------------------------------------------------------------------------
 # Presence requirement pi_k
@@ -396,7 +438,7 @@ def classify_frame(df: pl.DataFrame, text_col: str = "task_text") -> pl.DataFram
     rows = [classify_text(t or "") for t in df[text_col].to_list()]
     cols = pl.DataFrame(rows, schema={"modality": pl.Utf8, "presence": pl.Float64,
                                        "use_case": pl.Utf8, "consequence_high": pl.Int64, "channel": pl.Utf8})
-    return df.hstack(cols)
+    return cap_trades_manipulation(df.hstack(cols), text_col=text_col)
 
 
 def distribution(df: pl.DataFrame, weight_col: str | None = None) -> dict[str, dict]:

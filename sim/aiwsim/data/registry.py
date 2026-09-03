@@ -250,6 +250,11 @@ PARAMETERS: list[dict] = [
        "fixed-capability path (about 2x), provider margin (about 1.3x); fitted so producers' revenue matches reported industry revenue in 2025 ($45-80bn) and 2026 ($90-200bn); Phase 8", group="revenue"),
     _p("P.144", "Market price over token cost, long run", 1.5, 1.1, 2.5, "multiple", "E", "competition compresses margins and frontier premia; Phase 8", group="revenue"),
     _p("P.145", "Price multiple half-life", 5.0, 3.0, 10.0, "years", "E", "Phase 8", group="revenue"),
+    # ---- Phase 9 labour market (review §2.7): entrant supply responds to relative wages with a lag ----
+    _p("P.146", "Entrant supply elasticity to relative wages", 0.5, 0.0, 1.5, "elasticity", "E",
+       "field-of-study response literature (enrolment and major choice respond to expected relative earnings with elasticities of order 0.5, "
+       "with a lag of a few years); scales the share of an occupation's attrition cut that lands on its entrant cohort; 0 reproduces the Phase 8 rule; Phase 9", group="labor"),
+    _p("P.147", "Entrant response lag", 8, 4, 16, "quarters", "E", "time from a relative-wage change to a change in the entering cohort (course length); Phase 9", group="labor"),
 ]
 
 

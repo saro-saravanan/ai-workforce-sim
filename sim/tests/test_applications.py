@@ -85,6 +85,18 @@ def test_monotone_in_learning_rate_and_utilization(ctx):
     assert e_hi >= e_lo - 1e-9, (e_lo, e_hi)
 
 
+def test_cost_floor_bounds_embodied_cost_per_hour(ctx):
+    """Under the Seba 2026 preset the manipulation hardware cost per worker-hour stops at the class floor; without the floor it falls below a dollar (review §2.8; Phase 9)."""
+    scen = load_scenario_by_path_or_id(ctx, "preset-seba-2026")
+    d, _ = run_scenario(ctx, scen, draws=1, with_tornado=False, with_channels=False, regions=["US"])
+    t = d["meta"]["quarters"].index("2034Q4")
+    assert d["supply"]["embodiment"]["manip"]["cost_per_hour_usd"]["central"][t] >= 1.5
+    off = copy.deepcopy(scen); off["levers"]["applications"]["hardware"]["cost_floor_scale"] = 0.0
+    d0, _ = run_scenario(ctx, ctx.resolve(off), draws=1, with_tornado=False, with_channels=False, regions=["US"])
+    assert d0["supply"]["embodiment"]["manip"]["cost_per_hour_usd"]["central"][t] < 1.0
+    assert ctx.apps.classes["manip"].cost_floor == 1.5 and ctx.apps.classes["driving"].cost_floor == 3.0
+
+
 def test_approval_path_states_and_shocks():
     q = [f"{y}Q{k}" for y in range(2024, 2041) for k in range(1, 5)]
     spec = (2026, 2036, 0.0, 0.6)

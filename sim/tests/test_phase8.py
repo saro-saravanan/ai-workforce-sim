@@ -47,13 +47,49 @@ def test_work_week_raises_heads_and_lowers_pay_per_head(ctx):
     assert ww["meta"]["policy_on"] is True and ww["meta"]["policy"]["work_week_hours"] == 36
 
 
-def test_ubi_ai_tax_costs_transfers_and_fiscal_validity(ctx):
-    d = _doc(ctx, "policy-ubi-ai-tax")
-    us = d["series"]["US"]
+def test_ubi_financing_rules_and_fiscal_validity(ctx):
+    """The tax-financed basic income is balanced-budget and within a point of the baseline; the deficit variant trips the fiscal flag (review §2.1, §2.10; Phase 9)."""
+    base = _doc(ctx, "baseline"); tax = _doc(ctx, "policy-ubi-ai-tax"); deficit = _doc(ctx, "policy-ubi-deficit")
+    us = tax["series"]["US"]
     assert us["transfers_bn"]["central"][-1] > 1000 and us["ai_tax_revenue_bn"]["central"][-1] > 0
-    assert us["fiscal_balance_bn"]["central"][-1] < 0
-    v = d["meta"]["validity"]
+    assert us["fiscal_balance_bn"]["central"][-1] >= 0, "the surcharge covers the payment in full; the AI tax comes on top"
+    assert tax["meta"]["validity"]["fiscal_warning"] is False
+    e0 = base["series"]["US"]["employment_pct_vs_baseline"]["central"][-1]; e1 = us["employment_pct_vs_baseline"]["central"][-1]
+    assert abs(e1 - e0) < 1.0, (e0, e1)
+    assert deficit["series"]["US"]["fiscal_balance_bn"]["central"][-1] < 0
+    v = deficit["meta"]["validity"]
     assert v["fiscal_warning"] is True and v["fiscal_balance_pct_gdp_2040"] < -3 and v["note"]
+
+
+def test_entrant_supply_response(ctx):
+    """P.146 = 0 reproduces the Phase 8 hiring rule whatever the lag; a positive elasticity moves the shortfall off the entrant cohort (review §2.7; Phase 9)."""
+    import numpy as np
+    base = load_scenario_by_path_or_id(ctx, "baseline")
+
+    def run(eps, lag=8):
+        s = copy.deepcopy(base); s["overrides"] = {"P.146": {"central": eps}, "P.147": {"central": lag}}
+        return _central(ctx, ctx.resolve(s)).regions["US"]
+    z = run(0.0); z4 = run(0.0, 4); h = run(1.5)
+    for k in ("unhired_cum", "unemployed_stock", "lost_by_age", "emp_total", "mean_ln_w"):
+        assert np.array_equal(getattr(z, k), getattr(z4, k)), k
+    def young_share(r):
+        return r.lost_by_age[0, 0, -1] / max(r.lost_by_age[0, :, -1].sum(), 1.0)
+    assert young_share(h) < young_share(z), (young_share(z), young_share(h))
+    assert h.unemployed_stock[0, -1] < z.unemployed_stock[0, -1]
+    assert abs(h.unhired_cum[0, -1] / z.unhired_cum[0, -1] - 1.0) < 0.05, "positions closed by attrition do not depend on who was queued for them"
+
+
+def test_threshold_seed_lever(ctx):
+    """Seed 0 is byte-identical to the reference hash; another seed re-spreads the per-task thresholds without touching the task groups (review §2.4; Phase 9)."""
+    import numpy as np
+    from aiwsim.mc import build_task_groups
+    t0 = build_task_groups(ctx.inputs); t0b = build_task_groups(ctx.inputs, 0); t1 = build_task_groups(ctx.inputs, 1)
+    assert np.array_equal(t0.hash_u, t0b.hash_u) and t0.n == t1.n and np.array_equal(t0.weight, t1.weight)
+    assert not np.array_equal(t0.hash_u, t1.hash_u)
+    scen = copy.deepcopy(load_scenario_by_path_or_id(ctx, "baseline")); scen["levers"]["capability"]["threshold_seed"] = 1
+    scen = ctx.resolve(scen)
+    assert ctx.params_for(scen).flags["threshold_seed"] == 1
+    assert ctx.params_for(load_scenario_by_path_or_id(ctx, "baseline")).flags["threshold_seed"] == 0
 
 
 def test_retraining_subsidy_raises_retraining_and_lowers_unemployment(ctx):
@@ -111,7 +147,7 @@ def test_seba_2026_preset_and_rethinkx_rows(ctx):
     assert e2[t35] > e1[t35] and e2[-1] > e1[-1]
     rows = {(f["short"], f["metric"], f["year"]): f for f in d2["forecasts"]}
     cost10 = rows[("RethinkX 2025, robot cost at entry", "humanoid_cost_per_hour_usd", 2025)]; cost1 = rows[("RethinkX 2025, robot cost by 2035", "humanoid_cost_per_hour_usd", 2034)]
-    assert cost10["model_central"] is not None and cost1["model_central"] is not None and cost1["model_central"] < cost10["model_central"]
+    assert cost10["model_central"] is not None and cost1["model_central"] is not None and cost1["model_central"] <= cost10["model_central"]   # the class floor binds in both years (review §2.8)
     assert cost10["verdict"] in ("within band", "model lower", "model higher")
     half = rows[("RethinkX 2026, robots do half of physical work", "physical_work_share", 2039)]; assert half["claimed"] == 50.0 and half["preset_id"] == "preset-seba-2026"
     assert half["model_central"] is not None and half["model_central"] > d2["series"]["US"]["embodied_displacement_share"]["central"][q.index("2039Q4")]

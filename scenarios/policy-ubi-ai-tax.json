@@ -1,8 +1,8 @@
 {
   "schema_version": "0.3",
   "id": "policy-ubi-ai-tax",
-  "name": "Policy: $500/month basic income, AI-tax financed",
-  "description": "A $500 monthly payment to every adult, with a 30% tax on AI spend toward its cost; the shortfall falls on the deficit.",
+  "name": "Policy: $500/month basic income, tax-financed",
+  "description": "A $500 monthly payment to every adult, financed by an income-tax surcharge that covers the payment in full, with a 30% tax on AI spend covering part of the bill on top. Balanced-budget by construction: the surcharge takes back what the transfer pays out, so the run shows the redistribution, not a deficit stimulus (the deficit-financed version is variant policy-ubi-deficit).",
   "parent": "baseline",
   "levers": {
     "policy": {
@@ -12,7 +12,7 @@
         "financing": {
           "retraining": "deficit",
           "wage_insurance": "ai_tax",
-          "ubi": "ai_tax",
+          "ubi": "income_tax_surcharge",
           "work_week": "deficit"
         }
       }
