@@ -3,7 +3,13 @@ name = "aiwsim"
 version = "0.1.0"
 description = "Simulation core: AI workforce impact model (spec v0.2)"
 requires-python = ">=3.12"
-dependencies = ["numpy>=2.0", "polars>=1.0", "pyyaml>=6", "jsonschema>=4"]
+dependencies = [
+    "numpy>=2.0",
+    "polars>=1.0",
+    "pyyaml>=6",
+    "jsonschema>=4",
+    "fastexcel>=0.21.0",
+]
 
 [project.scripts]
 aiwsim = "aiwsim.cli:main"

@@ -29,7 +29,12 @@ jobs:
           head -c 1500 /tmp/probe.bin; echo
           echo "== links on the input-output accounts data page"
           curl -sS -L -A "$UA" "https://www.bea.gov/industry/input-output-accounts-data" -o /tmp/io.html -w "code %{http_code} size %{size_download}\n" || true
-          grep -oiE 'href="[^"]*\.(xlsx|xls|zip|csv)"' /tmp/io.html | sort -u | head -80 || true
+          grep -oiE 'href="[^"]*"' /tmp/io.html | grep -iE 'xls|io-annual|itable|industry/|release|\.zip|\.csv' | sort -u | head -150 || true
+          echo "== other BEA pages that may carry the files"
+          for pg in https://www.bea.gov/data/industries/input-output-accounts-data https://www.bea.gov/industry/io-annual https://apps.bea.gov/industry/Release/XLS/; do
+            curl -sS -L -A "$UA" "$pg" -o /tmp/pg.html -w "$pg code %{http_code} size %{size_download}\n" || true
+            grep -oiE 'href="[^"]*"' /tmp/pg.html | grep -iE 'xls|io-annual|\.zip|\.csv' | sort -u | head -60 || true
+          done
           echo "== links on the io-annual directory"
           curl -sS -L -A "$UA" "https://apps.bea.gov/industry/xls/io-annual/" -o /tmp/dir.html -w "code %{http_code} size %{size_download}\n" || true
           grep -oiE 'href="[^"]*"' /tmp/dir.html | sort -u | head -120 || true
@@ -66,9 +71,12 @@ jobs:
           [ -f /tmp/oews/in4.zip ] || { echo "no OEWS industry file found"; exit 0; }
           unzip -l /tmp/oews/in4.zip | head -40
           unzip -l /tmp/oews/nat.zip | head -20
+          v=$(cat data/external/bls/OEWS_VINTAGE)
+          curl -sS -L -A "Mozilla/5.0 aiwsim-data-fetch" -o /tmp/oews/st.zip "https://www.bls.gov/oes/special-requests/oesm${v}st.zip" || true
+          unzip -l /tmp/oews/st.zip | head -10 || true
           python3 - <<'PY'
           import zipfile, re, shutil
-          for z, pat in (("/tmp/oews/in4.zip", r"natsector_M20\d\d_dl\.xlsx$"), ("/tmp/oews/nat.zip", r"national_M20\d\d_dl\.xlsx$")):
+          for z, pat in (("/tmp/oews/in4.zip", r"natsector_M20\d\d_dl\.xlsx$"), ("/tmp/oews/nat.zip", r"national_M20\d\d_dl\.xlsx$"), ("/tmp/oews/st.zip", r"state_M20\d\d_dl\.xlsx$")):
               with zipfile.ZipFile(z) as zf:
                   names = [n for n in zf.namelist() if re.search(pat, n, re.I)]
                   assert names, (z, zf.namelist())
