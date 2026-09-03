@@ -55,10 +55,39 @@ jobs:
               rm -f "data/external/bea/$f"
             done
           fi
-          # 4. the BEA API, when a key is configured (InputOutput dataset, TableID 259 = summary use table, producer prices)
+          # 4. the BEA API, when a key is configured (repository secret BEA_API_KEY): pick the summary use table at producer prices by its
+          #    description, then fetch the latest year the dataset offers
           if [ "$ok" = "0" ] && [ -n "$BEA_API_KEY" ]; then
-            curl -sS -A "$UA" "https://apps.bea.gov/api/data/?UserID=$BEA_API_KEY&method=GetData&DataSetName=InputOutput&TableID=259&Year=2023&ResultFormat=json" -o data/external/bea/use_summary_2023_api.json || true
-            if [ "$(stat -c %s data/external/bea/use_summary_2023_api.json)" -gt 100000 ]; then ok=1; echo "use_summary_2023_api.json" > data/external/bea/USE_TABLE_FILE; echo "fetched via API"; fi
+            curl -sS -A "$UA" "https://apps.bea.gov/api/data/?UserID=$BEA_API_KEY&method=GetParameterValues&DataSetName=InputOutput&ParameterName=TableID&ResultFormat=json" -o /tmp/bea_tables.json || true
+            python3 - <<'PY'
+          import json, re, sys
+          try:
+              d = json.load(open("/tmp/bea_tables.json"))
+          except Exception as e:
+              print("table list unreadable:", e); sys.exit(0)
+          vals = d.get("BEAAPI", {}).get("Results", {}).get("ParamValue", [])
+          print(f"{len(vals)} InputOutput tables")
+          pick = None
+          for v in vals:
+              desc = str(v.get("Desc", "")); key = str(v.get("Key", ""))
+              if re.search(r"\buse\b", desc, re.I) and re.search(r"summary", desc, re.I) and re.search(r"producer", desc, re.I) and not re.search(r"after redefinitions", desc, re.I):
+                  print("candidate", key, desc)
+                  if pick is None or "before redefinitions" in desc.lower():
+                      pick = key
+          for v in vals[:80]:
+              print("  ", v.get("Key"), str(v.get("Desc", ""))[:110])
+          open("/tmp/bea_table_id", "w").write(pick or "")
+          print("picked", pick)
+          PY
+            TID=$(cat /tmp/bea_table_id)
+            if [ -n "$TID" ]; then
+              for Y in 2024 2023 2022; do
+                curl -sS -A "$UA" "https://apps.bea.gov/api/data/?UserID=$BEA_API_KEY&method=GetData&DataSetName=InputOutput&TableID=$TID&Year=$Y&ResultFormat=json" -o "data/external/bea/use_summary_${Y}_api.json" || true
+                sz=$(stat -c %s "data/external/bea/use_summary_${Y}_api.json" 2>/dev/null || echo 0); echo "TableID $TID year $Y -> $sz bytes"
+                if [ "$sz" -gt 100000 ] && grep -q '"DataValue"' "data/external/bea/use_summary_${Y}_api.json"; then ok=1; echo "use_summary_${Y}_api.json" > data/external/bea/USE_TABLE_FILE; echo "BEA API TableID $TID year $Y" > data/external/bea/USE_TABLE_SOURCE; echo "fetched via API"; break; fi
+                rm -f "data/external/bea/use_summary_${Y}_api.json"
+              done
+            fi
           fi
           [ "$ok" = "1" ] || echo "no BEA use table found"
           ls -la data/external/bea || true
