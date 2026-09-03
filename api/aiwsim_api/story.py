@@ -237,7 +237,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                   "chart": {"type": "regions", "items": [[x, remp[x], rgdp[x], rents[x]] for x in regions]},
                   "extra_chart": {"type": "bars", "title": f"Where the money comes from, {yr} ($bn a year, all regions)",
                                   "items": [["Software replacing tasks", src.get("automation", 0.0)], ["Tools that speed up workers", src.get("augmentation", 0.0)],
-                                            ["AI-made content (consumers)", src.get("content", 0.0)]] + [[f"Work bought: {t}", v] for t, v in groups[:6]], "unit": "$bn"},
+                                            ["AI subscriptions and services (consumers)", src.get("consumer", 0.0)], ["AI-made content (consumers)", src.get("content", 0.0)]] + [[f"Work bought: {t}", v] for t, v in groups[:6]], "unit": "$bn"},
                   "income": {"sources_world_bn": src, "paying_groups_world_bn": groups, "received_by_stage_bn": stages}})
     # 7. Two futures, and the difference is a choice
     futures = named_futures(doc, region, futures_docs)
@@ -312,7 +312,7 @@ def _sources_sentence(src: dict[str, float], groups: list[tuple[str, float]], st
         return ""
     share = lambda k: 100 * src.get(k, 0.0) / tot
     s = (f"That income is paid by employers replacing tasks with software ({share('automation'):.0f}% of the ${tot:.0f} billion spent on AI worldwide in {yr}), "
-         f"employers buying tools that speed up workers ({share('augmentation'):.0f}%), and consumers paying for AI-made content ({share('content'):.0f}%)")
+         f"employers buying tools that speed up workers ({share('augmentation'):.0f}%), consumers paying for AI subscriptions and services ({share('consumer'):.0f}%), and consumers paying for AI-made content ({share('content'):.0f}%)")
     if groups:
         s += "; the work being bought is mostly " + ", ".join(f"{t.lower()} (${v:.0f} billion)" for t, v in groups[:3])
     if stages:
@@ -333,6 +333,11 @@ def investment_story(doc: dict[str, Any]) -> dict[str, Any] | None:
     if not inv or not inv.get("rows"):
         return None
     rows = {r["year"]: r for r in inv["rows"]}; years = inv["years"]; y0, yN = years[0], years[-1]
+    pm = doc["meta"].get("price_multiple_path") or []
+    if pm:
+        qs = doc["meta"]["quarters"]
+        for y, r in rows.items():
+            t = max(i for i, x in enumerate(qs) if int(x[:4]) == y); r["price_multiple"] = pm[t]
     r26 = rows.get(2026) or rows[y0]; r30 = rows.get(2030) or r26; rN = rows[yN]
     obs = [(y, r["capex_observed_bn"]) for y, r in rows.items() if r.get("capex_observed_bn")]
     cum = inv["cumulative_2024_to_horizon"]
@@ -348,7 +353,9 @@ def investment_story(doc: dict[str, Any]) -> dict[str, Any] | None:
         (f"The money coming back to AI producers. In the model, employers and consumers spend {money(r26['producer_revenue_bn'])} a year on AI in 2026, {money(r30['producer_revenue_bn'])} by 2030 and "
         f"{money(rN['producer_revenue_bn'])} by {yN}: {money(cum['producer_revenue_bn'])} over the period, {100*ratio_rev:.0f}% of the capital spent. "
         + (f"Producers' cumulative revenue passes cumulative capex in {payback}." if payback else f"Producers' cumulative revenue never catches up with cumulative capex by {yN}.")
-        + " This is revenue for replacing and speeding up work and for AI-made content, priced at what the tokens cost; it is not the whole AI industry's sales (consumer subscriptions, advertising, search, coding assistants used as experiments, and internal use are outside the model)."),
+        + f" It has three parts: what employers pay to replace and speed up work at market prices (token cost times a price multiple that starts near {rows[y0].get('price_multiple', 4.0):.0f}x and compresses with competition), "
+          f"what consumers pay for AI subscriptions and services ({money(r26.get('consumer_revenue_bn', 0.0))} in 2026, {money(rN.get('consumer_revenue_bn', 0.0))} by {yN}), and AI-made content. "
+          "The path is fitted to the industry's reported 2025 revenue and its 2026 run rates, which sit on the scoreboard below."),
         (f"The return to the economy. The same AI adds about {money(r30['productivity_gain_bn'])} a year of productivity gain by 2030 and {money(rN['productivity_gain_bn'])} by {yN} across the modelled regions "
         f"({money(cum['productivity_gain_bn'])} cumulative, {ratio_prod:.1f} times the capital spent" + (f"; the productivity gain alone repays the capex by {econ_payback}" if econ_payback else "") + "). "
         f"Counting the data-centre build itself as output, the GDP effect is {money(rN['gdp_gain_bn'])} a year by {yN}. Most of that gain goes to the firms that adopt AI and, through lower prices, to their customers, not to the companies that built the capacity."),
@@ -365,7 +372,7 @@ def investment_story(doc: dict[str, Any]) -> dict[str, Any] | None:
         items.append([f"{y} productivity gain", r["productivity_gain_bn"]])
     return {"paragraphs": para, "rows": [rows[y] for y in chart_years], "cumulative": cum, "payback_year_revenue": payback, "payback_year_productivity": econ_payback,
             "chart": {"type": "bars", "title": "Per year, $bn: capital spent (observed where reported, else the model's path), AI producers' revenue, productivity gain", "items": items, "unit": "$bn"},
-            "definition": "AI producers' revenue (called AI rents by value-chain stage in the technical documents) is what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive: in the model it is exactly what employers and consumers spend on AI, split across those four stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense."}
+            "definition": "AI producers' revenue (called AI rents by value-chain stage in the technical documents) is what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive: employers' spending on AI at market prices, consumers' spending on AI subscriptions and services, and payments for AI-made content, split across the four stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense."}
 
 
 def _age_employment_shares(doc: dict[str, Any]) -> list[float]:

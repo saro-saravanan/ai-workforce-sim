@@ -1,9 +1,9 @@
 spec_version: '0.3'
 source: docs/model-spec.md §10 (v0.2) + docs/model-spec-v0.3-applications.md §A.9 (P.100–P.128)
-count: 110
+count: 116
 count_by_tag_primary:
-  S: 22
-  E: 67
+  S: 23
+  E: 72
   D: 21
 count_note: 'Spec §10 says ''Counts: 77 parameters; 18 S, 21 D, 38 E''. The tables as written contain 81 rows (including
   P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer).'
@@ -1473,3 +1473,68 @@ parameters:
   tag_primary: E
   source: Phase 7
   group: applications
+- id: P.140
+  name: Consumer AI revenue 2025
+  central: 15.0
+  min: 10.0
+  max: 22.0
+  unit: $bn/yr
+  tag: S
+  tag_primary: S
+  source: OpenAI FY2025 revenue $13.1bn (FT-verified statements), consumer subscriptions the larger part in 2025;
+    Google, xAI, Perplexity and others; Phase 8
+  group: revenue
+- id: P.141
+  name: Consumer AI revenue ceiling
+  central: 150.0
+  min: 80.0
+  max: 300.0
+  unit: $bn/yr
+  tag: E
+  tag_primary: E
+  source: about 1.5bn paying-equivalent users at $100/yr (subscriptions plus advertising); Phase 8
+  group: revenue
+- id: P.142
+  name: Consumer AI revenue midpoint year
+  central: 2030.0
+  min: 2028.0
+  max: 2034.0
+  unit: year
+  tag: E
+  tag_primary: E
+  source: logistic path anchored at P.140 in 2025; Phase 8
+  group: revenue
+- id: P.143
+  name: Market price over cost, 2025
+  central: 5.0
+  min: 3.0
+  max: 8.0
+  unit: multiple
+  tag: E
+  tag_primary: E
+  source: 'what employers pay per unit of AI work delivered over the model''s cost of that work (tokens at the fixed-capability
+    price plus integration): usage intensity per unit of work delivered (agentic loops, retries, pilots and seats
+    that displace nothing yet: about 2x), frontier pricing over the fixed-capability path (about 2x), provider margin
+    (about 1.3x); fitted so producers'' revenue matches reported industry revenue in 2025 ($45-80bn) and 2026 ($90-200bn);
+    Phase 8'
+  group: revenue
+- id: P.144
+  name: Market price over token cost, long run
+  central: 1.5
+  min: 1.1
+  max: 2.5
+  unit: multiple
+  tag: E
+  tag_primary: E
+  source: competition compresses margins and frontier premia; Phase 8
+  group: revenue
+- id: P.145
+  name: Price multiple half-life
+  central: 5.0
+  min: 3.0
+  max: 10.0
+  unit: years
+  tag: E
+  tag_primary: E
+  source: Phase 8
+  group: revenue

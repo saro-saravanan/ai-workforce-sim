@@ -287,6 +287,7 @@ def region_series(ro, mg: list[str] | None = None) -> dict[str, Any]:
         "retraining_cum": pct(ro.retraining_cum, 1.0, 0), "exited_cum": pct(ro.exited_cum, 1.0, 0), "unemployed_stock": pct(ro.unemployed_stock, 1.0, 0),
         "adoption_share": pct(ro.adoption_emp, 100.0), "adoption_share_firm_weighted": pct(ro.adoption_firm, 100.0),
         "ai_spend_bn": pct(ro.ai_spend, 1.0, 1), "ai_production_jobs": pct(ro.ai_jobs, 1.0, 0),
+        "ai_spend_at_token_cost_bn": pct(ro.spend_at_cost, 1.0, 1) if ro.spend_at_cost.size else {}, "ai_consumer_revenue_bn": pct(ro.consumer_rev, 1.0, 2) if ro.consumer_rev.size else {},
         # levels in heads (full-time equivalents incl. self-employed): the frozen-AI path (population and normal growth) and the path with AI
         "baseline_employment_level": pct(np.broadcast_to(ro.N0.sum(axis=0)[None, :], ro.N.sum(axis=1).shape).copy(), 1.0, 0),
         "employment_level": pct(ro.N0.sum(axis=0)[None, :] * (1.0 + ro.employment_pct), 1.0, 0),   # same quantity as the headline, in heads
@@ -399,8 +400,9 @@ def _spend_sources(ro: Any) -> dict[str, Any]:
     if not ro.spend_aug.size:
         return {}
     content = ro.ai_content_revenue if ro.ai_content_revenue.size else np.zeros_like(ro.ai_spend)
-    auto = np.maximum(ro.ai_spend - ro.spend_aug - content, 0.0)
-    return {"automation": pct(auto, 1.0, 2), "augmentation": pct(ro.spend_aug, 1.0, 2), "content": pct(content, 1.0, 2), "total": pct(ro.ai_spend, 1.0, 2)}
+    consumer = ro.consumer_rev if ro.consumer_rev.size else np.zeros_like(ro.ai_spend)
+    auto = np.maximum(ro.ai_spend - ro.spend_aug - content - consumer, 0.0)
+    return {"automation": pct(auto, 1.0, 2), "augmentation": pct(ro.spend_aug, 1.0, 2), "content": pct(content, 1.0, 2), "consumer": pct(consumer, 1.0, 2), "total": pct(ro.ai_spend, 1.0, 2)}
 
 
 def _spend_groups(ro: Any, mg: list[str], top: int = 8) -> dict[str, Any]:
@@ -452,10 +454,11 @@ def investment_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, 
         gdp = {"US": float(getattr(inp, "gdp_2024_bn", 21433.0))}
     cap_raw = o.trace.get("capex_annual_bn")
     cap = np.asarray(cap_raw, dtype=float) if cap_raw is not None else np.zeros(len(q))
-    rev = np.zeros(len(q)); spend = np.zeros(len(q)); gain = np.zeros(len(q)); prod = np.zeros(len(q))
+    rev = np.zeros(len(q)); spend = np.zeros(len(q)); gain = np.zeros(len(q)); prod = np.zeros(len(q)); cons = np.zeros(len(q)); cost = np.zeros(len(q))
     for x, ro in o.regions.items():
         rev += sum(ro.rents.values())[0] if ro.rents else 0.0
         spend += ro.ai_spend[0]
+        cons += ro.consumer_rev[0] if ro.consumer_rev.size else 0.0; cost += ro.spend_at_cost[0] if ro.spend_at_cost.size else 0.0
         g = gdp.get(x, 0.0); gain += g * ro.gdp_pct[0]; prod += g * ro.tfp_pct[0]
     obs = _observed_capex_by_year(inp)
     rows = []
@@ -463,12 +466,13 @@ def investment_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, 
         t = idx[y]
         rows.append({"year": y, "capex_model_bn": round(float(cap[t]), 1), "capex_observed_bn": (round(obs[y], 1) if y in obs else None),
                      "producer_revenue_bn": round(float(rev[t]), 1), "ai_spend_bn": round(float(spend[t]), 1),
+                     "consumer_revenue_bn": round(float(cons[t]), 1), "spend_at_cost_bn": round(float(cost[t]), 1),
                      "gdp_gain_bn": round(float(gain[t]), 1), "productivity_gain_bn": round(float(prod[t]), 1),
                      "investment_in_gdp_bn": round(float(max(gain[t] - prod[t], 0.0)), 1)})
     cum = {k: round(float(sum((r[k] if r[k] is not None else r.get("capex_model_bn", 0.0)) for r in rows)), 1) for k in ("capex_model_bn", "producer_revenue_bn", "gdp_gain_bn", "productivity_gain_bn")}
     return {"years": years, "rows": rows, "cumulative_2024_to_horizon": cum, "gdp_2024_bn": {k: round(v) for k, v in gdp.items()},
             "notes": ["capex_model_bn is the U.S. hyperscaler capex path the model assumes (P.80-P.82); capex_observed_bn sums the four hyperscalers from data/processed/series/capex.csv",
-                      "producer_revenue_bn is the value-chain revenue of AI producers (model, compute, chips, integration) summed over all regions; it equals what employers and consumers spend on AI in the model",
+                      "producer_revenue_bn is the value-chain revenue of AI producers (model, compute, chips, integration) summed over all regions: employers' spend at market prices (token cost times the price multiple P.143-P.145) plus consumer AI spending (P.140-P.142) plus AI-made content; spend_at_cost_bn is the employers' spend at token cost",
                       "gdp_gain_bn is the GDP effect versus the frozen-AI path at 2024 GDP; productivity_gain_bn is its TFP part; investment_in_gdp_bn is the rest, mostly the data-centre build itself counted as output"]}
 
 
@@ -522,8 +526,11 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
             out.append({**f, "model_central": None, "model_p10": None, "model_p90": None, "verdict": "not comparable", "note": (f.get("note", "") + "; " + note).strip("; ")}); continue
         arr = np.asarray(arr, dtype=float); central = float(arr[0]); lo = float(np.percentile(arr[1:], 10)) if arr.size > 1 else central; hi = float(np.percentile(arr[1:], 90)) if arr.size > 1 else central
         claimed = float(f["claimed"])
+        c_lo = float(f["claimed_low"]) if f.get("claimed_low") not in (None, "") else claimed
+        c_hi = float(f["claimed_high"]) if f.get("claimed_high") not in (None, "") else claimed
         close = abs(claimed - central) <= 0.03 * abs(claimed)                       # a central-only quantity (an input path) counts as agreement within 3%
-        verdict = "within band" if (lo - 1e-9 <= claimed <= hi + 1e-9 or close) else ("model lower" if claimed > hi else "model higher")
+        overlap = (lo - 1e-9 <= c_hi) and (c_lo <= hi + 1e-9)                       # the model's band meets the claim's range
+        verdict = "within band" if (overlap or close) else ("model lower" if c_lo > hi else "model higher")
         out.append({**f, "quarter": yq, "model_central": round(central, 2), "model_p10": round(lo, 2), "model_p90": round(hi, 2), "verdict": verdict,
                     "note": (f.get("note", "") + ("; " + note if note else "")).strip("; ")})
     return out
@@ -545,7 +552,8 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "headline_definition": "FTE jobs including self-employed and platform workers (spec v0.3 §A.5.1); payroll-only employment is not separately tracked",
             "channels_task_hours": o.trace.get("channels_task_hours"), "self_employed_fte": o.trace.get("self_employed_fte"),
             "embodied_on": o.trace.get("embodied_on"), "content_categories": o.trace.get("content_categories"), "export_serving_fte": o.trace.get("export_serving_fte"),
-            "policy_on": o.trace.get("policy_on"), "policy": o.trace.get("policy")}
+            "policy_on": o.trace.get("policy_on"), "policy": o.trace.get("policy"),
+            "price_multiple_path": o.trace.get("price_multiple_path"), "consumer_ai_revenue_path_bn": o.trace.get("consumer_ai_revenue_path_bn")}
     series = {x: region_series(o.regions[x], o.major_groups) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})

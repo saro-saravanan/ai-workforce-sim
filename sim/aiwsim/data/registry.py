@@ -238,6 +238,18 @@ PARAMETERS: list[dict] = [
     _p("P.127", "Authenticity premium α_s (2025 level; half-life if eroding)", None, None, None, "logit units; years", "E", "V?: ensemble axis {persistent, eroding}; Phase 7",
        group="applications", by=_by(level=(1.5, 0.5, 3.0), half_life_years=(8, 4, 20))),
     _p("P.128", "AI content platform margin", 0.4, 0.2, 0.7, "share of price", "E", "Phase 7", group="applications"),
+    # ---- Phase 8 revenue layer (spec v0.3 §A.16): what firms pay over token cost, and consumer AI spending ----
+    _p("P.140", "Consumer AI revenue 2025", 15.0, 10.0, 22.0, "$bn/yr", "S",
+       "OpenAI FY2025 revenue $13.1bn (FT-verified statements), consumer subscriptions the larger part in 2025; Google, xAI, Perplexity and others; Phase 8", group="revenue"),
+    _p("P.141", "Consumer AI revenue ceiling", 150.0, 80.0, 300.0, "$bn/yr", "E",
+       "about 1.5bn paying-equivalent users at $100/yr (subscriptions plus advertising); Phase 8", group="revenue"),
+    _p("P.142", "Consumer AI revenue midpoint year", 2030.0, 2028.0, 2034.0, "year", "E", "logistic path anchored at P.140 in 2025; Phase 8", group="revenue"),
+    _p("P.143", "Market price over cost, 2025", 5.0, 3.0, 8.0, "multiple", "E",
+       "what employers pay per unit of AI work delivered over the model's cost of that work (tokens at the fixed-capability price plus integration): "
+       "usage intensity per unit of work delivered (agentic loops, retries, pilots and seats that displace nothing yet: about 2x), frontier pricing over the "
+       "fixed-capability path (about 2x), provider margin (about 1.3x); fitted so producers' revenue matches reported industry revenue in 2025 ($45-80bn) and 2026 ($90-200bn); Phase 8", group="revenue"),
+    _p("P.144", "Market price over token cost, long run", 1.5, 1.1, 2.5, "multiple", "E", "competition compresses margins and frontier premia; Phase 8", group="revenue"),
+    _p("P.145", "Price multiple half-life", 5.0, 3.0, 10.0, "years", "E", "Phase 8", group="revenue"),
 ]
 
 

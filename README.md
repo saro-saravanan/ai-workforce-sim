@@ -49,12 +49,12 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 
 | Metric | Value | Sign confidence |
 |---|---|---|
-| Employment | −5.6% [−10.8, −0.1] (about 9.5 million jobs on a base of 169 million) | medium |
-| GDP | +8.1% [+5.0, +16.4] | high |
-| Real wages | +4.1% [+1.9, +7.6] | high |
-| Wage share | −4.8 pp [−6.4, −3.3] | high |
+| Employment | −5.5% [−10.6, −0.4] (about 9.6 million jobs against the 174 million there would have been in 2040) | medium |
+| GDP | +8.3% [+5.3, +16.1] | high |
+| Real wages | +3.8% [+1.6, +7.2] | high |
+| Wage share | −4.8 pp [−6.3, −3.3] | high |
 
-In levels: about 152 million jobs today, 174 million by 2040 without further AI progress, 164 million with it (likely 155 to 174 million), so more jobs than today and fewer than there would have been. Most of the gap is hiring that never happens: about 8.1 million positions are never offered to new entrants against 3.0 million layoffs, and the layoff share is fitted to the AI-cited job cuts employers announced in 2025 and the first half of 2026 (Challenger, Gray & Christmas), which the spec's attrition-first rule had understated tenfold. The employment sign is only medium confidence because the demand multiplier can flip it ("gains spent back": +13%; "gains pocketed": −6%). Robots and vehicles reach 7% of task-hours by 2040 at central assumptions; under the Seba/RethinkX preset robotaxis pass 10% of driver work in 2030 and 75% by 2035, still below Seba's 95% claim because approval paths, the production ramp and the ever-automatable share bind before cost does. See `docs/findings-phase8.md`.
+In levels: about 152 million jobs today, 174 million by 2040 without further AI progress, 165 million with it (likely 156 to 174 million), so more jobs than today and fewer than there would have been. Most of the gap is hiring that never happens: about 8.1 million positions are never offered to new entrants against 3.0 million layoffs, and the layoff share is fitted to the AI-cited job cuts employers announced in 2025 and the first half of 2026 (Challenger, Gray & Christmas), which the spec's attrition-first rule had understated tenfold. The employment sign is only medium confidence because the demand multiplier can flip it ("gains spent back": +13%; "gains pocketed": −6%). Robots and vehicles reach 7% of task-hours by 2040 at central assumptions; under the Seba/RethinkX preset robotaxis pass 10% of driver work in 2030 and 75% by 2035, still below Seba's 95% claim because approval paths, the production ramp and the ever-automatable share bind before cost does. See `docs/findings-phase8.md`.
 
 ## Architecture
 

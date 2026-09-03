@@ -161,4 +161,7 @@ def test_investment_section_and_capex_rows(ctx):
     cum = inv["cumulative_2024_to_horizon"]; assert cum["capex_model_bn"] > cum["producer_revenue_bn"] and cum["productivity_gain_bn"] > cum["capex_model_bn"]
     shorts = {f["short"]: f for f in d["forecasts"]}
     assert shorts["Hyperscaler capex 2026 guidance"]["model_central"] == rows[2026]["capex_model_bn"]
-    assert shorts["Frontier labs' revenue run rate, mid-2026"]["model_central"] is not None and shorts["Frontier labs' revenue run rate, mid-2026"]["verdict"] == "model lower"
+    for k in ("AI industry revenue 2025", "AI industry revenue 2026 (est.)"):
+        assert shorts[k]["verdict"] == "within band", (k, shorts[k]["model_central"])
+    assert rows[2026]["consumer_revenue_bn"] > 0 and rows[2026]["spend_at_cost_bn"] < rows[2026]["producer_revenue_bn"]
+    assert d["meta"]["price_multiple_path"][0] > d["meta"]["price_multiple_path"][-1] > 1.0

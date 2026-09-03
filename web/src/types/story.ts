@@ -137,6 +137,8 @@ export interface InvestmentRow {
   capex_model_bn: number
   capex_observed_bn: number | null
   producer_revenue_bn: number
+  consumer_revenue_bn?: number
+  spend_at_cost_bn?: number
   ai_spend_bn: number
   gdp_gain_bn: number
   productivity_gain_bn: number

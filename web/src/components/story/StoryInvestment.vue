@@ -26,6 +26,7 @@ const bn = (v: number | null | undefined) => (v == null ? 'n/a' : fmtBn(v))
             <th scope="col">Year</th>
             <th scope="col" class="num">Capex</th>
             <th scope="col" class="num">AI producers' revenue</th>
+            <th scope="col" class="num">of which consumers</th>
             <th scope="col" class="num">Productivity gain</th>
             <th scope="col" class="num">GDP effect</th>
           </tr>
@@ -38,6 +39,7 @@ const bn = (v: number | null | undefined) => (v == null ? 'n/a' : fmtBn(v))
               }}<span v-if="r.capex_observed_bn" class="muted"> reported</span>
             </td>
             <td class="num">{{ bn(r.producer_revenue_bn) }}</td>
+            <td class="num">{{ bn(r.consumer_revenue_bn) }}</td>
             <td class="num">{{ bn(r.productivity_gain_bn) }}</td>
             <td class="num">{{ bn(r.gdp_gain_bn) }}</td>
           </tr>

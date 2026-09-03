@@ -137,7 +137,7 @@ class BP:
 
 @dataclass
 class OccLayer:
-    S: np.ndarray; G: np.ndarray; Z: np.ndarray; kappa_bar: np.ndarray; tok_bar: np.ndarray; aug: np.ndarray
+    S: np.ndarray; G: np.ndarray; Z: np.ndarray; kappa_bar: np.ndarray; tok_bar: np.ndarray; aug: np.ndarray; kappa_bar_cost: np.ndarray
 
 
 # ------------------------------------------------------------------------------------------------
@@ -171,6 +171,8 @@ class RegionOut:
     approval: dict[str, np.ndarray] = field(default_factory=dict)          # class -> [n_q]
     adjacent_jobs: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q]
     hw_capex_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] hardware produced in the region, $bn/yr
+    spend_at_cost: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] employer AI spend at token cost (no price multiple)
+    consumer_rev: np.ndarray = field(default_factory=lambda: np.zeros(0))    # [D, n_q] consumer AI spending paid from the region
     spend_by_mg: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_mg, n_q] software AI spend by paying occupation group, $bn/yr
     spend_aug: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] the augmentation (tools) part of software AI spend, $bn/yr
     self_fte0: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [n_occ] self-employed FTE 2024Q1 (in N0)
@@ -631,7 +633,15 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     Nt = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]; LNW = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]
     DD = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]; UU = [np.zeros((Dk[k], n_occ, n_q), dtype=dt_k[k]) for k in range(R)]
     LNP = np.zeros((D, R, n_q))
-    rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw",
+    # ---- revenue layer (spec §A.16): what firms pay over token cost, and consumer AI spending outside the task engine ----
+    yrs_f = np.array([int(x[:4]) + (int(x[5]) - 1) / 4.0 for x in quarters])
+    m0 = bp.vec("P.143", 4.0); m_lr = bp.vec("P.144", 1.5); m_hl = np.maximum(bp.vec("P.145", 5.0), 0.5)
+    m_path = m_lr[:, None] + (m0 - m_lr)[:, None] * 0.5 ** (np.maximum(yrs_f - 2025.0, 0.0)[None, :] / m_hl[:, None])     # [D, n_q]
+    c25 = bp.vec("P.140", 15.0); c_max = np.maximum(bp.vec("P.141", 150.0), c25 * 1.05); c_mid = bp.vec("P.142", 2030.0)
+    k_c = np.log(np.maximum(c_max / c25 - 1.0, 1e-6)) / np.maximum(c_mid - 2025.0, 0.5)
+    cons_path = c_max[:, None] / (1.0 + np.exp(-k_c[:, None] * (yrs_f[None, :] - c_mid[:, None])))                       # [D, n_q] $bn/yr world
+    gdp_share = Y0[:, 0] / max(Y0[:, 0].sum(), 1e-9)                                                                      # who pays: by 2024 GDP
+    rec = {k: np.zeros((D, R, n_q)) for k in ("gdp", "tfp", "adopt_e", "adopt_f", "spend", "jobs", "unemp", "retr_stock", "wshare", "mu", "q", "dlnc", "nu", "net", "C", "emp", "mlnw", "spend_cost", "cons_rev",
                                               "emb_share", "adj_jobs", "hw_capex", "underemp")}
     cum["cut"] = np.zeros((D, R)); hours_cut = np.zeros((D, R, n_occ))
     rec.update({k: np.zeros((D, R, n_q)) for k in ("ai_content_rev", "cs", "trade_share", "transfers", "policy_cost", "tax_rev", "fiscal")})
@@ -668,15 +678,17 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         if key in layer_cache:
             return layer_cache[key]
         inference, wF_sig, wF_aug, _sig = base_layer(t, mult)
-        kappa = np.maximum(inference + integ_us * TDTYPE(tier), TDTYPE(1e-6))
+        kappa_cost = np.maximum(inference + integ_us * TDTYPE(tier), TDTYPE(1e-6))                       # token cost plus integration
+        kappa = np.maximum(kappa_cost * m_path[:, t][:, None].astype(TDTYPE), TDTYPE(1e-6))                            # what the firm pays: cost times the market-price multiple (spec §A.16 revenue layer)
         prof = logistic((ln_wage_tier[tier] - np.log(kappa)) / b_kappa)
         wPi = wF_sig * prof
         S = agg(tg, wPi); G = agg(tg, wF_aug)
         Z = agg(tg, wPi * np.clip(1 - kappa / wage_h_tier[tier], 0, 1))
-        Kc = agg(tg, wPi * kappa); Tk = agg(tg, wPi * n_tok); Aug = agg(tg, wF_aug * kappa) * 0.3
+        Kc = agg(tg, wPi * kappa); Kcc = agg(tg, wPi * kappa_cost); Tk = agg(tg, wPi * n_tok); Aug = agg(tg, wF_aug * kappa) * 0.3
         with np.errstate(divide="ignore", invalid="ignore"):
             kb = np.where(S > 0, Kc / np.maximum(S, 1e-12), 0.0); tb = np.where(S > 0, Tk / np.maximum(S, 1e-12), 0.0)
-        lay_ = OccLayer(S=S, G=G, Z=Z, kappa_bar=kb, tok_bar=tb, aug=Aug)
+            kbc = np.where(S > 0, Kcc / np.maximum(S, 1e-12), 0.0)
+        lay_ = OccLayer(S=S, G=G, Z=Z, kappa_bar=kb, tok_bar=tb, aug=Aug, kappa_bar_cost=kbc)
         layer_cache[key] = lay_
         return lay_
 
@@ -694,6 +706,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         lays = [task_layer(max(0, t - int(lags[k])), price_mult[:, max(0, t - int(lags[k]))], tiers_r[k]) for k in range(R)]
         S = np.stack([l_.S for l_ in lays], axis=1); G = np.stack([l_.G for l_ in lays], axis=1); Z = np.stack([l_.Z for l_ in lays], axis=1)
         kb = np.stack([l_.kappa_bar for l_ in lays], axis=1); tb = np.stack([l_.tok_bar for l_ in lays], axis=1); Aug = np.stack([l_.aug for l_ in lays], axis=1)
+        kbc = np.stack([l_.kappa_bar_cost for l_ in lays], axis=1)
         rec["C"][:, :, t] = np.stack([C[:, max(0, t - int(lags[k]))] for k in range(R)], axis=1)
 
         # ---- embodied channels (spec v0.3 §A.3): feasibility, hardware cost, ramp, approval, coverage ----
@@ -894,8 +907,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         tfp = -(dlnc @ wY)
         D_sp = Dr if ch.automation else np.zeros_like(Dr); U_sp = Ur if ch.augmentation else np.zeros_like(Ur)
         spend_auto_occ = N0t * HOURS_PER_YEAR * D_sp * kb / 1e9; spend_aug_occ = N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9)) / 1e9   # [D, R, n_occ]
-        spend = spend_auto_occ.sum(axis=2) + spend_aug_occ.sum(axis=2)                                                      # [D, R]
+        spend = spend_auto_occ.sum(axis=2) + spend_aug_occ.sum(axis=2)                                                      # [D, R] at market prices
+        spend_cost = (N0t * HOURS_PER_YEAR * D_sp * kbc / 1e9).sum(axis=2) + spend_aug_occ.sum(axis=2) / m_path[:, t][:, None]   # at token cost
+        cons_rev = cons_path[:, t][:, None] * gdp_share[None, :]                                                            # [D, R] consumer AI spending paid from each region
+        rec["spend_cost"][:, :, t] = spend_cost; rec["cons_rev"][:, :, t] = cons_rev
         rec["spend_mg"][:, :, :, t] = (spend_auto_occ + spend_aug_occ) @ MG; rec["spend_aug"][:, :, t] = spend_aug_occ.sum(axis=2)   # who pays (spec §A.16)
+        spend = spend + cons_rev                                                                                            # producers' revenue from employers and consumers
         tokens_prev = (N0t * HOURS_PER_YEAR * D_sp * tb).sum(axis=(1, 2))
         received_total = np.zeros((D, R))
         for i_s, stage in enumerate(stages):
@@ -963,6 +980,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         o.N = Nt[k].astype(np.float64); o.ln_w = LNW[k].astype(np.float64); o.ln_P = LNP[:, k]; o.D_ = DD[k].astype(np.float64); o.U = UU[k].astype(np.float64)
         o.gdp_pct = rec["gdp"][:, k]; o.tfp_pct = rec["tfp"][:, k]; o.adoption_emp = rec["adopt_e"][:, k]; o.adoption_firm = rec["adopt_f"][:, k]
         o.ai_spend = rec["spend"][:, k]; o.ai_jobs = rec["jobs"][:, k]; o.net_ai_trade = rec["net"][:, k]; o.C_region = rec["C"][:, k]
+        o.spend_at_cost = rec["spend_cost"][:, k]; o.consumer_rev = rec["cons_rev"][:, k]
         o.spend_by_mg = rec["spend_mg"][:, k]; o.spend_aug = rec["spend_aug"][:, k]
         o.emp_total = rec["emp"][:, k]; o.mean_ln_w = rec["mlnw"][:, k]
         o.laid_off_cum = rec_cum["laid"][:, k]; o.unhired_cum = rec_cum["unhired"][:, k]; o.reemployed_cum = rec_cum["reemp"][:, k]
@@ -986,7 +1004,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
                               "channels_task_hours": {c: float((tg.weight[tg.channel == i] * inp.emp0[tg.occ[tg.channel == i]]).sum() / (tg.weight * inp.emp0[tg.occ]).sum())
                                                       for i, c in enumerate(["software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none"])},
                               "self_employed_fte": {x: float(self0[k].sum()) for k, x in enumerate(order)}, "embodied_on": bool(emb_on),
-                              "content_categories": [c.cat_id for c in cats], "policy_on": bool(policy_on), "policy": dict(pol), "whole_job": wj_diag, "export_serving_fte": {x: float((exp_share[k] * emp_base[k]).sum()) for k, x in enumerate(order)},
+                              "content_categories": [c.cat_id for c in cats], "policy_on": bool(policy_on), "policy": dict(pol), "whole_job": wj_diag,
+                              "price_multiple_path": [round(float(v), 3) for v in m_path[0]], "consumer_ai_revenue_path_bn": [round(float(v), 2) for v in cons_path[0]], "export_serving_fte": {x: float((exp_share[k] * emp_base[k]).sum()) for k, x in enumerate(order)},
                               "capex_annual_bn": cap.annual_bn, "access_lag": {x: int(lags[k]) for k, x in enumerate(order)},
                               "wage_tier": {x: tiers_r[k] for k, x in enumerate(order)}})
 
