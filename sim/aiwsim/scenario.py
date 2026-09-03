@@ -46,7 +46,7 @@ def resolve(scenario: dict[str, Any], scen_dir: Path, _depth: int = 0) -> dict[s
     else:
         parent = resolve(find_scenario(scen_dir, parent_id), scen_dir, _depth + 1)
         merged = copy.deepcopy(parent)
-        for key in ("id", "name", "description", "author", "created", "seed", "draws"):
+        for key in ("id", "name", "description", "author", "created", "seed", "draws", "regions"):   # regions: configuration (Phase 9), not inherited
             if key in scenario:
                 merged[key] = scenario[key]
         merged["parent"] = parent_id

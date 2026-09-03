@@ -202,3 +202,11 @@ def test_investment_section_and_capex_rows(ctx):
         assert shorts[k]["verdict"] == "within band", (k, shorts[k]["model_central"])
     assert rows[2026]["consumer_revenue_bn"] > 0 and rows[2026]["spend_at_cost_bn"] < rows[2026]["producer_revenue_bn"]
     assert d["meta"]["price_multiple_path"][0] > d["meta"]["price_multiple_path"][-1] > 1.0
+
+
+def test_scenario_regions_field_survives_inheritance(ctx):
+    """config-us-closed inherits from the baseline but runs the U.S. alone (Phase 9, review §2.3)."""
+    scen = ctx.resolve(load_scenario_by_path_or_id(ctx, "config-us-closed"))
+    assert scen.get("regions") == ["US"]
+    doc, _ = run_scenario(ctx, scen, draws=1, with_channels=False, with_tornado=False)
+    assert list(doc["series"]) == ["US"]
