@@ -93,7 +93,10 @@ describe('channel colors and labels', () => {
     expect(cellAxesLabel(5)).toBe(
       'demand response | reinstatement | pass-through | hardware learning | authenticity',
     )
-    expect(cellAxesLabel(9)).toBe(cellAxesLabel(5))
+    expect(cellAxesLabel(6)).toBe(
+      'demand response | reinstatement | pass-through | hardware learning | authenticity | closure',
+    )
+    expect(cellAxesLabel(9)).toBe(cellAxesLabel(6))
   })
   it('publishes the Phase 7 tiles: the surplus proxy with its caption, the traded share for exporters only', () => {
     const [surplus, traded] = APPLICATION_TILES

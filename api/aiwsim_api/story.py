@@ -11,6 +11,8 @@ import json
 import math
 from typing import Any
 
+import numpy as np
+
 HEAD = "employment_pct_vs_baseline"
 AGE_LABELS = {"16-24": "under 25", "25-44": "25 to 44", "45-54": "45 to 54", "55+": "55 and over"}
 SURENESS = {"high": ("we would bet on it", 3), "medium": ("leaning this way", 2), "low": ("a coin flip", 1)}
@@ -109,6 +111,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                "unemployment_peak": {"quarter": q[peak_t], "extra": round(peak_unemp)}, "gdp_pct": g50, "real_wage_pct": {"p10": rw10, "p50": rw50, "p90": rw90},
                "price_index_pct": price, "wage_share_pp": wshare, "reconciliation": recon}
 
+    sp = structural_spread(doc)
     beats: list[dict[str, Any]] = []
     # 1. The jobs ledger in levels: today, 2040 without AI, 2040 with AI
     lvl = blk.get("employment_level") or {}; lvl0 = blk.get("baseline_employment_level") or {}
@@ -127,9 +130,10 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                               f"With AI the model's median is about {_millions(with50)} ({today_words}; likely between {_millions(with10)} and {_millions(with90)}): "
                               f"about {_millions(jobs_gap)} fewer than there would have been, one job in {round(base / max(jobs_gap, 1.0))} " + ("never created rather than destroyed." if unfilled > 3 * max(laid, 1.0) else "removed.")
                               + (f" The biggest remover is {CHANNEL_WORDS[max(removed, key=removed.get)]}; the biggest offset is {CHANNEL_WORDS[max(added, key=added.get)]}." if removed and added else ""),
-                  "range": f"Likely between {_millions(jobs_lo)} fewer and {'no loss at all' if jobs_hi <= 0 else _millions(jobs_hi) + ' fewer'} than there would have been; "
-                           f"against today, between {abs(100*(with10/max(today,1.0)-1)):.0f}% {'fewer' if with10 < today else 'more'} and {abs(100*(with90/max(today,1.0)-1)):.0f}% {'fewer' if with90 < today else 'more'}.",
-                  "sureness": _sure(conf(HEAD)), "what_changes_it": "How much of the productivity gain gets spent back into the economy. Spent back, jobs are flat or up against the no-AI path; pocketed, the loss doubles.",
+                  "range": f"Across the model's assumptions, between {_millions(jobs_lo)} fewer and {'no loss at all' if jobs_hi <= 0 else _millions(jobs_hi) + ' fewer'} than there would have been; "
+                           f"against today, between {abs(100*(with10/max(today,1.0)-1)):.0f}% {'fewer' if with10 < today else 'more'} and {abs(100*(with90/max(today,1.0)-1)):.0f}% {'fewer' if with90 < today else 'more'}."
+                           + (f" The model's mechanism cells alone span {sp['min']:+.1f}% to {sp['max']:+.1f}%." if sp else ""),
+                  "sureness": _sure("low" if (sp and not sp["agree_on_sign"]) else conf(HEAD)), "what_changes_it": "Whether households' spending of the gains feeds back into hiring (the macro closure) and how strongly (the demand multiplier); with the feedback off the gap is about a third larger.",
                   "chart": {"type": "fan", "series": {"employment": {k: blk[HEAD][k] for k in ("p10", "p50", "p90") if k in blk[HEAD]},
                                                       "gdp": {k: blk["gdp_pct_vs_baseline"][k] for k in ("p10", "p50", "p90") if k in blk["gdp_pct_vs_baseline"]}}, "quarters": q},
                   "extra_chart": {"type": "bars", "title": f"Jobs in millions: today, {yr} without AI, {yr} with AI",
@@ -251,7 +255,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     caveats = _caveats(doc)
     return {"scenario_hash": doc["meta"]["scenario_hash"], "scenario_id": doc["meta"].get("scenario_id"), "scenario_name": doc["meta"].get("scenario_name"),
             "region": region, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
-            "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "investment": investment, "caveats": caveats,
+            "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "investment": investment, "backtest": backtest_story(doc), "structural_spread": sp, "caveats": caveats,
             "forecasts": doc.get("forecasts", []), "glossary": GLOSSARY}
 
 
@@ -326,6 +330,22 @@ def _sources_sentence(src: dict[str, float], groups: list[tuple[str, float]], st
 STAGE_WORDS = {"model": "the model makers", "compute": "the cloud and data-centre operators", "chips": "the chip makers", "integration": "local integrators and platforms", "fabs": "the fabs", "energy": "energy suppliers"}
 
 
+def backtest_story(doc: dict[str, Any]) -> dict[str, Any] | None:
+    """The model scored against 2024-2026 observations, with a plain sentence per series (contracts §29)."""
+    bt = doc.get("backtest")
+    if not bt or not bt.get("rows"):
+        return None
+    sentences = []
+    for sm in bt["summary"].values():
+        if sm.get("n"):
+            fit = " (a calibration target, so not evidence)" if sm.get("used_in_fit") else ""
+            sentences.append(f"{sm['label']}: the model is off by {sm['mape_pct']:.0f}% on average over {sm['n']} observations, "
+                             f"{'above' if sm['bias_pct'] > 0 else 'below'} the observed values{fit}.")
+        else:
+            sentences.append(f"{sm['label']}: the model does not track this quantity; shown for context.")
+    return {"horizon": bt["horizon"], "rows": bt["rows"], "summary": bt["summary"], "sentences": sentences, "notes": bt.get("notes", [])}
+
+
 def investment_story(doc: dict[str, Any]) -> dict[str, Any] | None:
     """Investment versus returns: the capex being poured into data centres and power against what the model says AI earns and
     what it adds to the economy. World totals, central run, from the results document's `investment` section."""
@@ -391,13 +411,18 @@ def named_futures(doc: dict[str, Any], region: str, futures_docs: dict[str, dict
     torn_g = {r["param"]: r for r in doc.get("tornado", {}).get("gdp_pct_vs_baseline", [])}
     out = []
     m = torn.get("P.87")
-    if m:
-        hi_e, lo_e = m["effect_at_high"], m["effect_at_low"]; gm = torn_g.get("P.87", {})
-        out.append({"name": "Gains spent back", "employment_pct": hi_e, "gdp_pct": gm.get("effect_at_high"), "jobs": round(-hi_e / 100 * base), "source": "sensitivity: demand multiplier at the top of its range",
-                    "description": f"If productivity gains are spent back into the economy, employment in {yr} is {hi_e:+.0f}% versus no AI ({'about ' + _millions(-hi_e/100*base) + ' more jobs' if hi_e > 0 else 'about ' + _millions(-hi_e/100*base) + ' fewer'})."})
+    closure = _closure_medians(doc, region)
+    for key, name, words in (("demand", "Gains spent back (demand closure)", "households spend the productivity gains and firms hire against that demand; the model's default closure"),
+                             ("no_demand_feedback", "Gains not spent back (no demand feedback)", "the spending feedback is switched off, so only cheaper output and new tasks offset the displacement")):
+        c = closure.get(key)
+        if c:
+            out.append({"name": name, "employment_pct": c["employment_pct"], "gdp_pct": c.get("gdp_pct"), "jobs": round(-c["employment_pct"] / 100 * base), "source": f"structural ensemble: median of the {c['cells']} cells with this closure",
+                        "description": f"{words.capitalize()}. Employment in {yr} is {c['employment_pct']:+.0f}% versus no AI (about {_millions(-c['employment_pct']/100*base)} {'fewer' if c['employment_pct'] < 0 else 'more'} jobs)."})
+    if m and not closure:
+        lo_e = m["effect_at_low"]; gm = torn_g.get("P.87", {})
         out.append({"name": "Gains pocketed", "employment_pct": lo_e, "gdp_pct": gm.get("effect_at_low"), "jobs": round(-lo_e / 100 * base), "source": "sensitivity: demand multiplier at the bottom of its range",
                     "description": f"If the gains are saved or paid out as rents, employment is {lo_e:+.0f}% (about {_millions(-lo_e/100*base)} fewer jobs)."})
-    else:
+    if not out:
         out.append({"name": "Central", "employment_pct": _p(blk[HEAD], t40), "gdp_pct": _p(blk["gdp_pct_vs_baseline"], t40), "jobs": round(-_p(blk[HEAD], t40) / 100 * base), "source": "median", "description": ""})
     for sid, fd in (futures_docs or {}).items():
         fb = fd["series"].get(region) or fd["series"]["US"]; fq = fd["meta"]["quarters"]; ft = len(fq) - 1
@@ -408,6 +433,28 @@ def named_futures(doc: dict[str, Any], region: str, futures_docs: dict[str, dict
                     "description": f"With {fd['meta'].get('scenario_name', sid).replace('Preset: ', '')} assumptions, employment in {yr} is {e:+.0f}% and robots and vehicles do {emb:.0f}% of task-hours"
                                    + (f"; robotaxis pass 10% of driver work in {gate[:4]}" if gate else "") + "."})
     return out
+
+
+def _closure_medians(doc: dict[str, Any], region: str) -> dict[str, dict[str, float]]:
+    """Median 2040 employment (and GDP) across the structural cells of each macro closure (the sixth cell axis)."""
+    st = doc.get("structural") or {}
+    emp = (st.get(HEAD) or {}).get("by_cell") or {}; gdp = (st.get("gdp_pct_vs_baseline") or {}).get("by_cell") or {}
+    out: dict[str, dict[str, float]] = {}
+    for key in ("demand", "no_demand_feedback"):
+        es = [v["p50"][-1] for c, v in emp.items() if c.split("|")[-1] == key and v.get("p50")]
+        gs = [v["p50"][-1] for c, v in gdp.items() if c.split("|")[-1] == key and v.get("p50")]
+        if es:
+            out[key] = {"employment_pct": float(np.median(es)), "gdp_pct": float(np.median(gs)) if gs else None, "cells": len(es)}
+    return out
+
+
+def structural_spread(doc: dict[str, Any], metric: str = HEAD) -> dict[str, Any] | None:
+    """Range of the cell medians at the horizon: the disagreement between the model's mechanism cells, separate from the parameter draws."""
+    by = ((doc.get("structural") or {}).get(metric) or {}).get("by_cell") or {}
+    vals = [v["p50"][-1] for v in by.values() if v.get("p50")]
+    if not vals:
+        return None
+    return {"min": float(min(vals)), "max": float(max(vals)), "cells": len(vals), "agree_on_sign": (min(vals) > 0) == (max(vals) > 0)}
 
 
 def policy_runs(doc: dict[str, Any], policy_docs: dict[str, dict[str, Any]], region: str) -> list[dict[str, Any]]:
@@ -453,6 +500,7 @@ def _caveats(doc: dict[str, Any]) -> list[str]:
     flags = doc["meta"].get("data_flags", {})
     fixtures = [k for k, v in flags.items() if isinstance(v, str) and "FIXTURE" in v.upper()]
     out = [
+        "This is a structured scenario model, not an estimated forecasting model: its ranges are ranges over its own assumptions and exclude model error.",
         "Every number is a difference from a world in which AI stopped improving in 2023, not a forecast of the level of jobs or output.",
         "The headline counts jobs as full-time equivalents and includes gig and freelance work.",
     ]
@@ -467,7 +515,7 @@ def _caveats(doc: dict[str, Any]) -> list[str]:
 
 GLOSSARY = {
     "versus no AI": "compared with a world in which AI stopped improving in 2023; population and normal growth are the same in both",
-    "likely range": "the middle 80% of the model's runs; one run in ten falls above it and one in ten below",
+    "range of the model's assumptions": "the middle 80% of the model's runs across its parameter draws and mechanism cells; one run in ten falls above it and one in ten below. It is not a forecast interval: it excludes model error, data error and events outside the model",
     "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
     "AI income (AI producers' revenue)": "what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive; in the model this equals what employers and consumers spend on AI, split by stage and allocated to the regions whose companies hold the market share; gross revenue, not profit and not economic rent in the textbook sense",
     "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",
@@ -528,7 +576,7 @@ def executive_brief_md(st: dict[str, Any]) -> str:
             for label, v in b["extra_chart"]["items"]:
                 L.append(f"- {label.strip()}: {float(v):,.0f}")
             L.append("")
-        L.append(f"*Likely range:* {b['range']}  ")
+        L.append(f"*Range of the model's assumptions:* {b['range']}  ")
         L.append(f"*How sure:* {b['sureness']['label']}.  ")
         L.append(f"*What changes it:* {b['what_changes_it']}"); L.append("")
     L.append("## What could be done"); L.append("")
@@ -551,8 +599,17 @@ def executive_brief_md(st: dict[str, Any]) -> str:
         L.append("| Who | Claim | Model (this run) | Verdict |"); L.append("|---|---|---|---|")
         for f in st["forecasts"]:
             mc = f.get("model_central")
-            L.append(f"| {f['short']} | {f['claimed']} {f['unit']} by {f['year']} ({f['region']}) | {(f'{mc:.1f}') if mc is not None else 'n/a'} | {f['verdict']}{' (nearest model quantity)' if f.get('proxy') else ''} |")
+            L.append(f"| {f['short']}{' (calibration target)' if f.get('role') == 'target' else ''} | {f['claimed']} {f['unit']} by {f['year']} ({f['region']}) | {(f'{mc:.1f}') if mc is not None else 'n/a'} | {f['verdict']}{' (nearest model quantity)' if f.get('proxy') else ''} |")
         L.append(""); L.append("A claim marked *nearest model quantity* is compared with the closest thing the model tracks, named in the technical brief; the verdict is about direction and size, not a one-to-one test.")
+        L.append("")
+    if st.get("backtest"):
+        L.append("## How the model has done so far (2024 to mid-2026)"); L.append("")
+        for x in st["backtest"]["sentences"]:
+            L.append(f"- {x}")
+        L.append(""); L.append("| Series | Quarter | Observed | Model | Error |"); L.append("|---|---|---|---|---|")
+        for r in st["backtest"]["rows"]:
+            if r.get("model_central") is not None:
+                L.append(f"| {r['label']} | {r['quarter']} | {r['value']:,.1f} | {r['model_central']:,.1f} | {r['error_pct']:+.0f}% |")
         L.append("")
     L.append("## Read this with care"); L.append("")
     for c in st["caveats"]:
@@ -687,7 +744,7 @@ def executive_brief_html(st: dict[str, Any]) -> str:
             parts.append(chart_svg(b["chart"]))
         if b.get("extra_chart"):
             parts.append(f"<p style='font-size:13.5px;color:#666;margin:10px 0 2px'>{e(b['extra_chart'].get('title', ''))}</p>" + chart_svg(b["extra_chart"]))
-        parts.append(f"<div class='meta'><span><b>Likely range:</b> {e(b['range'])}</span><span><b>How sure:</b> <span class='dots'>{'●' * b['sureness']['dots']}{'○' * (3 - b['sureness']['dots'])}</span> {e(b['sureness']['label'])}</span><span><b>What changes it:</b> {e(b['what_changes_it'])}</span></div></div>")
+        parts.append(f"<div class='meta'><span><b>Range of the model's assumptions:</b> {e(b['range'])}</span><span><b>How sure:</b> <span class='dots'>{'●' * b['sureness']['dots']}{'○' * (3 - b['sureness']['dots'])}</span> {e(b['sureness']['label'])}</span><span><b>What changes it:</b> {e(b['what_changes_it'])}</span></div></div>")
     parts.append("<h2>What could be done</h2>")
     if st["policies"]:
         parts.append("<ul>" + "".join(f"<li>{e(p['sentence'])}</li>" for p in st["policies"]) + "</ul>")
@@ -703,8 +760,13 @@ def executive_brief_html(st: dict[str, Any]) -> str:
         parts.append("<h2>How the model compares with named forecasts</h2><table><tr><th>Who</th><th>Claim</th><th>Model (this run)</th><th>Verdict</th></tr>")
         for f in st["forecasts"]:
             mc = f.get("model_central")
-            parts.append(f"<tr><td>{e(f['short'])}</td><td>{e(str(f['claimed']))} {e(f['unit'])} by {f['year']} ({e(f['region'])})</td><td>{(f'{mc:.1f}') if mc is not None else 'n/a'}</td><td>{e(f['verdict'])}{' (nearest model quantity)' if f.get('proxy') else ''}</td></tr>")
+            parts.append(f"<tr><td>{e(f['short'])}{' <i>(calibration target)</i>' if f.get('role') == 'target' else ''}</td><td>{e(str(f['claimed']))} {e(f['unit'])} by {f['year']} ({e(f['region'])})</td><td>{(f'{mc:.1f}') if mc is not None else 'n/a'}</td><td>{e(f['verdict'])}{' (nearest model quantity)' if f.get('proxy') else ''}</td></tr>")
         parts.append("</table><p style='font-size:13px;color:#666'>A claim marked <i>nearest model quantity</i> is compared with the closest thing the model tracks; the verdict is about direction and size, not a one-to-one test.</p>")
+    if st.get("backtest"):
+        parts.append("<h2>How the model has done so far (2024 to mid-2026)</h2><ul>" + "".join(f"<li>{e(x)}</li>" for x in st["backtest"]["sentences"]) + "</ul>")
+        parts.append("<table><tr><th>Series</th><th>Quarter</th><th>Observed</th><th>Model</th><th>Error</th></tr>"
+                     + "".join(f"<tr><td>{e(r['label'])}</td><td>{r['quarter']}</td><td>{r['value']:,.1f}</td><td>{r['model_central']:,.1f}</td><td>{r['error_pct']:+.0f}%</td></tr>" for r in st["backtest"]["rows"] if r.get("model_central") is not None)
+                     + "</table>")
     parts.append("<h2>Read this with care</h2><div class='caveat'><ul>" + "".join(f"<li>{e(c)}</li>" for c in st["caveats"]) + "</ul></div>")
     parts.append("<h2>Words used</h2><ul>" + "".join(f"<li><b>{e(k)}</b>: {e(v)}</li>" for k, v in st["glossary"].items()) + "</ul>")
     parts.append(f"<p style='color:#888;font-size:12px'>Run <code>{e(st['scenario_hash'])}</code>. Technical brief and methodology in the repository.</p></body></html>")

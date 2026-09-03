@@ -1810,6 +1810,28 @@ const LEVER_LABELS: Record<
 }
 // ---------- Phase 7 (spec v0.3 §A.9, contracts §25); labels follow api/aiwsim_api/levers.py ----------
 Object.assign(LEVER_LABELS, {
+  // Phase 9 (contracts §29): the closure axis and the production-ramp configuration
+  'levers.macro.closure': {
+    label: 'Macro closure',
+    param: 'P.87',
+    mechanism:
+      'Household demand feedback on (demand) or off (no_demand_feedback); with it off only cheaper output and new tasks offset the displacement (review §2.1, spec §6.4).',
+  },
+  'levers.applications.hardware.ramp_allocation': {
+    label: 'Production ramp allocation',
+    param: 'P.117',
+    mechanism: 'Shared (global) or per-region (local) hardware production capacity (review §2.3).',
+  },
+  'levers.capability.threshold_seed': {
+    label: 'Task-threshold seed',
+    step: 1,
+    mechanism: 'Seed of the task-threshold draw; the diagnostics vary it to show what resolution the task engine supports.',
+  },
+  'levers.applications.hardware.cost_floor_scale': {
+    label: 'Hardware cost-floor scale',
+    unit: '×',
+    mechanism: 'Multiplies the embodied classes\' cost floors (review §2.8: no $0.04 robot).',
+  },
   'levers.applications.enabled': {
     label: 'Application layer (v0.3) on',
     mechanism: 'Embodied, output-substitution and traded-services channels (spec v0.3); off reproduces the v0.2 task engine.',
@@ -1914,7 +1936,7 @@ function buildLevers(schema: JsonSchema, baseline: ScenarioDocument): LeverDef[]
         type: 'number',
         min,
         max,
-        step: meta?.step ?? niceStep(min, max),
+        step: meta?.step ?? (node.type === 'integer' ? 1 : niceStep(min, max)),
         unit: meta?.unit ?? '',
         default: (def as number) ?? (node.default as number) ?? meta?.default ?? min,
       })

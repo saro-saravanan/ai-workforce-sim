@@ -239,6 +239,11 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
     q.flags["approval"] = {k: str(v) for k, v in app.get("approval", {}).items()}
     q.flags["platform_labor"] = app.get("platform_labor", "status_quo")
     q.flags["induced_demand_scale"] = float(app.get("induced_demand_scale", 1.0))
+    macro = levers.get("macro", {})
+    q.flags["closure"] = macro.get("closure", "demand")
+    if q.flags["closure"] == "no_demand_feedback":
+        q.set("P.87", 0.0)
+    q.flags["ramp_allocation"] = app.get("hardware", {}).get("ramp_allocation", "global")
     q.flags["layoff_first_share"] = float(levers.get("labor", {}).get("layoff_first_share", 0.0))
     content = app.get("content", {})
     q.flags["authenticity"] = content.get("authenticity", "eroding")

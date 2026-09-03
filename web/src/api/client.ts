@@ -1,4 +1,5 @@
 import type {
+  BacktestSection,
   CompareResponse,
   ExplainResponse,
   LeverDef,
@@ -662,6 +663,19 @@ export async function fetchOutlook(
   if (occ) qs.set('occ', occ)
   if (age) qs.set('age', age)
   return getJson<OutlookResponse>(`/api/outlook/${encodeURIComponent(doc.meta.scenario_hash)}?${qs}`)
+}
+
+// ---------- Phase 9 (contracts §29) ----------
+
+/**
+ * The backtest section of a run: the results document carries it in every mode (the API's
+ * `/api/results/{hash}`, the static `runs/<id>.json`), so there is no endpoint to call. Null when
+ * the run has none (older exports, the mock, an empty section).
+ */
+export function fetchBacktest(doc: ResultsDocument | null | undefined): BacktestSection | null {
+  const bt = doc?.backtest
+  if (!bt || !('rows' in bt) || !Array.isArray(bt.rows) || !bt.rows.length) return null
+  return bt as BacktestSection
 }
 
 /**

@@ -429,6 +429,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     eps_w = bp.col("P.73", 0.3); beta_w = bp.col("P.74", 0.3)
     rho_new = bp.vec("P.61", 0.4); lag_new = int(p.get("P.62", 8))
     m_mult = bp.vec("P.87", 0.6); co = bp.vec("P.56", 0.3); jlag = int(p.get("P.84", 4))
+    if p.flags.get("closure", "demand") == "no_demand_feedback":                       # Phase 9 (review §2.1): the household demand multiplier is switched off
+        m_mult = np.zeros_like(m_mult)
     W_cons = inp.consumption_share / inp.consumption_share.sum()
     compl = inp.emp0 * (1.0 - inp.occ_exposure_beta); compl = compl / compl.sum()
     retr_entry = float(p.get("P.68", 0.06)); retr_success = float(p.get("P.70", 0.55)); retr_dur = int(p.get("P.71", 4))
@@ -736,12 +738,17 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             retire = Rk / (4.0 * e["L"])
             gap = np.maximum(Rstar - Rk, 0.0)
             capacity = np.maximum(e["prod_prev"], e["q0"]) * (1.0 + g_max) ** 0.25 * e["cap_mult"][t]
-            demand = retire.sum(axis=1) + gap.sum(axis=1)
-            production = np.minimum(capacity, demand) * e["recall"][t]
-            repl = np.minimum(production, retire.sum(axis=1))
-            growth = production - repl
-            repl_alloc = np.where(retire.sum(axis=1, keepdims=True) > 0, retire * (repl / np.maximum(retire.sum(axis=1), 1e-9))[:, None], 0.0)
-            gap_alloc = np.where(gap.sum(axis=1, keepdims=True) > 0, gap * (growth / np.maximum(gap.sum(axis=1), 1e-9))[:, None], 0.0)
+            if p.flags.get("ramp_allocation", "global") == "local":                   # Phase 9 (review §2.3): every region draws the full capacity path
+                prod_r = np.minimum(capacity[:, None], retire + gap) * e["recall"][t]
+                repl_alloc = np.minimum(prod_r, retire); gap_alloc = prod_r - repl_alloc
+                production = prod_r.sum(axis=1)
+            else:
+                demand = retire.sum(axis=1) + gap.sum(axis=1)
+                production = np.minimum(capacity, demand) * e["recall"][t]
+                repl = np.minimum(production, retire.sum(axis=1))
+                growth = production - repl
+                repl_alloc = np.where(retire.sum(axis=1, keepdims=True) > 0, retire * (repl / np.maximum(retire.sum(axis=1), 1e-9))[:, None], 0.0)
+                gap_alloc = np.where(gap.sum(axis=1, keepdims=True) > 0, gap * (growth / np.maximum(gap.sum(axis=1), 1e-9))[:, None], 0.0)
             Rk = np.maximum(Rk - retire + repl_alloc + gap_alloc, 0.0)
             e["R"] = Rk; e["cum"] = e["cum"] + production; e["prod_prev"] = np.maximum(production, 0.5 * e["prod_prev"])
             cov = np.where(H > 1.0, np.minimum(1.0, Rk * e["cap_unit"][:, None] / np.maximum(H, 1.0)), 0.0) * e["recall"][t]   # no addressable hours, no coverage

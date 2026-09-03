@@ -36,6 +36,7 @@ ENSEMBLE_AXES: dict[str, dict[str, dict[str, float]]] = {
     "passthrough": {"low": {"P.74": 0.15, "P.53": 0.4}, "mid": {"P.74": 0.4, "P.53": 0.8}},
     "hardware": {"automotive": {"P.113": 0.08}, "electronics": {"P.113": 0.20}},     # spec v0.3 §A.7 learning-rate axis
     "authenticity": {"persistent": {"P.127.half_life_years": 1e6}, "eroding": {"P.127.half_life_years": 8.0}},   # spec v0.3 §A.4, §A.7
+    "closure": {"demand": {}, "no_demand_feedback": {"P.87": 0.0}},   # Phase 9 (review §2.1): demand closure keeps the sampled multiplier; no_demand_feedback sets it to zero
 }
 
 
@@ -46,7 +47,8 @@ def cells() -> list[dict[str, Any]]:
             for pth, pv in ENSEMBLE_AXES["passthrough"].items():
                 for hw, hv in ENSEMBLE_AXES["hardware"].items():
                     for au, av in ENSEMBLE_AXES["authenticity"].items():
-                        out.append({"id": f"{d}|{r}|{pth}|{hw}|{au}", "values": {**dv, **rv, **pv, **hv, **av}})
+                        for cl, cv in ENSEMBLE_AXES["closure"].items():
+                            out.append({"id": f"{d}|{r}|{pth}|{hw}|{au}|{cl}", "values": {**dv, **rv, **pv, **hv, **av, **cv}})
     return out
 
 

@@ -423,6 +423,19 @@
             }
           }
         },
+        "macro": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "closure": {
+              "enum": [
+                "demand",
+                "no_demand_feedback"
+              ],
+              "description": "Macro closure (review 2.1): demand keeps the household demand multiplier (P.87); no_demand_feedback sets it to zero so displacement is absorbed by wages and flows."
+            }
+          }
+        },
         "applications": {
           "type": "object",
           "additionalProperties": false,
@@ -487,6 +500,13 @@
                   "type": "number",
                   "minimum": 0.3,
                   "maximum": 1.5
+                },
+                "ramp_allocation": {
+                  "enum": [
+                    "global",
+                    "local"
+                  ],
+                  "description": "global: one production capacity shared across regions in proportion to their fleet gaps; local: every region can draw the full capacity path (as a single-region run does)."
                 }
               }
             },
@@ -790,6 +810,14 @@
       "type": "boolean",
       "default": false,
       "description": "Saved by a user through the API; lives in scenarios/user/."
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Regions to simulate (default: all ten). ['US'] is the U.S.-closed configuration used in the regional decomposition."
     }
   }
 }

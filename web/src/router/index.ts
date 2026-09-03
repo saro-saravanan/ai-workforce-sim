@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 export const VIEWS = [
   { name: 'story', path: '/story', label: 'Story', phase: 8 },
   { name: 'outlook', path: '/outlook', label: 'Your outlook', phase: 8 },
+  { name: 'backtest', path: '/backtest', label: 'Backtest', phase: 9 },
   { name: 'map', path: '/map', label: 'Map', phase: 1 },
   { name: 'flows', path: '/flows', label: 'Flows', phase: 2 },
   { name: 'occupations', path: '/occupations', label: 'Occupations', phase: 1 },
@@ -19,6 +20,7 @@ const router = createRouter({
     { path: '/', redirect: '/story' },
     { path: '/story', name: 'story', component: () => import('@/views/StoryView.vue') },
     { path: '/outlook', name: 'outlook', component: () => import('@/views/OutlookView.vue') },
+    { path: '/backtest', name: 'backtest', component: () => import('@/views/BacktestView.vue') },
     { path: '/map', name: 'map', component: () => import('@/views/MapView.vue') },
     {
       path: '/occupations',

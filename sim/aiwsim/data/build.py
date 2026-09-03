@@ -35,7 +35,7 @@ from aiwsim.data.sources import SOURCES
 
 TABLES = [
     "occupations", "tasks", "sectors", "occ_sector", "states", "occ_state",
-    "series/btos", "series/metr_horizons", "series/capex", "series/regulatory_events",
+    "series/btos", "series/metr_horizons", "series/capex", "series/regulatory_events", "series/backtest",
     "params/registry", "geo/us_states",
     "cohorts/occ_decile", "cohorts/national_deciles", "cohorts/occ_education", "cohorts/occ_age",
     # Phase 3 (contracts §11)
@@ -392,6 +392,9 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
          ["transcribed from docs/data-inventory.md §4; guidance ranges stored as midpoint with low/high columns"],
          "Key is (company, year, basis): Microsoft is given on both June-fiscal and calendar bases, so (company, "
          "year) alone is not unique — a documented deviation from contracts §1. " + series.CAPEX_SUM_NOTES),
+        ("series/backtest", series.backtest(), SOURCES["sec_capex"], "Backtest targets 2024-2026 (review §2.2)",
+         ["transcribed from Census BTOS, Challenger reports, company reports, press summaries and the NY Fed; see docs/data-inventory.md"],
+         series.BACKTEST_NOTES),
         ("series/regulatory_events", series.regulatory_events(), SOURCES["regulatory"],
          "Regulatory timeline, inventory §5",
          ["transcribed from docs/data-inventory.md §5; month-precision dates set to the 1st (date_precision)"],

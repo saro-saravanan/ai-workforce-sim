@@ -29,7 +29,7 @@ export function confidenceTitle(c: Confidence | undefined, at: string): string {
   const parts = [
     `${CONFIDENCE_LABEL[c.level]} at ${at.replace(/Q/, ' Q')}`,
     `sign holds in ${Math.round(c.sign_share * 100)}% of draws`,
-    c.cells_agree ? 'all 8 mechanism cells agree on the sign' : 'mechanism cells disagree on the sign',
+    c.cells_agree ? 'all mechanism cells agree on the sign' : 'mechanism cells disagree on the sign',
     c.flip_params.length
       ? `flipped within range by ${c.flip_params.join(', ')}`
       : 'no single parameter flips the sign',

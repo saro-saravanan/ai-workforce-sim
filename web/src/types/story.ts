@@ -3,7 +3,7 @@
  * executive brief, and the personal outlook. Every number is read from the results document by
  * the server (`api/aiwsim_api/story.py`) or, in static and mock modes, by `lib/outlook.ts`.
  */
-import type { ConfidenceLevel, ForecastRow, SlimSeries } from '@/types/results'
+import type { BacktestSection, ConfidenceLevel, ForecastRow, SlimSeries } from '@/types/results'
 
 export type BeatId = 'jobs' | 'hiring' | 'young' | 'pay' | 'waves' | 'money' | 'futures'
 export const BEAT_IDS: BeatId[] = ['jobs', 'hiring', 'young', 'pay', 'waves', 'money', 'futures']
@@ -155,6 +155,22 @@ export interface StoryInvestment {
   definition: string
 }
 
+/** The results `backtest` section with one plain sentence per series (contracts §29). */
+export interface StoryBacktest extends BacktestSection {
+  sentences: string[]
+}
+
+/**
+ * The range of the mechanism-cell medians at the horizon for the headline (employment), separate
+ * from the parameter draws; `agree_on_sign` false makes the jobs beat "a coin flip".
+ */
+export interface StructuralSpreadSummary {
+  min: number
+  max: number
+  cells: number
+  agree_on_sign: boolean
+}
+
 export interface StoryDocument {
   scenario_hash: string
   scenario_id: string | null
@@ -171,6 +187,10 @@ export interface StoryDocument {
   caveats: string[]
   forecasts: ForecastRow[]
   glossary: Record<string, string>
+  // ---------- Phase 9 (contracts §29) ----------
+  /** null when the run carries no backtest section (older runs, the mock) */
+  backtest?: StoryBacktest | null
+  structural_spread?: StructuralSpreadSummary | null
 }
 
 export type OutlookVerdict =

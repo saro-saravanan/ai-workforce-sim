@@ -5,7 +5,7 @@
   "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
   "parent": null,
   "seed": 42,
-  "draws": 256,
+  "draws": 384,
   "horizon": {
     "start": "2024Q1",
     "end": "2040Q4"

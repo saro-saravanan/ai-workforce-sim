@@ -476,6 +476,57 @@ def investment_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, 
                       "gdp_gain_bn is the GDP effect versus the frozen-AI path at 2024 GDP; productivity_gain_bn is its TFP part; investment_in_gdp_bn is the rest, mostly the data-centre build itself counted as output"]}
 
 
+def _backtest_targets(inp: Inputs) -> list[dict[str, Any]]:
+    path = Path(inp.root) / "data" / "processed" / "series" / "backtest.csv"
+    if not path.exists():
+        return []
+    return pl.read_csv(path, schema_overrides={"quarter": pl.Utf8, "series_id": pl.Utf8}).to_dicts()
+
+
+def backtest_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, Any]:
+    """The model scored against observed 2024-2026 series (review §2.2): one row per observation with the model's central value at
+    that quarter, the error, and per-series summaries. Rows with model_metric 'none' are context the model does not track."""
+    targets = _backtest_targets(inp)
+    if not targets:
+        return {}
+    q = o.quarters; us = o.regions.get("US") or next(iter(o.regions.values()))
+    cap_raw = o.trace.get("capex_annual_bn"); cap = np.asarray(cap_raw, dtype=float) if cap_raw is not None else None
+    rev = None
+    if all(r.rents for r in o.regions.values()):
+        rev = sum(sum(r.rents.values())[0] for r in o.regions.values())
+    offset_2023 = next((float(r["value"]) for r in targets if r["series_id"] == "challenger_ai_cum" and r["quarter"] == "2023Q4"), 0.0)
+    rows = []
+    for r in targets:
+        m = r["model_metric"]; qq = r["quarter"]; model = None; note = ""
+        if qq in q:
+            t = q.index(qq)
+            if m == "adoption_share_firm_weighted":
+                model = 100 * float(us.adoption_firm[0, t])
+            elif m == "ai_layoffs_cum":
+                model = float(us.laid_off_cum[0, t]) + offset_2023; note = "model layoffs since 2024Q1 plus the 2023 count"
+            elif m == "ai_producer_revenue_bn" and rev is not None:
+                model = float(rev[t])
+            elif m == "hyperscaler_capex_bn" and cap is not None:
+                model = float(cap[t]); note = "input path, not a prediction"
+        elif m != "none":
+            note = "before the model horizon"
+        obs = float(r["value"])
+        err = (model - obs) if model is not None else None
+        rows.append({**r, "value": obs, "model_central": (round(model, 2) if model is not None else None), "error": (round(err, 2) if err is not None else None),
+                     "error_pct": (round(100 * err / obs, 1) if (err is not None and obs) else None), "note": note})
+    summary = {}
+    for sid in sorted({r["series_id"] for r in rows}):
+        rs = [r for r in rows if r["series_id"] == sid and r["error_pct"] is not None]
+        if rs:
+            summary[sid] = {"label": rs[0]["label"], "n": len(rs), "mape_pct": round(float(np.mean([abs(r["error_pct"]) for r in rs])), 1),
+                            "bias_pct": round(float(np.mean([r["error_pct"] for r in rs])), 1), "used_in_fit": bool(any(r["used_in_fit"] for r in rs))}
+        else:
+            summary[sid] = {"label": next(r["label"] for r in rows if r["series_id"] == sid), "n": 0, "mape_pct": None, "bias_pct": None, "used_in_fit": False, "note": "not tracked by the model"}
+    return {"horizon": ["2024Q1", "2026Q2"], "rows": rows, "summary": summary,
+            "notes": ["Central run. Rows marked used_in_fit set a parameter (BTOS: adoption q; Challenger 2025 and 2026Q2: layoff_first_share; revenue: P.140 and P.143), so their errors are not evidence.",
+                      "A true hold-out would refit on 2024-2025 and score 2026; the fitted parameters used 2026 rows and this is stated on the page."]}
+
+
 def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, Any]]:
     """Forecaster scoreboard: each named claim against the model's central value and 10–90 band for the same quantity (spec v0.3 §A.16)."""
     if apps is None or not getattr(apps, "forecasts", None):
@@ -612,5 +663,5 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
     return {"meta": meta, "series": series, "occupations": occs, "states": states, "regions": regions_meta, "world": world, "supply": supply,
             "channels": channels or {},
             "structural": structural(o, q) if cells else {}, "confidence": conf, "tornado": torn or {},
-            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps), "forecasts": forecasts_section(inp, o, apps), "investment": investment_section(inp, o, regional),
+            "cohorts": cohorts_section(o), "flows": flows_section(o), "applications": applications_section(inp, o, apps), "forecasts": forecasts_section(inp, o, apps), "investment": investment_section(inp, o, regional), "backtest": backtest_section(inp, o, regional),
             "explain": {"notes": explain_notes(inp, o, conf), "trace": trace(o, q), "diff": annotate_diff(diff or [])}}

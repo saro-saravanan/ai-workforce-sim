@@ -46,7 +46,7 @@ def test_story_beats_numbers_and_forecasts(run):
     assert jobs["title"].endswith("fewer than there would have been") and "jobs today" in jobs["sentence"]
     hiring = st["beats"][1]; assert "Reality check" in hiring["sentence"] and hiring["reality_check"] and any(r["short"].startswith("Challenger") for r in hiring["reality_check"])
     assert hiring["title"].startswith("Most of the gap is hiring that never happens; about one position in")
-    assert st["futures"][0]["name"] == "Gains spent back" and st["futures"][1]["name"] == "Gains pocketed"
+    assert st["futures"][0]["name"].startswith("Gains spent back") and (st["futures"][1]["name"].startswith("Gains not spent back") or st["futures"][1]["name"] == "Gains pocketed")
     assert st["futures"][0]["employment_pct"] > st["futures"][1]["employment_pct"]
     assert st["forecasts"] and all(f["verdict"] in ("within band", "model lower", "model higher") for f in st["forecasts"])
     assert any(f["short"].startswith("Seba") and f["proxy"] for f in st["forecasts"])

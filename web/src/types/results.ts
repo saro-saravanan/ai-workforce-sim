@@ -37,7 +37,9 @@ export interface ResultsMeta {
   static?: boolean
   /**
    * Mechanism-cell ids: 8 in v0.2 ("bessen|acemoglu_low|passthrough_low"), 16 with the Phase 6
-   * hardware-learning axis, 32 with the Phase 7 authenticity axis (`|eroding` / `|persistent`).
+   * hardware-learning axis, 32 with the Phase 7 authenticity axis (`|eroding` / `|persistent`),
+   * 64 with the Phase 9 macro-closure axis (`|demand` / `|no_demand_feedback`). The UI reads the
+   * count and the axes from the ids (`cellAxesLabel`), never from a constant.
    */
   cells?: string[]
   /** Phase 2: [10, 25, 50, 75, 90] */
@@ -384,11 +386,17 @@ export interface ResultsDocument {
   // ---------- Phase 8 (contracts §28) ----------
   /** the forecast scoreboard: named claims read against this run's band */
   forecasts?: ForecastRow[]
+  // ---------- Phase 9 (contracts §29) ----------
+  /** the model scored against observed 2024–2026 series; `{}` or absent when the run has none */
+  backtest?: BacktestSection | Record<string, never> | null
 }
 
 // ---------- Phase 8 sections (contracts §28) ----------
 
 export type ForecastVerdict = 'within band' | 'model lower' | 'model higher'
+
+/** Phase 9: a calibration target set a parameter and is not evidence; a comparison is. */
+export type ForecastRole = 'target' | 'comparison'
 
 /** One scoreboard row (`forecasts.csv` read against the run's p10–p90 band at the claim's quarter). */
 export interface ForecastRow {
@@ -410,6 +418,61 @@ export interface ForecastRow {
   model_p10: number | null
   model_p90: number | null
   verdict: ForecastVerdict | string
+  /** Phase 9 (contracts §29); absent in older documents, read as a comparison */
+  role?: ForecastRole | string
+  /** the claim's own range when the source gives one; the verdict reads the band against it */
+  claimed_low?: number | null
+  claimed_high?: number | null
+}
+
+// ---------- Phase 9 sections (contracts §29) ----------
+
+/**
+ * The model quantity a backtest row is scored against; `none` marks context series the model does
+ * not track (shown as observed points only).
+ */
+export type BacktestModelMetric =
+  | 'adoption_share_firm_weighted'
+  | 'ai_layoffs_cum'
+  | 'ai_producer_revenue_bn'
+  | 'hyperscaler_capex_bn'
+  | 'none'
+
+/** One observation (`backtest.csv`) with the model's central value at that quarter. */
+export interface BacktestRow {
+  series_id: string
+  label: string
+  quarter: string
+  value: number
+  unit: string
+  model_metric: BacktestModelMetric | string
+  source: string
+  /** how the observation was verified */
+  source_tag: string
+  /** 1 when the row set a parameter (a calibration target, not evidence) */
+  used_in_fit: number | boolean
+  model_central: number | null
+  error: number | null
+  error_pct: number | null
+  note: string
+}
+
+export interface BacktestSummary {
+  label: string
+  /** scored observations; 0 for a context series */
+  n: number
+  mape_pct: number | null
+  bias_pct: number | null
+  used_in_fit: boolean
+  /** "not tracked by the model" for n = 0 */
+  note?: string
+}
+
+export interface BacktestSection {
+  horizon: [string, string]
+  rows: BacktestRow[]
+  summary: Record<string, BacktestSummary>
+  notes: string[]
 }
 
 // ---------- Phase 6 sections (contracts §19–20) ----------
@@ -639,6 +702,7 @@ export type LeverGroup =
   | 'adoption'
   | 'labor'
   | 'policy'
+  | 'macro'
   | 'applications'
   | 'baseline'
 

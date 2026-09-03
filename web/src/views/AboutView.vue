@@ -9,6 +9,8 @@ const results = useResultsStore()
 
 const BRANCH = 'spec/model-v0.1'
 const docUrl = (path: string) => `${REPO_URL}/blob/${BRANCH}/${path}`
+/** the one-page current-model statement (Phase 9) lives on main */
+const CURRENT_MODEL_URL = `${REPO_URL}/blob/main/docs/current-model.md`
 
 const meta = computed(() => results.meta)
 const flags = computed(() => Object.entries(meta.value?.data_flags ?? {}))
@@ -85,6 +87,7 @@ const LINKS = [
   { label: 'Methodology', href: docUrl('docs/methodology.md'), note: 'how the model is built and calibrated' },
   { label: 'Model specification', href: docUrl('docs/model-spec.md'), note: 'v0.2, with §16 implementation notes' },
   { label: 'Contracts', href: docUrl('docs/contracts.md'), note: 'results document, API and static export' },
+  { label: 'Current model', href: CURRENT_MODEL_URL, note: 'one page: fitted parameters and their targets (main branch)' },
 ]
 </script>
 
@@ -93,8 +96,8 @@ const LINKS = [
     <header>
       <h2>About this tool</h2>
       <p class="lede">
-        AI Workforce Sim is an interactive, multi-region simulation of how AI reshapes work and the
-        economy between 2024 and 2040. Ten regions run jointly through a shared capability clock,
+        AI Workforce Sim is a structured scenario model of how AI reshapes work and the economy
+        between 2024 and 2040, not a forecast: it is interactive and multi-region. Ten regions run jointly through a shared capability clock,
         and every number the views show is the difference between a scenario and a frozen-AI
         counterfactual in which no frontier AI arrives after 2023. The levers change the scenario;
         a deterministic model produces the results, and the Ask layer only reads them.
@@ -112,20 +115,44 @@ const LINKS = [
     </section>
 
     <section class="card">
+      <h3>What kind of model this is</h3>
+      <p class="text-p">
+        The model is a structured scenario model: a set of mechanisms with stated parameters,
+        run across parameter draws and mechanism cells, whose bands are the range of its own
+        assumptions rather than a forecast interval. Three tools keep it honest. The
+        <RouterLink :to="{ path: '/backtest', query: $route.query }">Backtest</RouterLink> view
+        scores the central run against what has been observed since 2024 (firm adoption, AI-cited
+        job cuts, AI industry revenue, hyperscaler capex) and marks the rows that were used to set
+        a parameter as calibration targets rather than evidence; a convergence test reports how
+        the 10th, 50th and 90th percentiles move with the draw count and the seed; and a regional
+        decomposition runs the United States alone (the <code>config-us-closed</code> scenario)
+        beside the ten-region configuration to show how much of the headline comes from the
+        regional layer. The structural ensemble has a closure axis, <code>demand</code> versus
+        <code>no_demand_feedback</code>, so the named futures on the Story view are the medians of
+        the cells under each closure, and the jobs beat reports the spread of the mechanism cells
+        alone. The one-page
+        <a :href="CURRENT_MODEL_URL" target="_blank" rel="noopener">current-model statement</a>
+        lists the fitted parameters and their targets.
+      </p>
+    </section>
+
+    <section class="card">
       <h3>The story, your outlook and the scoreboard</h3>
       <p class="text-p">
         The <RouterLink :to="{ path: '/story', query: $route.query }">Story</RouterLink> view
         reads the current run as one reconciled set of numbers and seven findings in plain
-        language, each with its likely range, how sure the model is of the direction, and what
+        language, each with the range of the model's assumptions, how sure the model is of the
+        direction, and what
         would change it; it ends with the policy runs read against the baseline and an executive
         brief without parameter codes. Named futures sit beside the model's own extremes: the
         Seba / RethinkX disruption preset is one of them and can be opened as a scenario.
         <RouterLink :to="{ path: '/outlook', query: $route.query }">Your outlook</RouterLink>
         narrows the same run to one occupation and one age band. The forecast scoreboard on the
         Story view puts named public claims (Goldman Sachs, IMF, Acemoglu, RethinkX and others)
-        next to the run's central value and likely range and says whether the model lands within,
-        below or above each claim; where the model tracks only a neighbouring quantity, the row
-        says so.
+        next to the run's central value and the range of its assumptions and says whether the model
+        lands within, below or above each claim; where the model tracks only a neighbouring
+        quantity, the row says so, and claims that were used to set a parameter are marked as
+        calibration targets and counted separately.
       </p>
     </section>
 

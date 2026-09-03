@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.3",
+  "id": "config-us-closed",
+  "name": "Configuration: U.S. closed (no regional layer)",
+  "description": "The baseline run for the United States alone: no shared production ramp, no trade feedback, no rents from or to other regions. Used with the regional decomposition to show how much of the U.S. headline comes from the ten-region configuration.",
+  "parent": "baseline",
+  "regions": ["US"],
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

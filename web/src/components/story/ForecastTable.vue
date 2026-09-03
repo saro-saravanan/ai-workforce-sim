@@ -2,13 +2,27 @@
 import { computed } from 'vue'
 import type { ForecastRow } from '@/types/results'
 import { pyFixed } from '@/lib/plain'
+import { RANGE_LABEL, RANGE_TITLE } from '@/lib/story'
 
-/** The scoreboard: named claims against this run's central value and likely range. */
+/**
+ * The scoreboard: named claims against this run's central value and the range of the model's
+ * assumptions. A row with `role === 'target'` set a parameter (a calibration target): it is
+ * marked and counted apart, because it is not evidence.
+ */
 const props = defineProps<{ forecasts: ForecastRow[]; currentId?: string | null }>()
 defineEmits<{ preset: [scenarioId: string] }>()
 
 const num = (v: number | null | undefined, digits = 1) =>
   v == null || !Number.isFinite(v) ? 'n/a' : pyFixed(v, Number.isInteger(v) ? 0 : digits)
+const isTarget = (f: ForecastRow) => f.role === 'target'
+/** "12 to 18" after the claimed value when the source gives a range */
+const claimedRange = (f: ForecastRow) =>
+  f.claimed_low != null && f.claimed_high != null
+    ? ` (${num(f.claimed_low)} to ${num(f.claimed_high)})`
+    : ''
+const targets = computed(() => props.forecasts.filter(isTarget).length)
+const comparisons = computed(() => props.forecasts.length - targets.value)
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 const chipClass = (verdict: string) =>
   verdict === 'within band'
     ? 'within'
@@ -28,16 +42,24 @@ const hasProxy = computed(() => props.forecasts.some((f) => f.proxy))
             <th scope="col">Who</th>
             <th scope="col">Claim</th>
             <th scope="col" class="num">Model, central</th>
-            <th scope="col" class="num">Likely range</th>
+            <th scope="col" class="num range" :title="RANGE_TITLE">{{ RANGE_LABEL }}</th>
             <th scope="col">Verdict</th>
             <th scope="col"></th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="(f, i) in forecasts" :key="i">
-            <td :title="f.source">{{ f.short }}</td>
+            <td class="who" :title="f.source">
+              {{ f.short
+              }}<span
+                v-if="isTarget(f)"
+                class="chip target"
+                title="This claim was used to set a parameter, so the model's agreement with it is not evidence"
+                >calibration target</span
+              >
+            </td>
             <td class="claim" :title="f.note">
-              {{ num(f.claimed) }} {{ f.unit }} by {{ f.year }} ({{ f.region }})
+              {{ num(f.claimed) }}{{ claimedRange(f) }} {{ f.unit }} by {{ f.year }} ({{ f.region }})
             </td>
             <td class="num">
               {{ num(f.model_central)
@@ -66,6 +88,13 @@ const hasProxy = computed(() => props.forecasts.some((f) => f.proxy))
       * nearest model quantity: the claim is compared with the closest thing the model tracks (hover
       the claim for the detail), so the verdict is about direction and size, not a one-to-one test.
     </p>
+    <p v-if="forecasts.length" class="muted note counts">
+      {{ plural(comparisons, 'comparison') }}, {{ plural(targets, 'calibration target') }}<template
+        v-if="targets"
+      >
+        (used to set a parameter; not evidence)</template
+      >.
+    </p>
   </div>
 </template>
 
@@ -82,6 +111,17 @@ const hasProxy = computed(() => props.forecasts.some((f) => f.proxy))
 table.forecasts th {
   cursor: default;
   position: static;
+}
+table.forecasts td.who {
+  white-space: normal;
+  min-width: 150px;
+  max-width: 220px;
+}
+table.forecasts th.range {
+  white-space: normal;
+  min-width: 120px;
+  max-width: 160px;
+  cursor: help;
 }
 table.forecasts td.claim {
   white-space: normal;
@@ -110,6 +150,17 @@ table.forecasts td.action {
   background: var(--warn-bg);
   color: var(--warn-ink);
   border-color: transparent;
+}
+.chip.target {
+  margin-left: 6px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border-style: dashed;
+  vertical-align: 1px;
+  cursor: help;
 }
 .link-btn {
   border: 0;

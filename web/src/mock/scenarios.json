@@ -6,7 +6,7 @@
   "description": "v0.2 defaults from docs/model-spec.md section 10. All levers at central values, structural ensemble on, no shocks.",
   "parent": null,
   "seed": 42,
-  "draws": 256,
+  "draws": 384,
   "horizon": {
    "start": "2024Q1",
    "end": "2040Q4"
@@ -58,7 +58,8 @@
     "layoff_friction": 0.25,
     "price_pass_through": 0.7,
     "occupational_attrition_pct_per_quarter": 2.5,
-    "wage_pass_through": 0.3
+    "wage_pass_through": 0.3,
+    "layoff_first_share": 0.25
    },
    "policy": {
     "US": {
@@ -125,6 +126,19 @@
   "ensemble": {
    "mechanisms": "all",
    "shapley": false
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "config-us-closed",
+  "name": "Configuration: U.S. closed (no regional layer)",
+  "description": "The baseline run for the United States alone: no shared production ramp, no trade feedback, no rents from or to other regions. Used with the regional decomposition to show how much of the U.S. headline comes from the ten-region configuration.",
+  "parent": "baseline",
+  "regions": [
+   "US"
+  ],
+  "ensemble": {
+   "mechanisms": "all"
   }
  },
  {
@@ -341,6 +355,48 @@
  },
  {
   "schema_version": "0.3",
+  "id": "preset-seba-2026",
+  "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
+  "description": "RethinkX's 2024–2026 labour claims and the 2026 'Rethinking Energy, Mobility, and Materials' roadmap as levers: humanoid labour under $10/hour at entry and under $1/hour before 2035, robots doing as much work as people by the late 2030s, TaaS carrying 80% of urban passenger miles by 2035. Pushes the manipulation class as hard as the transport preset pushes driving: the fastest clocks, the top of the ever-automatable range, maximum utilization, the lowest unit price, accelerated approval everywhere, and induced demand at twice the catalogue. The forecast scoreboard tests these claims against the model.",
+  "parent": "preset-seba-rethinkx",
+  "levers": {
+   "applications": {
+    "embodiment": {
+     "driving_doubling_months": 6,
+     "manipulation_doubling_months": 6,
+     "fixed_doubling_months": 6,
+     "aerial_doubling_months": 6,
+     "coupling_to_software": 0.7,
+     "manipulation_automatable_share": 0.85
+    },
+    "hardware": {
+     "learning_rate": 0.25,
+     "utilization_scale": 1.6,
+     "unit_price_scale": 0.5,
+     "ramp_max_growth_per_year": 1.5
+    },
+    "approval": {
+     "US": "accelerated",
+     "CN": "accelerated",
+     "UK": "accelerated",
+     "SG": "accelerated",
+     "RoA": "accelerated",
+     "EU": "accelerated",
+     "JP": "accelerated",
+     "KR": "accelerated",
+     "IN": "accelerated",
+     "TW": "accelerated"
+    },
+    "induced_demand_scale": 2
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  },
+  "preset": true
+ },
+ {
+  "schema_version": "0.3",
   "id": "preset-seba-rethinkx",
   "name": "Preset: Seba / RethinkX disruption",
   "description": "Tony Seba's technology-disruption framework as scenario levers: cost curves at electronics-like learning rates, fleets built at the fastest historical ramps, high utilization (transport as a service), approvals accelerated where fleets already operate, embodiment clocks coupled tightly to the software frontier, and an eroding preference for human-made content. Reproduces the shape of his S-curve claims; the forecast scoreboard compares his 2017 and 2020 numbers with the model's.",
@@ -389,5 +445,28 @@
    "mechanisms": "all"
   },
   "preset": true
+ },
+ {
+  "schema_version": "0.3",
+  "id": "variant-layoffs-first",
+  "name": "Variant: employers cut through layoffs",
+  "description": "The same AI, with employers that cut ahead of attrition twice as readily as the fitted baseline: half of each quarter's required headcount reduction is taken as layoffs at once (lever labor.layoff_first_share 0.5 against the baseline's 0.25, which is fitted to the AI-cited job cuts employers announced in 2025 and the first half of 2026), net occupational attrition at the bottom of its range (P.63) and the layoff pace at the top (P.64). The same total jobs, borne by incumbents rather than entrants.",
+  "parent": "baseline",
+  "overrides": {
+   "P.63": {
+    "central": 1.5
+   },
+   "P.64": {
+    "central": 0.5
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  },
+  "levers": {
+   "labor": {
+    "layoff_first_share": 0.5
+   }
+  }
  }
 ]

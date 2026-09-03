@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import type { StoryBeat } from '@/types/story'
+import { RANGE_LABEL, RANGE_TITLE } from '@/lib/story'
 import SurenessDots from '@/components/story/SurenessDots.vue'
 
-/** One numbered beat: title, sentence, the chart (slot), then the three-part fact line. */
-defineProps<{ beat: StoryBeat; index: number; compact?: boolean }>()
+/**
+ * One numbered beat: title, sentence, the chart (slot), then the three-part fact line. `rangeNote`
+ * is an extra line under the range (the jobs beat: the spread of the mechanism cells alone).
+ */
+defineProps<{ beat: StoryBeat; index: number; compact?: boolean; rangeNote?: string }>()
 </script>
 
 <template>
@@ -21,8 +25,9 @@ defineProps<{ beat: StoryBeat; index: number; compact?: boolean }>()
     </div>
     <dl class="facts">
       <div class="fact">
-        <dt>Likely range</dt>
+        <dt :title="RANGE_TITLE">{{ RANGE_LABEL }}</dt>
         <dd>{{ beat.range }}</dd>
+        <dd v-if="rangeNote" class="range-note muted">{{ rangeNote }}</dd>
       </div>
       <div class="fact">
         <dt>How sure</dt>
@@ -107,5 +112,13 @@ dt {
 dd {
   margin: 0;
   color: var(--ink-2);
+}
+dt[title] {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.range-note {
+  font-size: 13px;
 }
 </style>

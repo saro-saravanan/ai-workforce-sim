@@ -104,8 +104,9 @@ export const CHANNEL_COLOR_SLOT: Record<ChannelName, number> = {
 }
 
 /**
- * Names of the mechanism-cell axes in id order (spec §7.2, v0.3 §A.7): a document with n-part
- * cell ids uses the first n. Eight cells = 3 axes, sixteen = 4, thirty-two = 5.
+ * Names of the mechanism-cell axes in id order (spec §7.2, v0.3 §A.7, contracts §29): a document
+ * with n-part cell ids uses the first n. Eight cells = 3 axes, sixteen = 4, thirty-two = 5,
+ * sixty-four = 6 (the macro closure, `demand` / `no_demand_feedback`).
  */
 export const CELL_AXIS_NAMES = [
   'demand response',
@@ -113,6 +114,7 @@ export const CELL_AXIS_NAMES = [
   'pass-through',
   'hardware learning',
   'authenticity',
+  'closure',
 ] as const
 export function cellAxesLabel(parts: number): string {
   return CELL_AXIS_NAMES.slice(0, Math.max(1, Math.min(CELL_AXIS_NAMES.length, parts))).join(' | ')

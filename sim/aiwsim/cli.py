@@ -85,6 +85,33 @@ def cmd_validate(args: argparse.Namespace) -> int:
     return pytest.main(["-q", str(root / "sim" / "tests")])
 
 
+def cmd_convergence(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from .convergence import convergence_markdown, convergence_table
+    from .pipeline import Context
+    ctx = Context(Path.cwd())
+    res = convergence_table(ctx, tuple(int(x) for x in args.draws.split(",")), tuple(int(x) for x in args.seeds.split(",")))
+    md = convergence_markdown(res)
+    if args.out:
+        Path(args.out).write_text(md)
+    print(md)
+    return 0
+
+
+def cmd_regional(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from .convergence import regional_decomposition, regional_markdown
+    from .pipeline import Context
+    ctx = Context(Path.cwd())
+    md = regional_markdown(regional_decomposition(ctx))
+    if args.out:
+        Path(args.out).write_text(md)
+    print(md)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="aiwsim", description=f"AI workforce impact simulation (spec v{SPEC_VERSION})")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -97,6 +124,10 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--force", action="store_true", help="fetch: re-download every raw file"); d.add_argument("--no-fetch", action="store_true", help="build: fail instead of fetching missing raw inputs")
     d.set_defaults(fn=cmd_data)
     v = sub.add_parser("validate"); v.set_defaults(fn=cmd_validate)
+    cv = sub.add_parser("convergence", help="Monte Carlo convergence table (review 2.5)")
+    cv.add_argument("--draws", default="64,128,256"); cv.add_argument("--seeds", default="42,7,99"); cv.add_argument("--out", default=None); cv.set_defaults(fn=cmd_convergence)
+    rg = sub.add_parser("regional", help="regional decomposition of the U.S. headline (review 2.3)")
+    rg.add_argument("--out", default=None); rg.set_defaults(fn=cmd_regional)
     args = ap.parse_args(argv)
     return int(args.fn(args))
 

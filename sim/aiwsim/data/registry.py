@@ -191,7 +191,7 @@ PARAMETERS: list[dict] = [
     _p("P.86", "MPC by decile", None, None, None, "share", "S", "Fagereng et al.; CBO", group="macro",
        by=_mpc_deciles(), range_note="±0.1",
        note="'0.9 → 0.4' across deciles; linear interpolation between the endpoints is our reading (E)."),
-    _p("P.87", "Demand multiplier m", 0.6, 0.3, 1.2, "—", "S/E", "", group="macro"),
+    _p("P.87", "Demand multiplier m", 0.6, 0.3, 0.9, "—", "S/E", "", group="macro"),
     _p("P.88", "Import shares", None, None, None, "—", "S", "", group="macro", note="TiVA"),
     _p("P.89", "Within-decile spread", None, None, None, "—", "D", "", group="macro", note="CPS"),
     _p("P.90", "Copula block correlations", None, None, None, "—", "E", "§7.1 table", group="macro",

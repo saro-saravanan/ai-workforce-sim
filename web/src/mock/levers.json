@@ -388,6 +388,18 @@
   "default": 0.3
  },
  {
+  "path": "levers.labor.layoff_first_share",
+  "label": "Layoff first share",
+  "group": "labor",
+  "mechanism": "Share of each quarter's required headcount reduction that employers take as layoffs at once, before attrition (0 = the spec's attrition-first rule; the 2025-2026 wave of AI-cited cuts suggests a positive value).",
+  "type": "number",
+  "min": 0,
+  "max": 1,
+  "step": 0.01,
+  "unit": "",
+  "default": 0.25
+ },
+ {
   "path": "levers.policy.US.retraining_subsidy_pct_wage",
   "label": "Retraining subsidy",
   "group": "policy",
@@ -549,6 +561,19 @@
   "default": 1
  },
  {
+  "path": "levers.macro.closure",
+  "label": "Macro closure",
+  "group": "macro",
+  "param": "P.87",
+  "mechanism": "Household demand feedback on (demand) or off (no_demand_feedback); with it off only cheaper output and new tasks offset the displacement (review §2.1, spec §6.4).",
+  "type": "enum",
+  "options": [
+   "demand",
+   "no_demand_feedback"
+  ],
+  "default": "demand"
+ },
+ {
   "path": "levers.applications.embodiment.driving_doubling_months",
   "label": "Driving autonomy doubling time",
   "group": "applications",
@@ -599,6 +624,18 @@
   "step": 1,
   "unit": "months",
   "default": 18
+ },
+ {
+  "path": "levers.applications.embodiment.manipulation_automatable_share",
+  "label": "Embodiment: Manipulation automatable share",
+  "group": "applications",
+  "mechanism": "Share of mobile-manipulation task-hours that can ever be automated (P.101 central 0.6); the RethinkX humanoid claims need the top of the range.",
+  "type": "number",
+  "min": 0.3,
+  "max": 0.85,
+  "step": 0.01,
+  "unit": "",
+  "default": 0.3
  },
  {
   "path": "levers.applications.embodiment.coupling_to_software",
@@ -664,6 +701,19 @@
   "step": 0.05,
   "unit": "/yr",
   "default": 0.5
+ },
+ {
+  "path": "levers.applications.hardware.ramp_allocation",
+  "label": "Production ramp allocation",
+  "group": "applications",
+  "param": "P.117",
+  "mechanism": "Shared (global) or per-region (local) hardware production capacity (review §2.3).",
+  "type": "enum",
+  "options": [
+   "global",
+   "local"
+  ],
+  "default": "global"
  },
  {
   "path": "levers.applications.approval.US",

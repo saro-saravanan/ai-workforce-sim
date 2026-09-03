@@ -6,6 +6,7 @@ import { useScrubberStore } from '@/stores/scrubber'
 import { useThemeStore } from '@/stores/theme'
 import { CATEGORICAL } from '@/lib/palette'
 import { fmtPct } from '@/lib/format'
+import { RANGE_TITLE } from '@/lib/story'
 import SeriesChart from '@/components/charts/SeriesChart.vue'
 
 /** The jobs beat: employment and GDP, p10–p90 band with the median line, over the quarters. */
@@ -35,7 +36,9 @@ const axis = (v: number) => `${v > 0 ? '+' : ''}${v}%`
 
 <template>
   <div class="fan">
-    <p class="muted note">% versus no AI · median line, likely range shaded</p>
+    <p class="muted note" :title="RANGE_TITLE">
+      % versus no AI · median line, range of the model's assumptions shaded
+    </p>
     <div v-for="pn in panels" :key="pn.key" class="panel">
       <div class="head">
         <span class="sw" :style="{ background: pn.hue }"></span>

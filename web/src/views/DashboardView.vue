@@ -153,7 +153,7 @@ const expandedTornado = computed(() =>
 const expandedConfidence = computed(() =>
   isHeadline(expanded.value) ? results.confidenceAt(expanded.value, refQ.value) : undefined,
 )
-/** Cell ids split into their axis parts for the legend (3 axes in v0.2, 4 in Phase 6, 5 in Phase 7). */
+/** Cell ids split into their axis parts for the legend (3 axes in v0.2, 4 in Phase 6, 5 in Phase 7, 6 in Phase 9). */
 const cellList = computed(() =>
   Object.keys(expandedStructural.value?.by_cell ?? {}).map((id) => ({
     id,

@@ -4,7 +4,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { ResultsDocument } from '@/types/results'
-import type { StoryDocument } from '@/types/story'
+import type { StoryBacktest, StoryDocument } from '@/types/story'
 import resultsJson from '@/mock/results.json'
 import storyJson from '@/mock/story.json'
 import { signedCount } from '@/lib/story'
@@ -31,6 +31,7 @@ async function mountStory() {
     routes: [
       { path: '/story', component: StoryView },
       { path: '/outlook', component: { template: '<div />' } },
+      { path: '/backtest', component: { template: '<div />' } },
     ],
   })
   await router.push('/story?region=US')
@@ -161,8 +162,12 @@ describe('StoryView', () => {
       const row = rows[i]!
       expect(row.find('td').text()).toBe(f.short)
       expect(row.find('td').attributes('title')).toBe(f.source)
-      const claimed = pyFixed(f.claimed, Number.isInteger(f.claimed) ? 0 : 1)
-      expect(row.text()).toContain(`${claimed} ${f.unit} by ${f.year} (${f.region})`)
+      const num = (v: number) => pyFixed(v, Number.isInteger(v) ? 0 : 1)
+      const range =
+        f.claimed_low != null && f.claimed_high != null
+          ? ` (${num(f.claimed_low)} to ${num(f.claimed_high)})`
+          : ''
+      expect(row.text()).toContain(`${num(f.claimed)}${range} ${f.unit} by ${f.year} (${f.region})`)
       expect(row.text()).toContain(
         f.model_central != null
           ? pyFixed(f.model_central, Number.isInteger(f.model_central) ? 0 : 1)
@@ -177,6 +182,76 @@ describe('StoryView', () => {
     expect(seba.find('.link-btn').text()).toBe('run their assumptions')
     expect(story.forecasts.some((f) => f.proxy)).toBe(true)
     expect(w.text()).toContain('nearest model quantity')
+  })
+
+  it('labels every beat’s range as the range of the model’s assumptions, with the tooltip', async () => {
+    const { w } = await mountStory()
+    const dts = w.findAll('[data-beat] dt').filter((d) => d.text() === "Range of the model's assumptions")
+    expect(dts).toHaveLength(story.beats.length)
+    expect(dts[0]!.attributes('title')).toContain('not a forecast interval')
+    expect(w.text()).not.toContain('Likely range')
+    expect(w.text()).not.toContain('likely range shaded')
+  })
+
+  it('shows the backtest section with its sentences and the link when the story carries one', async () => {
+    const backtest: StoryBacktest = {
+      horizon: ['2024Q1', '2026Q2'],
+      rows: [],
+      summary: {},
+      notes: [],
+      sentences: [
+        'Firms using AI (BTOS, %): the model is off by 40% on average over 4 observations, below the observed values (a calibration target, so not evidence).',
+        'Unemployment rate, recent college graduates: the model does not track this quantity; shown for context.',
+      ],
+    }
+    fetchStory.mockImplementationOnce(async () => ({
+      ...structuredClone(story),
+      backtest,
+      structural_spread: { min: -9.1, max: -2.3, cells: 64, agree_on_sign: true },
+    }))
+    const { w } = await mountStory()
+    const sec = w.find('[aria-labelledby="backtest-h"]')
+    expect(sec.exists()).toBe(true)
+    expect(sec.find('h3').text()).toBe('How the model has done so far (2024 to mid-2026)')
+    expect(sec.findAll('li').map((li) => li.text())).toEqual(backtest.sentences)
+    const link = sec.find('a')
+    expect(link.text()).toBe('Open the backtest view')
+    expect(link.attributes('href')).toContain('/backtest')
+    // the section sits between the investment section and the scoreboard
+    const ids = w.findAll('section[aria-labelledby]').map((s) => s.attributes('aria-labelledby'))
+    expect(ids.indexOf('backtest-h')).toBe(ids.indexOf('investment-h') + 1)
+    expect(ids.indexOf('forecasts-h')).toBe(ids.indexOf('backtest-h') + 1)
+    // the mechanism-cell spread under the first beat's range only
+    const jobs = w.find('[data-beat="jobs"]')
+    expect(jobs.find('.range-note').text()).toBe('Mechanism cells alone: −9.1% to −2.3% (64 cells)')
+    expect(w.find('[data-beat="hiring"] .range-note').exists()).toBe(false)
+  })
+
+  it('hides the backtest section and the spread line when the story has neither', async () => {
+    fetchStory.mockImplementationOnce(async () => ({
+      ...structuredClone(story),
+      backtest: null,
+      structural_spread: null,
+    }))
+    const { w } = await mountStory()
+    expect(w.find('[aria-labelledby="backtest-h"]').exists()).toBe(false)
+    expect(w.text()).not.toContain('How the model has done so far')
+    expect(w.find('.range-note').exists()).toBe(false)
+    // and the same when the fields are absent altogether (the mock story)
+    const { w: w2 } = await mountStory()
+    expect(w2.find('[aria-labelledby="backtest-h"]').exists()).toBe(false)
+  })
+
+  it('marks calibration targets on the scoreboard and counts them in the footer', async () => {
+    const st = structuredClone(story)
+    st.forecasts[0]!.role = 'target'
+    st.forecasts[1]!.role = 'comparison'
+    fetchStory.mockImplementationOnce(async () => st)
+    const { w } = await mountStory()
+    const rows = w.findAll('table.forecasts tbody tr')
+    expect(rows[0]!.find('.chip.target').text()).toBe('calibration target')
+    expect(rows[1]!.find('.chip.target').exists()).toBe(false)
+    expect(w.find('.counts').text()).toContain(`${st.forecasts.length - 1} comparisons, 1 calibration target`)
   })
 
   it('lists the caveats and the glossary', async () => {

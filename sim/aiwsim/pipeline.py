@@ -69,7 +69,7 @@ def run_scenario(ctx: Context, scen: dict[str, Any], draws: int | None = None, e
     seed = int(scen.get("seed", 42))
     inp = ctx.inputs
     regional = ctx.regional
-    region_ids = regions or (regional.order if regional else ["US"])
+    region_ids = regions or scen.get("regions") or (regional.order if regional else ["US"])
     if n_draws > 1:
         ds = draw_parameters(p, n_draws, seed, ens)
         out = run_batch_parallel(inp, p, scen, ds, fitted=ctx.fitted, cohorts=ctx.cohorts, workers=workers, regional=regional, regions=region_ids, apps=ctx.apps)

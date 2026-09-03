@@ -7,6 +7,17 @@ import type { StoryDocument, StoryFuture } from '@/types/story'
 import { REGION_NAMES, isRegionId } from '@/types/results'
 import { millions, pyFixed } from '@/lib/plain'
 
+/** The label of every beat's range (contracts §29): the band is the model's own runs, not a forecast interval. */
+export const RANGE_LABEL = "Range of the model's assumptions"
+export const RANGE_TITLE =
+  'the middle 80% of the model\'s runs across parameter draws and mechanism cells; not a forecast interval: it excludes model error'
+
+/** "Mechanism cells alone: −9.1% to −2.3% (64 cells)" for the jobs beat, or "" without a spread. */
+export function structuralSpreadLine(sp: StoryDocument['structural_spread']): string {
+  if (!sp || !Number.isFinite(sp.min) || !Number.isFinite(sp.max)) return ''
+  return `Mechanism cells alone: ${pct1(sp.min)} to ${pct1(sp.max)} (${sp.cells} cells${sp.agree_on_sign ? '' : '; they disagree on the sign'})`
+}
+
 export function regionName(id: string): string {
   return isRegionId(id) ? REGION_NAMES[id] : id
 }
@@ -30,7 +41,7 @@ export function execBriefMarkdown(st: StoryDocument): string {
   ]
   st.beats.forEach((b, i) => {
     L.push(`## ${i + 1}. ${b.title}`, '', b.sentence, '')
-    L.push(`*Likely range:* ${b.range}  `)
+    L.push(`*Range of the model's assumptions:* ${b.range}  `)
     L.push(`*How sure:* ${b.sureness.label}.  `)
     L.push(`*What changes it:* ${b.what_changes_it}`, '')
   })

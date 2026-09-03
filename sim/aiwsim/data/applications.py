@@ -234,7 +234,8 @@ FORECASTS: list[dict] = [
 
 
 def forecasts_frame() -> pl.DataFrame:
-    return pl.DataFrame([{"source_tag": "transcribed from recollection (V?); fetch and cite before use", **f} for f in FORECASTS])
+    targets = {"Challenger 2025, AI-cited job cuts", "Challenger 2026, AI-cited cuts since 2023", "AI industry revenue 2025", "AI industry revenue 2026 (est.)"}
+    return pl.DataFrame([{"source_tag": "transcribed from recollection (V?); fetch and cite before use", "role": ("target" if f["short"] in targets else "comparison"), **f} for f in FORECASTS])
 
 
 # ---- self-employed and platform workforce (spec §A.5.1; FIXTURE until the CPS / Nonemployer ingest runs) ------------------

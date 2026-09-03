@@ -6,7 +6,7 @@ import { useResultsStore } from '@/stores/results'
 import { useThemeStore } from '@/stores/theme'
 import { useStory } from '@/composables/useStory'
 import { useBriefs } from '@/composables/useBriefs'
-import { regionName } from '@/lib/story'
+import { regionName, structuralSpreadLine } from '@/lib/story'
 import { pyFixed } from '@/lib/plain'
 import { fmtCompact, quarterYear } from '@/lib/format'
 import StoryBeat from '@/components/story/StoryBeat.vue'
@@ -42,6 +42,12 @@ function barsTitle(beat: Beat, chart: BarsChart) {
   return chart.unit ?? (beat.id === 'hiring' ? 'people' : 'value')
 }
 const glossary = computed(() => Object.entries(story.value?.glossary ?? {}))
+/** the spread of the mechanism cells alone, under the first beat's range (contracts §29) */
+const spreadLine = computed(() => structuralSpreadLine(story.value?.structural_spread))
+const backtestHorizon = computed(() => {
+  const h = story.value?.backtest?.horizon
+  return h ? `${quarterYear(h[0])} to ${h[1].endsWith('Q2') ? 'mid-' : ''}${quarterYear(h[1])}` : ''
+})
 
 function openScenario(id: string) {
   if (id && id !== results.scenarioId) results.scenarioId = id
@@ -95,7 +101,13 @@ function openScenario(id: string) {
         <p>{{ story.numbers.reconciliation }}</p>
       </section>
 
-      <StoryBeat v-for="(b, i) in story.beats" :key="b.id" :beat="b" :index="i + 1">
+      <StoryBeat
+        v-for="(b, i) in story.beats"
+        :key="b.id"
+        :beat="b"
+        :index="i + 1"
+        :range-note="i === 0 ? spreadLine : undefined"
+      >
         <StoryFan v-if="b.chart.type === 'fan'" :chart="b.chart" />
         <StoryBars
           v-else-if="b.chart.type === 'bars'"
@@ -159,6 +171,19 @@ function openScenario(id: string) {
       <section v-if="story.investment" class="card block" aria-labelledby="investment-h">
         <h3 id="investment-h">Investment versus returns</h3>
         <StoryInvestment :investment="story.investment" :mode="theme.mode" />
+      </section>
+
+      <section v-if="story.backtest" class="card block" aria-labelledby="backtest-h">
+        <h3 id="backtest-h">How the model has done so far<template v-if="backtestHorizon"> ({{ backtestHorizon }})</template></h3>
+        <ul class="plain backtest-sentences">
+          <li v-for="(sentence, i) in story.backtest.sentences" :key="i">{{ sentence }}</li>
+        </ul>
+        <p class="muted backtest-link">
+          A calibration target set a parameter, so the model's agreement with it is not evidence.
+          <RouterLink :to="{ path: '/backtest', query: $route.query }"
+            >Open the backtest view</RouterLink
+          >
+        </p>
       </section>
 
       <section class="card block" aria-labelledby="forecasts-h">
@@ -293,6 +318,13 @@ ul.plain {
   flex-direction: column;
   gap: 6px;
   line-height: 1.5;
+}
+.backtest-link {
+  margin: 0;
+  font-size: 14px;
+}
+.backtest-link a {
+  color: var(--accent-ink);
 }
 .glossary {
   margin: 0;
