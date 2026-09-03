@@ -34,7 +34,7 @@ function title(m: GateMarker) {
 
 <template>
   <div ref="host" class="gate-host" :style="{ height: h + 'px' }">
-    <svg :width="width" :height="h" aria-hidden="true">
+    <svg :width="width" :height="h" :viewBox="`0 0 ${width} ${h}`" preserveAspectRatio="xMinYMin meet" class="rsvg" aria-hidden="true">
       <template v-if="years">
         <text
           v-for="(t, i) in ticks"
@@ -118,5 +118,10 @@ svg {
   fill: var(--surface);
   stroke: var(--muted);
   stroke-dasharray: 2 1.5;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

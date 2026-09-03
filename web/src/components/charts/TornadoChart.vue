@@ -90,7 +90,7 @@ function onLeave() {
       <span class="item muted" role="listitem">Chip = provenance tag (S study, D data, E estimate)</span>
     </div>
     <div ref="host" class="host">
-      <svg :width="width" :height="height" role="img" aria-label="One-at-a-time sensitivity, 2040 Q4">
+      <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" aria-label="One-at-a-time sensitivity, 2040 Q4">
         <g class="grid">
           <line
             v-for="t in ticks"
@@ -223,5 +223,10 @@ svg {
 }
 g {
   transition: opacity var(--t);
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

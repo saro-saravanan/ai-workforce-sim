@@ -134,7 +134,7 @@ function onRegion(e: Event) {
           </option>
         </select>
       </label>
-      <label class="scenario">
+      <label class="scenario region">
         <span class="muted">Region</span>
         <select
           class="select"
@@ -151,7 +151,7 @@ function onRegion(e: Event) {
       <button class="btn" :aria-pressed="leversOpen" @click="$emit('toggleLevers')">
         What if
       </button>
-      <RouterLink class="btn link" :to="{ path: '/compare', query: $route.query }">Compare</RouterLink>
+      <RouterLink class="btn link compare-link" :to="{ path: '/compare', query: $route.query }">Compare</RouterLink>
       <div class="menu-wrap" @keydown="onMenuKey">
         <button
           class="btn"
@@ -177,7 +177,7 @@ function onRegion(e: Event) {
           </p>
         </div>
       </div>
-      <span v-if="results.loading" class="muted">Running…</span>
+      <span v-if="results.loading" class="muted running">Running…</span>
       <span v-if="results.isMock" class="badge fixture" title="VITE_USE_MOCK=1: synthetic data"
         >mock data</span
       >
@@ -328,5 +328,52 @@ function onRegion(e: Event) {
 .tab sup {
   font-size: 10px;
   margin-left: 2px;
+}
+@media (max-width: 720px) {
+  .topbar {
+    padding: 6px 10px 0;
+  }
+  .row {
+    gap: 6px 8px;
+  }
+  .brand .sub,
+  .btn.link.compare-link,
+  .badge.static,
+  .running {
+    display: none;
+  }
+  .brand h1 {
+    font-size: 15px;
+  }
+  .scenario {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .scenario.region {
+    flex: 1 1 auto;
+  }
+  .scenario .select {
+    flex: 1;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-top: 2px;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    padding: 8px 9px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .btn {
+    padding: 5px 9px;
+  }
 }
 </style>

@@ -166,4 +166,24 @@ input[type='range'] {
 .legend strong {
   color: var(--ink-2);
 }
+@media (max-width: 720px) {
+  .scrubber {
+    padding: 6px 10px 8px;
+    gap: 2px;
+  }
+  .ticks {
+    font-size: 11px;
+  }
+  .ticks span:nth-child(even) {
+    display: none;
+  }
+  .legend,
+  .sep {
+    display: none;
+  }
+  .controls {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+}
 </style>

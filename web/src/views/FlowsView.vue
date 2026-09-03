@@ -153,4 +153,18 @@ const hasHoursCut = computed(() => !!results.flows?.destinations.hours_cut_self)
 .empty {
   padding: 28px;
 }
+@media (max-width: 900px) {
+  .body,
+  .layout {
+    flex-wrap: wrap;
+  }
+  .plot {
+    flex: 1 1 100%;
+    min-height: 360px;
+  }
+  .side {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+}
 </style>

@@ -381,7 +381,7 @@ const cursorX = computed(() => x.value(hoverQ.value ?? props.q))
 
 <template>
   <div ref="host" class="timeline-host" :style="{ height: height + 'px' }">
-    <svg :width="width" :height="height" role="img" aria-label="AI supply timeline: capability, price, releases and rules on one time axis">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" aria-label="AI supply timeline: capability, price, releases and rules on one time axis">
       <g :transform="`translate(${m.left},${m.top})`">
         <!-- availability shading spans every panel -->
         <g v-if="showAvailability" class="unavail" aria-hidden="true">
@@ -569,5 +569,10 @@ svg {
 .shock .flag {
   font-size: 16px;
   fill: var(--ink);
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

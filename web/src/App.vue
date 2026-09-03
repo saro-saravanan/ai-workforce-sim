@@ -19,12 +19,17 @@ useThemeStore()
 useUrlSync()
 const router = useRouter()
 
+const NARROW = 720 // below this the explain panel is a bottom sheet and starts closed
 const explainOpen = ref(
   (() => {
+    const narrow = typeof window !== 'undefined' && window.innerWidth < NARROW
     try {
-      return localStorage.getItem('aiwsim.explain') !== '0'
+      const saved = localStorage.getItem('aiwsim.explain')
+      if (saved === '0') return false
+      if (saved === '1') return true
+      return !narrow
     } catch {
-      return true
+      return !narrow
     }
   })(),
 )
@@ -120,6 +125,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   display: flex;
   min-height: 0;
   min-width: 0;
+  position: relative;
+}
+@media (max-width: 720px) {
+  .main {
+    padding: 10px 12px;
+  }
 }
 .main {
   flex: 1;

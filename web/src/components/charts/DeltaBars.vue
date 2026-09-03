@@ -72,7 +72,7 @@ function onLeave() {
       <span class="item" role="listitem"><span class="sw" :style="{ background: pos }"></span>{{ positiveLabel }}</span>
     </div>
     <div ref="host" class="host">
-      <svg :width="width" :height="height" role="img" :aria-label="title">
+      <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" :aria-label="title">
         <g class="grid">
           <line v-for="t in ticks" :key="'g' + t" :x1="m.left + x(t)" :x2="m.left + x(t)" :y1="m.top" :y2="height - m.bottom" />
         </g>
@@ -145,5 +145,10 @@ g {
 }
 .dim {
   opacity: 0.4;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

@@ -62,7 +62,7 @@ const marker = computed(() => ({
 
 <template>
   <div ref="host" class="spark-host">
-    <svg :width="width" :height="height" aria-hidden="true">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" aria-hidden="true">
       <path v-if="outer" :d="outerPath" :fill="hue" :fill-opacity="BAND_OUTER_OPACITY" />
       <path v-if="inner" :d="innerPath" :fill="hue" :fill-opacity="BAND_INNER_OPACITY" />
       <line v-if="zero" class="zero" :x1="pad.left" :x2="width - pad.right" :y1="y(0)" :y2="y(0)" />
@@ -111,5 +111,10 @@ svg {
 .marker {
   stroke: var(--surface);
   stroke-width: 2;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

@@ -76,7 +76,7 @@ function onClick(band: string) {
 
 <template>
   <div ref="host" class="cohort-host">
-    <svg :width="width" :height="height" role="img" :aria-label="`${title} by cohort`">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" :aria-label="`${title} by cohort`">
       <g class="grid">
         <line
           v-for="t in ticks"
@@ -184,5 +184,10 @@ svg {
 .zero {
   stroke: var(--ink-2);
   stroke-width: 1;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

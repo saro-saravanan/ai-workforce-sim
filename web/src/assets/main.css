@@ -74,6 +74,13 @@ body,
 #app {
   height: 100%;
   margin: 0;
+  max-width: 100%;
+}
+body {
+  overflow-x: hidden;
+}
+svg {
+  max-width: 100%;
 }
 body {
   background: var(--page);

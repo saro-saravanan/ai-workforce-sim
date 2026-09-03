@@ -68,7 +68,7 @@ function onSeg(e: PointerEvent, d: (typeof data.value)[number], s: { st: RentSta
 
 <template>
   <div ref="host" class="rents-host" :style="{ height: height + 'px' }">
-    <svg :width="width" :height="height" role="img" :aria-label="`AI rents received by region and stage, ${quarterLabel}`">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" :aria-label="`AI rents received by region and stage, ${quarterLabel}`">
       <g :transform="`translate(${m.left},${m.top})`">
         <g class="grid">
           <line v-for="t in ticks" :key="t" :x1="x(t)" :x2="x(t)" y1="0" :y2="data.length * ROW" />
@@ -114,5 +114,10 @@ svg {
 .total {
   fill: var(--ink);
   font-variant-numeric: tabular-nums;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

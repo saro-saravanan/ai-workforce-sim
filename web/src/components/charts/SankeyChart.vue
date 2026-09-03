@@ -189,7 +189,7 @@ function linkDim(l: Link) {
 
 <template>
   <div ref="host" class="sankey-host">
-    <svg :width="width" :height="height" role="img" :aria-label="`Where displaced workers went, cumulative to ${quarterLabel}`">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" :aria-label="`Where displaced workers went, cumulative to ${quarterLabel}`">
       <g class="links">
         <path
           v-for="(l, i) in layout.links"
@@ -283,5 +283,10 @@ svg {
 .sub {
   fill: var(--ink-2);
   font-size: 13px;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

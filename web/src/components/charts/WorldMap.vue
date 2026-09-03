@@ -240,7 +240,7 @@ const ariaLabel = computed(() =>
 
 <template>
   <div ref="host" class="map-host">
-    <svg :width="width" :height="height" role="img" :aria-label="ariaLabel">
+    <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" :aria-label="ariaLabel">
       <defs>
         <pattern
           :id="uid"
@@ -374,5 +374,10 @@ svg {
 }
 .member {
   font-weight: 500;
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

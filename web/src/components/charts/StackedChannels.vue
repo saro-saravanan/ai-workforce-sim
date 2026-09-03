@@ -116,7 +116,7 @@ const atQ = computed(() => tooltipRows(props.q))
       <span class="item"><span class="sw line"></span>Net</span>
     </div>
     <div ref="host" class="stack-host">
-      <svg :width="width" :height="height" role="img" aria-label="Channel decomposition, stacked">
+      <svg :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" preserveAspectRatio="xMinYMin meet" class="rsvg" role="img" aria-label="Channel decomposition, stacked">
         <g :transform="`translate(${m.left},${m.top})`">
           <g class="grid">
             <line v-for="t in yTicks" :key="'g' + t" x1="0" :x2="iw" :y1="y(t)" :y2="y(t)" />
@@ -259,5 +259,10 @@ svg {
   align-items: center;
   gap: 6px;
   color: var(--ink-2);
+}
+.rsvg {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 </style>

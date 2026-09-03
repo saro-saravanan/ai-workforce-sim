@@ -157,6 +157,30 @@ const traceRows = computed(() => {
   width: 380px;
   overflow: hidden;
 }
+/* phones and narrow tablets: a bottom sheet over the content instead of a docked column; the rail is hidden (the top bar's
+   Explain button opens it) so the main column keeps the full width */
+@media (max-width: 720px) {
+  .explain {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 62%;
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    z-index: 20;
+    transition: none;
+  }
+  .explain:not(.open) {
+    display: none;
+  }
+  .explain.open,
+  .explain.open.ask {
+    width: auto;
+  }
+}
 .head .seg .btn {
   padding: 5px 12px;
 }
