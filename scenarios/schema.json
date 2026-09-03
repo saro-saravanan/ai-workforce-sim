@@ -318,6 +318,12 @@
               "minimum": 0.1,
               "maximum": 0.6,
               "description": "P.74"
+            },
+            "layoff_first_share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Share of each quarter's required headcount reduction that employers take as layoffs at once, before attrition (0 = the spec's attrition-first rule; the 2025-2026 wave of AI-cited cuts suggests a positive value)."
             }
           }
         },

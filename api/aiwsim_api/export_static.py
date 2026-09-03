@@ -26,7 +26,7 @@ from .levers import lever_definitions
 from .story import executive_brief_html, executive_brief_md, story
 
 DEFAULT_SCENARIOS = ["baseline", "eu-delay-deepseek-2027", "preset-acemoglu-2024", "preset-goldman-2023", "preset-imf-2024", "preset-seba-rethinkx", "preset-seba-2026",
-                     "policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36"]
+                     "policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36", "variant-layoffs-first"]
 
 
 def _dump(path: Path, obj: Any) -> None:
@@ -81,7 +81,8 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
     for sid in scenario_ids:
         doc = docs[sid]
         fut = {f: docs[f] for f in service.FUTURE_SCENARIOS if f in docs and f != sid}
-        st = story(doc, "US", pol, fut, base_doc)
+        var = {v: docs[v] for v in service.VARIANT_SCENARIOS if v in docs and v != sid}
+        st = story(doc, "US", pol, fut, base_doc, var)
         _dump(out / "story" / f"{sid}.json", st); stories[sid] = f"story/{sid}.json"
         (out / "briefs" / f"{sid}.exec.md").write_text(executive_brief_md(st))
         (out / "briefs" / f"{sid}.exec.html").write_text(executive_brief_html(st))
@@ -99,7 +100,8 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
     manifest = {"generated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "spec_version": SPEC_VERSION, "data_version": c.inputs.data_version,
                 "draws": draws, "runs": runs, "compares": compares, "levers": "levers.json", "scenarios": "scenarios.json", "regions": "regions.json",
                 "actors": "actors.json", "geo": geo, "insights": insights, "briefs": briefs, "story": stories, "exec_briefs": exec_briefs,
-                "policy_scenarios": [x for x in service.POLICY_SCENARIOS if x in docs], "future_scenarios": [x for x in service.FUTURE_SCENARIOS if x in docs]}
+                "policy_scenarios": [x for x in service.POLICY_SCENARIOS if x in docs], "future_scenarios": [x for x in service.FUTURE_SCENARIOS if x in docs],
+                "variant_scenarios": [x for x in service.VARIANT_SCENARIOS if x in docs]}
     _dump(out / "manifest.json", manifest)
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
     log(f"wrote {sum(1 for _ in out.rglob('*') if _.is_file())} files to {out}")

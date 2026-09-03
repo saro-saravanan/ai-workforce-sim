@@ -422,7 +422,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     if not ch.demand_response:
         eta = np.zeros_like(eta)
     pi_p = bp.col("P.53", 0.7); s_L = inp.labor_cost_share[None, :]
-    attr = bp.col("P.63", 2.5) / 100.0; lay = bp.col("P.64", 0.25)
+    attr = bp.col("P.63", 2.5) / 100.0; lay = bp.col("P.64", 0.25); phi_lay = float(p.flags.get("layoff_first_share", 0.0))
     hazard_self = bp.col("P.121", 0.3) / 4.0; lay_conv = bp.col("P.122", 0.6)
     eps_w = bp.col("P.73", 0.3); beta_w = bp.col("P.74", 0.3)
     rho_new = bp.vec("P.61", 0.4); lag_new = int(p.get("P.62", 8))
@@ -837,11 +837,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         # ---- hiring channel, layoffs, transitions (spec §5.3–5.4); self-employed margin (spec v0.3 §A.3.6) ----
         gap = N - N_star
         shed = np.maximum(gap, 0.0)
-        via_attr = np.minimum(shed, attr[:, None, :] * N * (1.0 - self_share))
-        rest = shed - via_attr
+        lay_first = phi_lay * shed * (1.0 - self_share)                              # employers who cut ahead of attrition (lever labor.layoff_first_share)
+        via_attr = np.minimum(shed - lay_first, attr[:, None, :] * N * (1.0 - self_share))
+        rest = shed - lay_first - via_attr
         frac_emb = np.where(D_use > 1e-9, D_emb / np.maximum(D_use, 1e-9), 0.0)
         lay_eff = (lay[:, None, :] * (1.0 - frac_emb) + lay_conv[:, None, :] * frac_emb) * epl
-        layoffs = lay_eff * rest * (1.0 - self_share)
+        layoffs = lay_first + lay_eff * rest * (1.0 - self_share)
         cut = rest * self_share                                                       # self-employed hours fall at once, no attrition buffer
         exits_self = hours_cut * hazard_self[:, None, :]
         hours_cut = hours_cut + cut - exits_self

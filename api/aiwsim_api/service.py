@@ -173,6 +173,7 @@ def compare(a: str, b: str, region: str = "US") -> dict[str, Any]:
 # ---------------------------------------------------------------- Phase 8: companion runs for the story layer
 POLICY_SCENARIOS = ["policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36"]
 FUTURE_SCENARIOS = ["preset-seba-rethinkx", "preset-seba-2026"]
+VARIANT_SCENARIOS = ["variant-layoffs-first"]
 COMPANION_DRAWS = 64
 
 
@@ -190,15 +191,16 @@ def companion_docs(ids: list[str], draws: int | None = COMPANION_DRAWS, regions:
 
 
 def story_companions(doc: dict[str, Any], region: str = "US", draws: int | None = COMPANION_DRAWS
-                     ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]], dict[str, Any]]:
-    """Policy runs, named-future runs, and the baseline the policy runs are read against, for a results document.
+                     ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]], dict[str, Any], dict[str, dict[str, Any]]]:
+    """Policy runs, named-future runs, the baseline the policy runs are read against, and behavioural variants, for a results document.
 
     Policy scenarios modify the baseline, so their effects are always differences from the baseline run (at the companion
-    draw count when the document itself is not the baseline). The Seba/RethinkX preset is shown as a named future unless
-    the document is that preset.
+    draw count when the document itself is not the baseline). The Seba/RethinkX presets are shown as named futures unless
+    the document is one of them; the layoffs-first variant feeds the hiring beat.
     """
     sid = doc["meta"].get("scenario_id")
     pol = companion_docs(POLICY_SCENARIOS, draws=draws)
     base = doc if sid == "baseline" else companion_docs(["baseline"], draws=draws).get("baseline", doc)
     fut = companion_docs([s for s in FUTURE_SCENARIOS if s != sid], draws=draws)
-    return pol, fut, base
+    var = companion_docs([s for s in VARIANT_SCENARIOS if s != sid], draws=draws)
+    return pol, fut, base, var

@@ -42,6 +42,10 @@ def test_story_beats_numbers_and_forecasts(run):
     # the headline gap in jobs is the headline percentage applied to the same base, and the removals by channel are named
     assert abs(n["jobs_gap"] - (-n["employment_pct"]["p50"] / 100 * n["jobs_base"])) < 2
     assert set(n["jobs_removed_by_channel"]) >= {"automation"} and n["jobs_removed_by_channel"]["automation"] > 0
+    jobs = st["beats"][0]; assert jobs["levels"]["today"] > 150_000_000 and jobs["levels"]["without_ai"] > jobs["levels"]["today"] and jobs["extra_chart"]["items"][0][0].startswith("Today")
+    assert jobs["title"].endswith("fewer than there would have been") and "jobs today" in jobs["sentence"]
+    hiring = st["beats"][1]; assert "Reality check" in hiring["sentence"] and hiring["reality_check"] and any(r["short"].startswith("Challenger") for r in hiring["reality_check"])
+    assert hiring["title"].startswith("Most of the gap is hiring that never happens; about one position in")
     assert st["futures"][0]["name"] == "Gains spent back" and st["futures"][1]["name"] == "Gains pocketed"
     assert st["futures"][0]["employment_pct"] > st["futures"][1]["employment_pct"]
     assert st["forecasts"] and all(f["verdict"] in ("within band", "model lower", "model higher") for f in st["forecasts"])
@@ -56,7 +60,9 @@ def test_futures_and_policy_runs_from_companions(run):
     _, doc = run
     seba = _shift(doc, -2.0, name="Preset: Seba / RethinkX disruption"); seba["meta"]["scenario_id"] = "preset-seba-rethinkx"
     pol = {"policy-a": _shift(doc, +1.0, unemployed=-50_000, cost=20.0, name="Policy: A"), "policy-b": _shift(doc, 0.0, cost=0.0, name="Policy: B")}
-    st = story.story(doc, "US", pol, {"preset-seba-rethinkx": seba}, policy_base=doc)
+    var = _shift(doc, 0.0, name="Variant: employers cut through layoffs"); var["series"]["US"]["laid_off_cum"]["central"] = [v * 20 for v in var["series"]["US"]["laid_off_cum"]["central"]]
+    st = story.story(doc, "US", pol, {"preset-seba-rethinkx": seba}, policy_base=doc, variant_docs={"variant-layoffs-first": var})
+    assert "If employers cut through layoffs twice as readily" in st["beats"][1]["sentence"] and "borne by incumbents" in st["beats"][1]["sentence"]
     names = [f["name"] for f in st["futures"]]
     assert names[-1] == "Preset: Seba / RethinkX disruption" and st["futures"][-1]["source"] == "scenario run"
     a, b = st["policies"]

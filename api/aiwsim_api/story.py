@@ -51,6 +51,13 @@ def _sure(level: str) -> dict[str, Any]:
 
 
 def _jobs_base(doc: dict[str, Any], region: str) -> float:
+    """The denominator for turning a percentage into jobs: the frozen-AI employment level at the horizon (heads, modelled
+    occupations plus self-employed and platform workers), so 'x% fewer' and the levels chart agree; older documents fall back
+    to 2024 employment plus the self-employed stock."""
+    blk = (doc.get("series") or {}).get(region) or (doc.get("series") or {}).get("US") or {}
+    lvl0 = blk.get("baseline_employment_level") or {}
+    if lvl0.get("central") or lvl0.get("p50"):
+        return _p(lvl0, len(doc["meta"]["quarters"]) - 1)
     rg = next((r for r in doc.get("regions", []) if r["region_id"] == region), None)
     base = float(rg["employment_total"]) if rg else 0.0
     return base + float((doc["meta"].get("self_employed_fte") or {}).get(region, 0.0))
@@ -60,11 +67,22 @@ def _quarter_year(q: str | None) -> str | None:
     return q[:4] if q else None
 
 
+def _row_when(f: dict[str, Any]) -> str:
+    return str(f["year"]) if f.get("metric") == "ai_layoffs_in_year" else f"2023 to {_quarter_words(str(f.get('quarter') or ''))}"
+
+
+def _quarter_words(q: str) -> str:
+    months = {"1": "March", "2": "June", "3": "September", "4": "December"}
+    return f"{months.get(q[-1], '')} {q[:4]}".strip() if len(q) == 6 else q
+
+
 # ---------------------------------------------------------------- beats
 def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[str, Any]] | None = None,
-          futures_docs: dict[str, dict[str, Any]] | None = None, policy_base: dict[str, Any] | None = None) -> dict[str, Any]:
+          futures_docs: dict[str, dict[str, Any]] | None = None, policy_base: dict[str, Any] | None = None,
+          variant_docs: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     """The whole story for one run. `policy_docs` are the policy scenarios, read as differences from `policy_base`
-    (the baseline they modify; defaults to `doc`); `futures_docs` are scenario runs shown as named futures."""
+    (the baseline they modify; defaults to `doc`); `futures_docs` are scenario runs shown as named futures;
+    `variant_docs` are behavioural variants (the layoffs-first run feeds the hiring beat)."""
     q = doc["meta"]["quarters"]; t40 = len(q) - 1; t30 = q.index("2030Q4") if "2030Q4" in q else t40
     blk = doc["series"].get(region) or doc["series"]["US"]
     yr = q[t40][:4]
@@ -92,24 +110,66 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                "price_index_pct": price, "wage_share_pp": wshare, "reconciliation": recon}
 
     beats: list[dict[str, Any]] = []
-    # 1. More jobs than today, fewer than there would have been
-    beats.append({"id": "jobs", "title": "More jobs than today, fewer than there would have been",
-                  "sentence": f"By {yr} there are about {_millions(jobs_gap)} fewer jobs than there would have been without AI, on a base of about {_millions(base)}: "
-                              f"about one job in {round(base / max(jobs_gap, 1.0))} " + ("never created rather than destroyed." if unfilled > 3 * max(laid, 1.0) else "removed.")
+    # 1. The jobs ledger in levels: today, 2040 without AI, 2040 with AI
+    lvl = blk.get("employment_level") or {}; lvl0 = blk.get("baseline_employment_level") or {}
+    today = _p(lvl0, 0) if lvl0 else base; without = _p(lvl0, t40) if lvl0 else base
+    numbers["jobs_today"] = round(today); numbers["jobs_2040_no_ai"] = round(without)
+    with50 = _p(lvl, t40) if lvl else without * (1 + e50 / 100); with10 = _p(lvl, t40, "p10") if lvl else without * (1 + e10 / 100); with90 = _p(lvl, t40, "p90") if lvl else without * (1 + e90 / 100)
+    vs_today = with50 / max(today, 1.0) - 1.0
+    if vs_today >= 0.01:
+        title1 = "More jobs than today, fewer than there would have been"; today_words = f"about {100*vs_today:.0f}% more than today"
+    elif vs_today <= -0.01:
+        title1 = "Fewer jobs than today, and fewer still than there would have been"; today_words = f"about {abs(100*vs_today):.0f}% fewer than today"
+    else:
+        title1 = "About as many jobs as today, fewer than there would have been"; today_words = "about the same as today"
+    beats.append({"id": "jobs", "title": title1,
+                  "sentence": f"There are about {_millions(today)} jobs today. Without further AI progress, population and normal growth would take that to about {_millions(without)} by {yr}. "
+                              f"With AI the model's median is about {_millions(with50)} ({today_words}; likely between {_millions(with10)} and {_millions(with90)}): "
+                              f"about {_millions(jobs_gap)} fewer than there would have been, one job in {round(base / max(jobs_gap, 1.0))} " + ("never created rather than destroyed." if unfilled > 3 * max(laid, 1.0) else "removed.")
                               + (f" The biggest remover is {CHANNEL_WORDS[max(removed, key=removed.get)]}; the biggest offset is {CHANNEL_WORDS[max(added, key=added.get)]}." if removed and added else ""),
-                  "range": f"Likely between {_millions(jobs_lo)} fewer and {'no loss at all' if jobs_hi <= 0 else _millions(jobs_hi) + ' fewer'}.",
-                  "sureness": _sure(conf(HEAD)), "what_changes_it": "How much of the productivity gain gets spent back into the economy. Spent back, jobs are flat or up; pocketed, the loss doubles.",
+                  "range": f"Likely between {_millions(jobs_lo)} fewer and {'no loss at all' if jobs_hi <= 0 else _millions(jobs_hi) + ' fewer'} than there would have been; "
+                           f"against today, between {abs(100*(with10/max(today,1.0)-1)):.0f}% {'fewer' if with10 < today else 'more'} and {abs(100*(with90/max(today,1.0)-1)):.0f}% {'fewer' if with90 < today else 'more'}.",
+                  "sureness": _sure(conf(HEAD)), "what_changes_it": "How much of the productivity gain gets spent back into the economy. Spent back, jobs are flat or up against the no-AI path; pocketed, the loss doubles.",
                   "chart": {"type": "fan", "series": {"employment": {k: blk[HEAD][k] for k in ("p10", "p50", "p90") if k in blk[HEAD]},
-                                                      "gdp": {k: blk["gdp_pct_vs_baseline"][k] for k in ("p10", "p50", "p90") if k in blk["gdp_pct_vs_baseline"]}}, "quarters": q}})
-    # 2. Not fired, not hired
+                                                      "gdp": {k: blk["gdp_pct_vs_baseline"][k] for k in ("p10", "p50", "p90") if k in blk["gdp_pct_vs_baseline"]}}, "quarters": q},
+                  "extra_chart": {"type": "bars", "title": f"Jobs in millions: today, {yr} without AI, {yr} with AI",
+                                  "items": [["Today (2024)", round(today / 1e6, 1)], [f"{yr} without AI", round(without / 1e6, 1)], [f"{yr} with AI, median", round(with50 / 1e6, 1)],
+                                            [f"{yr} with AI, low", round(with10 / 1e6, 1)], [f"{yr} with AI, high", round(with90 / 1e6, 1)]], "unit": "M jobs"},
+                  "levels": {"today": round(today), "without_ai": round(without), "with_ai": {"p10": round(with10), "p50": round(with50), "p90": round(with90)}}})
+    # 2. Most of the gap is hiring that never happens; and a reality check against announced AI layoffs
     tot_lost = max(unfilled + laid + _p(flows.get("self_employed_margin_cum", {}), t40) if flows else 1.0, 1.0)
-    beats.append({"id": "hiring", "title": "People are not fired. They are not hired.",
-                  "sentence": f"Of the {_millions(tot_lost)} positions AI takes out of the economy by {yr}, {_millions(unfilled)} are jobs never offered to new entrants and {_millions(laid)} are layoffs. "
-                              f"Unemployment rises by at most {_millions(peak_unemp)} at its {q[peak_t][:4]} peak. Of the people affected, {_millions(reemp)} find other work and {_millions(exited)} leave the workforce.",
-                  "range": "The split between unfilled positions and layoffs holds in every scenario the model ships.",
-                  "sureness": _sure("high" if unfilled / tot_lost > 0.85 else "medium"),
-                  "what_changes_it": "The pace at which employers let attrition do the work: faster required cuts turn unfilled positions into layoffs.",
+    obs = [f for f in doc.get("forecasts", []) if str(f.get("short", "")).startswith("Challenger") and f.get("model_central") is not None]
+    reality = ""
+    if obs:
+        parts = []
+        for f in obs:
+            when = f"in {f['year']}" if f.get("metric") == "ai_layoffs_in_year" else f"since 2023 through {_quarter_words(f.get('quarter') or '')}"
+            parts.append(f"{f['claimed']:,.0f} AI-cited job cuts {when} (model: {f['model_central']:,.0f})")
+        reality = (" Reality check: employers announced " + " and ".join(parts) + ", by Challenger, Gray & Christmas's count. The baseline's layoff pace is fitted to these counts: a quarter of each required cut "
+                   "is taken as layoffs at once rather than waiting for attrition. The counts are announcements, which include positions closed by attrition and redeployment, so the fit is deliberately loose; "
+                   "without it the model's attrition-first rule produced a tenth of the announced layoffs.")
+    var_words = ""
+    vdoc = next(iter((variant_docs or {}).values()), None)
+    if vdoc:
+        vb = vdoc["series"].get(region) or vdoc["series"]["US"]; vq = vdoc["meta"]["quarters"]; vt = len(vq) - 1; vt30 = vq.index("2030Q4") if "2030Q4" in vq else vt
+        v_laid30 = _p(vb["laid_off_cum"], vt30, "central"); v_laid = _p(vb["laid_off_cum"], vt, "central")
+        v_peak = max(_p(vb["unemployed_stock"], i, "central") for i in range(len(vq))); v_e = _p(vb[HEAD], vt, "central"); e_c = _p(blk[HEAD], t40, "central")
+        var_words = (" If employers cut through layoffs twice as readily (the layoffs-first variant): "
+                     f"{_millions(v_laid30)} layoffs by 2030 and {_millions(v_laid)} by {yr} instead of {_millions(laid)}, unemployment peaking {_millions(v_peak)} above the no-AI path, "
+                     f"and total jobs {'about the same' if abs(v_e - e_c) < 0.5 else f'{v_e - e_c:+.1f} points different'}: the same gap, borne by incumbents instead of entrants.")
+    lay_share = laid / max(unfilled + laid, 1.0)
+    beats.append({"id": "hiring", "title": f"Most of the gap is hiring that never happens; about one position in {max(round(1 / max(lay_share, 1e-6)), 2)} removed is a layoff",
+                  "sentence": f"Of the {_millions(tot_lost)} positions AI takes out of the economy by {yr} in the central run, {_millions(unfilled)} are jobs never offered to new entrants and {_millions(laid)} are layoffs. "
+                              f"Unemployment rises by at most {_millions(peak_unemp)} at its {q[peak_t][:4]} peak. Of the people affected, {_millions(reemp)} find other work and {_millions(exited)} leave the workforce."
+                              + reality + var_words,
+                  "range": "Hiring-first holds in every scenario the model ships; the layoff share is fitted to 2025–2026 announcements and is the least certain number here.",
+                  "sureness": _sure("medium" if obs else ("high" if unfilled / tot_lost > 0.85 else "medium")),
+                  "what_changes_it": "How fast employers cut ahead of attrition: the attrition rate and the layoff pace, both levers in the technical brief. Faster cuts do not change the total; they move it from entrants to incumbents and raise the unemployment peak.",
                   "chart": {"type": "bars", "items": [["Positions never refilled", unfilled], ["Layoffs", laid], ["Found other work", reemp], ["Left the workforce", exited], ["Still unemployed", unemployed]]}})
+    if obs:
+        beats[-1]["extra_chart"] = {"type": "bars", "title": "AI-cited job cuts: announced versus the model's layoffs",
+                                    "items": [[f"Announced, {_row_when(f)}", float(f["claimed"])] for f in obs] + [[f"Model, {_row_when(f)}", float(f["model_central"])] for f in obs]}
+        beats[-1]["reality_check"] = [{"short": f["short"], "claimed": f["claimed"], "model_central": f["model_central"], "verdict": f["verdict"], "unit": f["unit"]} for f in obs]
     # 3. The young pay first
     ages = doc.get("cohorts", {}).get("age", []); edu = doc.get("cohorts", {}).get("education", []); dec = doc.get("cohorts", {}).get("income_decile", [])
     if ages:
@@ -360,6 +420,7 @@ GLOSSARY = {
     "likely range": "the middle 80% of the model's runs; one run in ten falls above it and one in ten below",
     "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
     "AI income": "money flowing to the makers of models, computing, and chips, and to integrators",
+    "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",
     "jobs ledger / people ledger": "positions that exist versus people whose job was affected; a person who finds other work takes a position someone else would have had, so the two do not add up to each other",
 }
 
@@ -406,7 +467,7 @@ def executive_brief_md(st: dict[str, Any]) -> str:
          f"Scenario: {st['scenario_name']}. Everything below is a difference from a world in which AI stopped improving in 2023. Run `{st['scenario_hash']}`.", ""]
     L.append("## In five sentences"); L.append("")
     L.append(f"By {yr} there are about {_millions(n['jobs_gap'])} fewer jobs than there would have been, out of about {_millions(n['jobs_base'])}; most of them are jobs never created rather than jobs destroyed. "
-             f"Almost none of that is layoffs: it is positions not refilled, so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
+             f"Most of that is hiring that never happens rather than layoffs (about one position in {max(round((n['unfilled'] + n['laid_off']) / max(n['laid_off'], 1)), 2)} removed is a layoff), so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
              f"but workers' share of income falls {abs(n['wage_share_pp']):.1f} points. Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. "
              f"Whether jobs end up down {abs(n['employment_pct']['p10']):.0f}% or flat depends mostly on whether the gains are spent back into the economy.")
     L.append("")
@@ -557,7 +618,7 @@ def executive_brief_html(st: dict[str, Any]) -> str:
     parts.append(f"<h1>What AI does to work in {e(st['region'])}, in seven findings</h1><p style='color:#666;font-size:14px'>Scenario: {e(st['scenario_name'] or '')}. Everything below is a difference from a world in which AI stopped improving in 2023.</p>")
     parts.append("<div class='lede'>" + e(
         f"By {yr} there are about {_millions(n['jobs_gap'])} fewer jobs than there would have been, out of about {_millions(n['jobs_base'])}; most of them are jobs never created rather than jobs destroyed. "
-        f"Almost none of that is layoffs: it is positions not refilled, so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
+        f"Most of that is hiring that never happens rather than layoffs (about one position in {max(round((n['unfilled'] + n['laid_off']) / max(n['laid_off'], 1)), 2)} removed is a layoff), so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
         f"but workers' share of income falls {abs(n['wage_share_pp']):.1f} points. Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. "
         f"Whether jobs end up down {abs(n['employment_pct']['p10']):.0f}% or flat depends mostly on whether the gains are spent back into the economy.") + "</div>")
     for i, b in enumerate(st["beats"], 1):

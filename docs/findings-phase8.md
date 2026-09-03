@@ -8,8 +8,8 @@ Branch `spec/model-v0.3` at Phase 8. Baseline, U.S., 256 draws, 32 structural ce
 
 The reports of Phases 1–7 gave the same fact three ways (jobs below baseline, workers displaced, unemployed) and readers added them up. The story layer keeps two ledgers and explains why they differ:
 
-- **Jobs ledger (positions).** About 9.5 million fewer jobs exist in 2040 than there would have been, on a base of 169 million: one job in eighteen. Likely range 18 million fewer to no loss. The biggest remover is software doing tasks (13.4 million by channel accounting); the biggest offset is cheaper output selling more (5.7 million).
-- **People ledger (who was affected).** Over the period 11.7 million people found the job they had, or would have had, gone: 10.4 million positions never offered to new entrants, 0.7 million layoffs, 0.5 million full-time equivalents of gig and freelance hours cut. Of them 9.4 million found other work, 1.3 million left the workforce and 0.2 million are unemployed in 2040. Unemployment peaks at +450,000 in 2037.
+- **Jobs ledger (positions), in levels.** About 152 million jobs today (the modelled occupations plus self-employed and platform workers). Without further AI progress, population and normal growth take that to about 174 million by 2040; with AI the median is about 164 million, likely 155 to 174 million. So: more jobs than today, and about 9.8 million fewer than there would have been, one job in eighteen. The biggest remover is software doing tasks (13.4 million by channel accounting); the biggest offset is cheaper output selling more (5.7 million).
+- **People ledger (who was affected).** Over the period 11.7 million people found the job they had, or would have had, gone: 8.1 million positions never offered to new entrants, 3.0 million layoffs, 0.4 million full-time equivalents of gig and freelance hours cut. Of them 9.4 million found other work, 1.1 million left the workforce and 0.2 million are unemployed in 2040. Unemployment peaks at +458,000 in 2037.
 
 The ledgers do not add up to each other because a person who finds other work fills a position someone else would have had. Saying so once, in the header of every story, removed the most common misreading of the earlier reports.
 
@@ -18,12 +18,20 @@ The ledgers do not add up to each other because a person who finds other work fi
 | # | Finding | Sureness |
 |---|---|---|
 | 1 | More jobs than today, fewer than there would have been (9.5 million by 2040) | leaning this way |
-| 2 | People are not fired, they are not hired (10.4 million unfilled entries vs 0.7 million layoffs) | we would bet on it |
+| 2 | Most of the gap is hiring that never happens; about one position in four removed is a layoff (8.1 million unfilled entries vs 3.0 million layoffs, the layoff share fitted to announced AI-cited cuts) | leaning this way |
 | 3 | The young pay first (under-25s carry 42% of the shortfall, 5% of their jobs; over-55s almost nothing; no degree loses three times a graduate) | leaning this way |
 | 4 | Pay up 4%, the economy up 8%, the workers' share of income down 4.8 points | we would bet on it |
 | 5 | Three waves: office work now (graphic designers −17% by 2030), robots and vehicles later (0.2% of task-hours in 2030, 6.9% in 2040), AI-made content category by category (translation and voice 72% of spending by 2040, video 8%) | leaning this way |
 | 6 | The money flows to the U.S. and the chip makers ($151 billion a year of AI income to the U.S., $50 billion to China; largest GDP gains in Taiwan and Korea) | leaning this way |
 | 7 | Two futures, and the difference is partly a choice: gains spent back (+13%, 22 million more jobs) or pocketed (−6%) | a coin flip |
+
+### 2c. Reality check: the 2025–2026 layoffs
+
+The first version of this note said "people are not fired, they are not hired" and put layoffs at 0.7 million by 2040. That reading came from the spec's attrition-first rule, under which employers wait for people to leave. It contradicted what employers were doing: Challenger, Gray & Christmas counted 54,836 AI-cited job cuts announced in 2025 and 173,568 since 2023 by June 2026, when AI led all stated reasons for cuts five months running. The model's central run had 12,000 layoffs by the end of 2025.
+
+Phase 8 therefore adds a lever, the share of each required cut that employers take as layoffs before attrition, and fits it to the announced counts: at 0.25 the central run gives 67,668 layoffs in 2025 and 143,034 since 2023 by June 2026, within a factor of 1.3 of both. Two scoreboard rows carry the counts on every run. The consequences for the story: layoffs are 3.0 million by 2040 rather than 0.7 million, about one position in four removed; the unemployment peak barely moves (most of the laid-off are re-employed); the total gap does not move at all; and the sureness of finding 2 drops from "we would bet on it" to "leaning this way", because the layoff share is now a fitted number resting on one private tally of stated reasons. Announced cuts include positions closed by attrition and redeployment, so the fit is deliberately loose (risk #38). A variant scenario doubles the share: 3.8 million layoffs by 2040, unemployment peaking 563,000 above the no-AI path, the same total.
+
+The first finding was also retitled. "More jobs than today" cannot be read off a chart of percentages against the no-AI path, so the beat now carries levels: today, 2040 without AI, and 2040 with AI with its range. The claim survives in the baseline (the median is 8% above today, the low end 2% above), and the beat's title is computed from the levels, so a scenario in which 2040 employment falls below today would say so.
 
 Sureness is the existing confidence classification renamed for readers: high → "we would bet on it", medium → "leaning this way", low → "a coin flip". No finding was reworded to sound surer than its classification.
 

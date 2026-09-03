@@ -57,7 +57,8 @@
       "layoff_friction": 0.25,
       "price_pass_through": 0.7,
       "occupational_attrition_pct_per_quarter": 2.5,
-      "wage_pass_through": 0.3
+      "wage_pass_through": 0.3,
+      "layoff_first_share": 0.25
     },
     "policy": {
       "US": {

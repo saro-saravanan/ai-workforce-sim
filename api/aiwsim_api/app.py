@@ -193,7 +193,8 @@ def brief(shash: str, format: str = "md", region: str = "US", compare: str | Non
         except service.NotFound as e:
             raise HTTPException(404, str(e)) from e
     if format in ("exec", "exec-html", "exec-json"):
-        st = story_mod.story(doc, region, *_companions(doc, region))
+        pol, fut, base, var = _companions(doc, region)
+        st = story_mod.story(doc, region, pol, fut, base, var)
         if format == "exec-html":
             return HTMLResponse(story_mod.executive_brief_html(st))
         if format == "exec-json":
@@ -217,8 +218,8 @@ def story(shash: str, region: str = "US", companions: bool = True):
     companion draw count so the futures and policy sections can be filled; pass `companions=false` for the beats alone.
     """
     doc = _load(shash)
-    pol, fut, base = _companions(doc, region) if companions else ({}, {}, None)
-    return story_mod.story(doc, region, pol, fut, base)
+    pol, fut, base, var = _companions(doc, region) if companions else ({}, {}, None, {})
+    return story_mod.story(doc, region, pol, fut, base, var)
 
 
 @app.get("/api/outlook/{shash}")

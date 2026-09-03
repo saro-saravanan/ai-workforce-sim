@@ -56,6 +56,7 @@ LEVER_LABELS: dict[str, tuple[str, str, str, str]] = {
     "levers.applications.content.licensing_regime": ("Content licensing regime", "", "P.128", "AI content price and quality growth (spec v0.3 §A.4)"),
     "levers.applications.content.price_sensitivity": ("Content price sensitivity γ", "", "P.125", "output substitution (spec v0.3 §A.4)"),
     "levers.applications.trade.services_exposure_scale": ("Services-trade exposure (scale)", "×", "P.124", "traded services (spec v0.3 §A.5.3)"),
+    "levers.labor.layoff_first_share": ("Layoffs before attrition (share of each cut)", "share", "", "hiring-first rule (spec §5.3); Phase 8 reality check"),
     "levers.applications.induced_demand_scale": ("Induced demand from cheaper applications", "×", "", "output demand for robotaxis and drones (spec v0.3 §A.16)"),
     "levers.applications.platform_labor": ("Platform labor classification", "", "P.123", "self-employed margin (spec v0.3 §A.3.6)"),
 }

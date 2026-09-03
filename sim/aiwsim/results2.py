@@ -285,6 +285,9 @@ def region_series(ro, mg: list[str] | None = None) -> dict[str, Any]:
         "retraining_cum": pct(ro.retraining_cum, 1.0, 0), "exited_cum": pct(ro.exited_cum, 1.0, 0), "unemployed_stock": pct(ro.unemployed_stock, 1.0, 0),
         "adoption_share": pct(ro.adoption_emp, 100.0), "adoption_share_firm_weighted": pct(ro.adoption_firm, 100.0),
         "ai_spend_bn": pct(ro.ai_spend, 1.0, 1), "ai_production_jobs": pct(ro.ai_jobs, 1.0, 0),
+        # levels in heads (full-time equivalents incl. self-employed): the frozen-AI path (population and normal growth) and the path with AI
+        "baseline_employment_level": pct(np.broadcast_to(ro.N0.sum(axis=0)[None, :], ro.N.sum(axis=1).shape).copy(), 1.0, 0),
+        "employment_level": pct(ro.N0.sum(axis=0)[None, :] * (1.0 + ro.employment_pct), 1.0, 0),   # same quantity as the headline, in heads
         "ai_rents_received_bn": {**{s_: pct(a, 1.0, 1) for s_, a in ro.rents.items()}, "total": pct(sum(ro.rents.values()), 1.0, 1)},
         "ai_spend_by_source_bn": _spend_sources(ro),
         "ai_spend_by_occupation_group_bn": _spend_groups(ro, mg or []),
@@ -423,7 +426,7 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
     out = []
     for f in apps.forecasts:
         rid = f.get("region") or "US"; ro = o.regions.get(rid) or o.regions["US"]
-        yq = f"{int(f['year'])}Q4"
+        yq = str(f.get("quarter") or f"{int(f['year'])}Q4")
         if yq not in q:
             out.append({**f, "model_central": None, "model_p10": None, "model_p90": None, "verdict": "outside horizon"}); continue
         t = q.index(yq); m = f["metric"]; arr = None; note = ""
@@ -438,6 +441,11 @@ def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, 
         elif m == "ride_hail_driver_displacement":
             idx = [i for i, c in enumerate(inp.occ_codes) if c in ("53-3054", "53-3053")]
             arr = 100 * (ro.D_emb[0][idx, t] * ro.N0[idx, t]).sum() / max(ro.N0[idx, t].sum(), 1.0) * np.ones(1) if ro.D_emb.size and idx else None; note = "central draw only"
+        elif m == "ai_layoffs_cum":
+            arr = ro.laid_off_cum[:, t]; note = "model quantity: cumulative layoffs attributed to AI since 2024Q1 (heads); announced cuts include positions closed by attrition and redeployment"
+        elif m == "ai_layoffs_in_year":
+            t0 = q.index(f"{int(f['year']) - 1}Q4") if f"{int(f['year']) - 1}Q4" in q else 0
+            arr = ro.laid_off_cum[:, t] - ro.laid_off_cum[:, t0]; note = "model quantity: layoffs attributed to AI during the calendar year (heads)"
         elif m == "physical_work_share":
             phys = sum(v for k, v in (o.trace.get("channels_task_hours") or {}).items() if k.startswith("emb_"))
             arr = 100 * ro.emb_share[:, t] / max(phys, 1e-6) if ro.emb_share.size and phys > 0 else None

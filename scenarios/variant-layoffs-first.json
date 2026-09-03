@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.3",
+  "id": "variant-layoffs-first",
+  "name": "Variant: employers cut through layoffs",
+  "description": "The same AI, with employers that cut ahead of attrition twice as readily as the fitted baseline: half of each quarter's required headcount reduction is taken as layoffs at once (lever labor.layoff_first_share 0.5 against the baseline's 0.25, which is fitted to the AI-cited job cuts employers announced in 2025 and the first half of 2026), net occupational attrition at the bottom of its range (P.63) and the layoff pace at the top (P.64). The same total jobs, borne by incumbents rather than entrants.",
+  "parent": "baseline",
+  "overrides": {
+    "P.63": {
+      "central": 1.5
+    },
+    "P.64": {
+      "central": 0.5
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  },
+  "levers": {
+    "labor": {
+      "layoff_first_share": 0.5
+    }
+  }
+}

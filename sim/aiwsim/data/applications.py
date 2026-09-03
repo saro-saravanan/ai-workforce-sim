@@ -183,6 +183,15 @@ FORECASTS: list[dict] = [
     {"source": "Brynjolfsson, Chandar, Chen (2025), 'Canaries in the Coal Mine'", "short": "Canaries 2025", "region": "US", "year": 2025,
      "metric": "young_exposed_employment_pct", "proxy": 1, "claimed": -13.0, "unit": "% employment of 22–25-year-olds in the most exposed occupations vs late 2022",
      "note": "compared with the model's 16–24 employment effect in the most exposed occupations at 2025Q4"},
+    # ---- observed AI-cited layoffs (Challenger, Gray & Christmas job-cut announcement reports) ----
+    {"source": "Challenger, Gray & Christmas, job cut announcement reports (2025 annual; monthly through June 2026)", "short": "Challenger 2025, AI-cited job cuts", "region": "US", "year": 2025,
+     "metric": "ai_layoffs_in_year", "proxy": 1, "claimed": 54836.0, "unit": "announced U.S. job cuts citing AI in the calendar year",
+     "note": "employers cited AI for 54,836 announced cuts in 2025; compared with the model's layoffs attributed to AI during 2025 (announced cuts include positions closed by attrition and redeployment, so the like-for-like model figure lies between its layoffs and its unfilled positions)",
+     "source_tag": "challengergray.com monthly reports (V: page summaries 2026-09-03; report PDFs not fetched)"},
+    {"source": "Challenger, Gray & Christmas, job cut announcement reports (cumulative since AI was first tracked in 2023)", "short": "Challenger 2026, AI-cited cuts since 2023", "region": "US", "year": 2026, "quarter": "2026Q2",
+     "metric": "ai_layoffs_cum", "proxy": 1, "claimed": 173568.0, "unit": "announced U.S. job cuts citing AI, 2023 to June 2026",
+     "note": "101,743 of these were announced in the first half of 2026, when AI led all stated reasons for cuts five months running; compared with the model's cumulative AI layoffs at 2026Q2",
+     "source_tag": "challengergray.com June 2026 report and coverage (V: page summaries 2026-09-03; report PDFs not fetched)"},
     # ---- RethinkX labour series (2024–2026) and the 2026 convergence report; the preset-seba-2026 scenario carries their assumptions ----
     {"source": "RethinkX, 'Near-zero cost labor: the disruptive economics of humanoid robots' (2025) and 'This time, we are the horses' (2024, updated Dec 2025)",
      "short": "RethinkX 2025, robot cost at entry", "region": "US", "year": 2025, "metric": "humanoid_cost_per_hour_usd", "proxy": 1, "preset_id": "preset-seba-2026", "claimed": 10.0,

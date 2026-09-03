@@ -93,7 +93,7 @@ def test_forecast_scoreboard(ctx):
     assert len(fs) >= 6 and {f["short"] for f in fs} >= {"Seba 2017, passenger miles", "RethinkX 2020", "Acemoglu 2024", "Goldman 2023", "IMF 2024"}
     assert len({f["short"] for f in fs}) == len(fs), "every scoreboard row needs a distinct label"
     for f in fs:
-        assert f["verdict"] in ("within band", "model lower", "model higher") and f["quarter"].endswith("Q4")
+        assert f["verdict"] in ("within band", "model lower", "model higher") and f["quarter"][4] == "Q"
         assert (f["model_central"] is None) or (f["model_p10"] <= f["model_central"] + 1e-9 or f["model_p10"] is None)
     seba = [f for f in fs if f["short"].startswith("Seba 2017")]
     assert len(seba) == 2 and any(f["proxy"] for f in seba) and all(f["preset_id"] == "preset-seba-rethinkx" for f in seba)
@@ -130,3 +130,20 @@ def test_ai_spend_sources_add_up(ctx):
     soft = sum(v["central"][-1] for v in groups.values())
     assert abs(soft - (src["automation"]["central"][-1] + src["augmentation"]["central"][-1])) < 0.02 * tot + 0.5
     assert "Other groups" in groups and len(groups) <= 9 and all("p50" in v for v in groups.values())
+
+
+def test_employment_levels_and_layoff_reality_rows(ctx):
+    """Levels in heads reconcile with the headline; the Challenger rows score the model's layoffs; the layoffs-first variant moves the split, not the total."""
+    d = _doc(ctx, "baseline"); us = d["series"]["US"]; q = d["meta"]["quarters"]
+    lvl0 = us["baseline_employment_level"]["central"]; lvl = us["employment_level"]["central"]; e = us["employment_pct_vs_baseline"]["central"]
+    assert lvl0[-1] > lvl0[0] > 150_000_000, "the frozen-AI path carries population and normal growth"
+    assert abs(lvl[-1] / lvl0[-1] - 1 - e[-1] / 100) < 0.002
+    rows = {f["short"]: f for f in d["forecasts"]}
+    ch25 = rows["Challenger 2025, AI-cited job cuts"]; ch26 = rows["Challenger 2026, AI-cited cuts since 2023"]
+    assert ch25["quarter"] == "2025Q4" and ch26["quarter"] == "2026Q2" and ch25["model_central"] is not None and ch26["model_central"] is not None
+    # the baseline's layoffs-before-attrition share (0.25) is fitted to the announced counts: within a factor of two of both
+    assert 0.5 < ch25["model_central"] / ch25["claimed"] < 2.0 and 0.5 < ch26["model_central"] / ch26["claimed"] < 2.0
+    v = _doc(ctx, "variant-layoffs-first"); vs = v["series"]["US"]
+    t30 = q.index("2030Q4")
+    assert vs["laid_off_cum"]["central"][t30] > 1.5 * us["laid_off_cum"]["central"][t30]
+    assert abs(vs["employment_pct_vs_baseline"]["central"][-1] - e[-1]) < 1.0
