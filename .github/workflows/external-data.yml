@@ -1,0 +1,62 @@
+name: external-data
+# Fetches the external source files that the build environment cannot reach (BEA input-output use table,
+# BLS OEWS occupation-by-industry and national files) and commits them under data/external/ on the branch
+# the workflow is run from. Run it from the Actions tab (workflow_dispatch); the ingest modules read from
+# data/external/ when the files are present.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Fetch BEA summary use table (Supply-Use framework, producer values)
+        run: |
+          set -e
+          mkdir -p data/external/bea
+          ok=0
+          for f in Use_SUT_Framework_2017-2024_SUM.xlsx Use_SUT_Framework_2017-2023_SUM.xlsx Use_Tables_Supply-Use_Framework_2017-2023_SUM.xlsx IOUse_Before_Redefinitions_PRO_1997-2023_Summary.xlsx; do
+            code=$(curl -sS -L -A "aiwsim-data-fetch" -o "data/external/bea/$f" -w "%{http_code}" "https://apps.bea.gov/industry/xls/io-annual/$f" || true)
+            echo "$f -> $code"
+            if [ "$code" = "200" ] && [ "$(stat -c %s data/external/bea/$f)" -gt 100000 ]; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; break; fi
+            rm -f "data/external/bea/$f"
+          done
+          [ "$ok" = "1" ] || { echo "no BEA use table found"; exit 1; }
+          sha256sum data/external/bea/*.xlsx
+      - name: Fetch BLS OEWS national industry (sector level) and national cross-industry files
+        run: |
+          set -e
+          mkdir -p data/external/bls /tmp/oews
+          for v in 25 24; do
+            code=$(curl -sS -L -A "Mozilla/5.0 aiwsim-data-fetch" -o /tmp/oews/in4.zip -w "%{http_code}" "https://www.bls.gov/oes/special-requests/oesm${v}in4.zip" || true)
+            echo "oesm${v}in4.zip -> $code"
+            if [ "$code" = "200" ] && [ "$(stat -c %s /tmp/oews/in4.zip)" -gt 1000000 ]; then
+              curl -sS -L -A "Mozilla/5.0 aiwsim-data-fetch" -o /tmp/oews/nat.zip "https://www.bls.gov/oes/special-requests/oesm${v}nat.zip"
+              echo "$v" > data/external/bls/OEWS_VINTAGE; break
+            fi
+            rm -f /tmp/oews/in4.zip
+          done
+          [ -f /tmp/oews/in4.zip ] || { echo "no OEWS industry file found"; exit 1; }
+          unzip -l /tmp/oews/in4.zip | head -40
+          unzip -l /tmp/oews/nat.zip | head -20
+          python3 - <<'PY'
+          import zipfile, re, shutil
+          for z, pat in (("/tmp/oews/in4.zip", r"natsector_M20\d\d_dl\.xlsx$"), ("/tmp/oews/nat.zip", r"national_M20\d\d_dl\.xlsx$")):
+              with zipfile.ZipFile(z) as zf:
+                  names = [n for n in zf.namelist() if re.search(pat, n, re.I)]
+                  assert names, (z, zf.namelist())
+                  data = zf.read(names[0]); out = "data/external/bls/" + names[0].split("/")[-1]
+                  open(out, "wb").write(data); print(out, len(data))
+          PY
+          ls -la data/external/bls
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/external
+          git commit -m "External data: BEA summary use table and BLS OEWS sector and national files (fetched by the external-data workflow)" || echo "nothing to commit"
+          git push
