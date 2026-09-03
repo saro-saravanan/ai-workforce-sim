@@ -52,7 +52,7 @@ jobs:
           # 3. the names the archive index lists, live first then the archived copy (id_ returns the raw file)
           if [ "$ok" = "0" ] && [ -s /tmp/cdx.txt ]; then
             for line in $(awk '{print $2"|"$3}' /tmp/cdx.txt | grep -iE "use.*(sum|summary).*xlsx" | grep -viE "detail|_det|sector" | sort -u | tail -12); do
-              u="${line%%|*}"; ts="${line##*|}"; f=$(basename "$u")
+              ts="${line%%|*}"; u="${line##*|}"; f=$(basename "$u")
               curl -sS -L -A "$UA" -o "data/external/bea/$f" "$u" || true
               if is_xlsx "data/external/bea/$f"; then ok=1; echo "$f" > data/external/bea/USE_TABLE_FILE; echo "fetched live (indexed name) $u"; break; fi
               curl -sS -L -A "$UA" -o "data/external/bea/$f" "http://web.archive.org/web/${ts}id_/$u" || true
@@ -75,7 +75,7 @@ jobs:
           pick = None
           for v in vals:
               desc = str(v.get("Desc", "")); key = str(v.get("Key", ""))
-              if re.search(r"\buse\b", desc, re.I) and re.search(r"summary", desc, re.I) and re.search(r"producer", desc, re.I) and not re.search(r"after redefinitions", desc, re.I):
+              if re.search(r"\buse of commodities\b", desc, re.I) and re.search(r"summary", desc, re.I) and not re.search(r"after redefinitions|domestic supply|requirements", desc, re.I):
                   print("candidate", key, desc)
                   if pick is None or "before redefinitions" in desc.lower():
                       pick = key
