@@ -10,11 +10,16 @@ on:
         description: space-separated BEA spreadsheet URLs to fetch (optional; defaults to the SUT-framework summary use table candidates)
         required: false
         default: ''
+      environment:
+        description: GitHub environment that holds the BEA_API_KEY secret (leave empty when the secret is a repository secret)
+        required: false
+        default: ''
 permissions:
   contents: write
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - uses: actions/checkout@v4
         with:
