@@ -42,6 +42,7 @@ Set `ANTHROPIC_API_KEY` in the API server's environment to enable the chat layer
 | [docs/data-inventory.md](docs/data-inventory.md) | Every dataset with source, license, coverage, access method, and gaps |
 | [docs/risks.md](docs/risks.md) | Risks and assumptions ranked by how much they could change conclusions, with their status after the build |
 | [docs/findings-phase1.md](docs/findings-phase1.md) … [phase8](docs/findings-phase8.md) | What the model said after each phase, what surprised us, what we do not trust yet |
+| [docs/adversarial-review-phase8.md](docs/adversarial-review-phase8.md) | The end-of-Phase-8 adversarial review: what a veteran would attack, ranked, with diagnostics and a priority plan |
 | [docs/wireframes.md](docs/wireframes.md) | The wireframes the views were built from |
 | [scenarios/](scenarios/) | `schema.json`, `baseline.json`, presets (Acemoglu 2024, Goldman Sachs 2023, IMF 2024), and the example what-if |
 
