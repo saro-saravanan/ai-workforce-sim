@@ -156,6 +156,7 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
     if "robotics_doubling_months" in cap:
         q.set("P.19", float(cap["robotics_doubling_months"]))
     q.flags["capability_feedback"] = "on" if cap.get("feedback_from_revenue") else "off"
+    q.flags["threshold_seed"] = int(cap.get("threshold_seed", 0) or 0)      # re-seeds the per-task thresholds (review §2.4); 0 = the v0.2 hash
 
     cost = levers.get("cost", {})
     if "price_decline_per_year" in cost:
@@ -236,6 +237,7 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
         q.set("P.117", float(hw["ramp_max_growth_per_year"]))
     q.flags["utilization_scale"] = float(hw.get("utilization_scale", 1.0))
     q.flags["unit_price_scale"] = float(hw.get("unit_price_scale", 1.0))
+    q.flags["cost_floor_scale"] = float(hw.get("cost_floor_scale", 1.0))     # scales embodiment_classes.csv cost_floor_usd_per_hour (review §2.8)
     q.flags["approval"] = {k: str(v) for k, v in app.get("approval", {}).items()}
     q.flags["platform_labor"] = app.get("platform_labor", "status_quo")
     q.flags["induced_demand_scale"] = float(app.get("induced_demand_scale", 1.0))

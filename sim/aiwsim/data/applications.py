@@ -15,19 +15,26 @@ REGIONS = ["US", "EU", "UK", "CN", "JP", "KR", "IN", "TW", "SG", "RoA"]
 # ---- embodiment classes (spec §A.3.1–A.3.3; registry P.100–P.120) -------------------------------------------------
 EMBODIMENT_CLASSES: list[dict] = [
     # class, a_emb, theta_lo, theta_hi (doublings on the class clock), tau_months, saturation, unit_price_2025_usd, lifetime_y,
-    # opex_ratio, utilization, task_units_per_hour, g_max_per_year, cum_production_2025_units, adjacent_jobs_per_unit, note
+    # opex_ratio, utilization, task_units_per_hour, g_max_per_year, cum_production_2025_units, adjacent_jobs_per_unit, cost_floor_usd_per_hour, note
+    # cost_floor_usd_per_hour (E; review §2.8, Phase 9): the hardware cost per worker-hour equivalent cannot fall below the running cost that
+    # Wright's law does not learn away. Driving 3.0: energy, insurance, cleaning, remote assistance and depot per vehicle-hour at scale (E, from
+    # disclosed robotaxi operating budgets read per paid hour); mobile manipulation 1.5, fixed automation 1.0, aerial 0.8: energy, maintenance and
+    # a capital charge at scale (E). Applied in mc.py as a floor on kappa; lever applications.hardware.cost_floor_scale scales it (0 = Phase 8 curves).
     {"cls": "driving", "a_emb": 0.85, "theta_lo": 0.5, "theta_hi": 4.0, "tau_months": 18, "saturation": 8, "unit_price_2025_usd": 150_000,
      "lifetime_years": 5, "opex_ratio": 0.8, "utilization": 0.45, "task_units_per_hour": 1.0, "g_max_per_year": 0.5, "cum_production_2025": 3_000,
-     "adjacent_jobs_per_unit": 0.10, "note": "V?: unit price = vehicle + sensing + amortized autonomy stack; utilization = paid hours / 8760; 2025 cumulative production from public fleet counts"},
+     "adjacent_jobs_per_unit": 0.10, "cost_floor_usd_per_hour": 3.0,
+     "note": "V?: unit price = vehicle + sensing + amortized autonomy stack; utilization = paid hours / 8760; 2025 cumulative production from public fleet counts"},
     {"cls": "manip", "a_emb": 0.60, "theta_lo": 2.0, "theta_hi": 7.0, "tau_months": 15, "saturation": 10, "unit_price_2025_usd": 80_000,
      "lifetime_years": 8, "opex_ratio": 0.4, "utilization": 0.60, "task_units_per_hour": 0.7, "g_max_per_year": 0.5, "cum_production_2025": 20_000,
-     "adjacent_jobs_per_unit": 0.05, "note": "V?: mobile manipulators and humanoids on one class clock; theta spread covers warehouse picking (low) to construction (high)"},
+     "adjacent_jobs_per_unit": 0.05, "cost_floor_usd_per_hour": 1.5,
+     "note": "V?: mobile manipulators and humanoids on one class clock; theta spread covers warehouse picking (low) to construction (high)"},
     {"cls": "fixed", "a_emb": 0.30, "theta_lo": 1.0, "theta_hi": 5.0, "tau_months": 24, "saturation": 8, "unit_price_2025_usd": 60_000,
      "lifetime_years": 10, "opex_ratio": 0.3, "utilization": 0.80, "task_units_per_hour": 1.5, "g_max_per_year": 0.5, "cum_production_2025": 5_000,
-     "adjacent_jobs_per_unit": 0.03, "note": "AI-enabled increment over the baseline automation trend only (spec §A.1 attack 2); a_emb is the increment"},
+     "adjacent_jobs_per_unit": 0.03, "cost_floor_usd_per_hour": 1.0,
+     "note": "AI-enabled increment over the baseline automation trend only (spec §A.1 attack 2); a_emb is the increment"},
     {"cls": "aerial", "a_emb": 0.50, "theta_lo": 2.0, "theta_hi": 5.0, "tau_months": 18, "saturation": 8, "unit_price_2025_usd": 15_000,
      "lifetime_years": 4, "opex_ratio": 0.6, "utilization": 0.30, "task_units_per_hour": 1.0, "g_max_per_year": 0.5, "cum_production_2025": 5_000,
-     "adjacent_jobs_per_unit": 0.05, "note": "V?: delivery and inspection drones"},
+     "adjacent_jobs_per_unit": 0.05, "cost_floor_usd_per_hour": 0.8, "note": "V?: delivery and inspection drones"},
 ]
 
 # initial deployed stock 2024Q1 by class and region (units; E, V?)

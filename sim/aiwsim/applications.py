@@ -23,6 +23,7 @@ class EmbodimentClass:
     g_max_per_year: float; cum_production_2025: float; adjacent_jobs_per_unit: float
     stock_2024: dict[str, float] = field(default_factory=dict)
     prod_share: dict[str, float] = field(default_factory=dict)
+    cost_floor: float = 0.0           # USD per worker-hour equivalent below which kappa cannot fall (embodiment_classes.csv; review §2.8)
 
 
 @dataclass
@@ -109,7 +110,8 @@ def load_applications(root: Path, inp: Inputs, region_ids: list[str] | None = No
             saturation=float(r["saturation"]), unit_price_2025=float(r["unit_price_2025_usd"]), lifetime_years=float(r["lifetime_years"]),
             opex_ratio=float(r["opex_ratio"]), utilization=float(r["utilization"]), task_units_per_hour=float(r["task_units_per_hour"]),
             g_max_per_year=float(r["g_max_per_year"]), cum_production_2025=float(r["cum_production_2025"]), adjacent_jobs_per_unit=float(r["adjacent_jobs_per_unit"]),
-            stock_2024={x: float(r[f"stock_2024_{x}"] or 0.0) for x in regs}, prod_share={x: float(r[f"prod_share_{x}"] or 0.0) for x in regs})
+            stock_2024={x: float(r[f"stock_2024_{x}"] or 0.0) for x in regs}, prod_share={x: float(r[f"prod_share_{x}"] or 0.0) for x in regs},
+            cost_floor=float(r.get("cost_floor_usd_per_hour") or 0.0))
     apps: list[Application] = []
     for r in pl.read_csv(d / "applications.csv", schema_overrides={"app_id": pl.Utf8, "occ_codes": pl.Utf8, "cls": pl.Utf8}).fill_null("").iter_rows(named=True):
         apps.append(Application(app_id=r["app_id"], name=r["name"], family=r["family"], classes=[c for c in str(r["cls"]).split(";") if c],

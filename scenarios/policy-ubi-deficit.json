@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.3",
+  "id": "policy-ubi-deficit",
+  "name": "Variant: $500/month basic income, deficit-financed",
+  "description": "The same $500 monthly payment to every adult with the 30% AI tax covering a small part and the deficit the rest. About $1.7 trillion a year of deficit spending is outside the model's fiscal range (it has no inflation, interest-rate or debt response), so its employment effect is overstated; the run is kept only to show the validity flag (meta.validity.fiscal_warning). Read the tax-financed run (policy-ubi-ai-tax) for the policy's effect.",
+  "parent": "baseline",
+  "levers": {
+    "policy": {
+      "US": {
+        "ubi_monthly_usd": 500,
+        "ai_tax_pct_of_ai_spend": 30,
+        "financing": {
+          "retraining": "deficit",
+          "wage_insurance": "ai_tax",
+          "ubi": "ai_tax",
+          "work_week": "deficit"
+        }
+      }
+    }
+  },
+  "ensemble": {
+    "mechanisms": "all"
+  }
+}

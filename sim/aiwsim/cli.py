@@ -79,6 +79,22 @@ def cmd_data(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_diag(args: argparse.Namespace) -> int:
+    """Phase 9 diagnostics (review §2.4): threshold-seed sensitivity and the classifier audit sample."""
+    from .diagnostics import classifier_sample, seed_table, threshold_seed_sensitivity
+    root = find_root()
+    if args.action == "threshold-seeds":
+        from .pipeline import Context
+        ctx = Context(root)
+        rows = threshold_seed_sensitivity(ctx, seeds=tuple(int(s) for s in args.seeds.split(",")), regions=tuple(args.regions.split(",")), scenario=args.scenario)
+        print(seed_table(rows))
+    else:
+        out = Path(args.out) if args.out else root / "docs" / "classifier-audit-sample.md"
+        classifier_sample(root, n=args.n, seed=args.seed, out=out)
+        print(f"-> {out}")
+    return 0
+
+
 def cmd_validate(args: argparse.Namespace) -> int:
     import pytest
     root = find_root()
@@ -97,6 +113,13 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--force", action="store_true", help="fetch: re-download every raw file"); d.add_argument("--no-fetch", action="store_true", help="build: fail instead of fetching missing raw inputs")
     d.set_defaults(fn=cmd_data)
     v = sub.add_parser("validate"); v.set_defaults(fn=cmd_validate)
+    g = sub.add_parser("diag", help="Phase 9 diagnostics: threshold-seeds (markdown table), classifier-sample (audit table)")
+    g.add_argument("action", choices=["threshold-seeds", "classifier-sample"])
+    g.add_argument("--seeds", default="0,1,2", help="threshold-seeds: comma-separated seeds (0 = reference hash)")
+    g.add_argument("--regions", default="US", help="threshold-seeds: comma-separated regions to run"); g.add_argument("--scenario", default="baseline")
+    g.add_argument("--n", type=int, default=120, help="classifier-sample: statements to sample, stratified by channel")
+    g.add_argument("--seed", type=int, default=20260903, help="classifier-sample: sampling seed"); g.add_argument("--out", help="classifier-sample: output markdown path")
+    g.set_defaults(fn=cmd_diag)
     args = ap.parse_args(argv)
     return int(args.fn(args))
 
