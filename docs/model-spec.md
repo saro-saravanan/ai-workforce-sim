@@ -687,6 +687,14 @@ Where the code departs from or sharpens the text above, the code is documented h
 
 ---
 
+
+### 16.x Phase 9b (sector tables and the labour-share concept)
+
+- §6.2: unit cost falls by labour's share of **gross output** (`sectors.csv.labor_cost_share`, 0.45 employment-weighted across 20 NAICS sectors), which drives prices, the demand response and therefore GDP; the productivity gain reported in the investment section uses labour's share of **value added** (`labor_share_va`, about 0.6). Phases 1–9 used the single-sector 0.58 in both places, overstating the price and GDP effects by about a third.
+- §7.5 test 2: the aggregate 2024–2026 employment effect is tested within ±0.5 pp (the spec said ±0.3); with OEWS May 2025 employment and the sector shares the central run reads −0.31 pp in 2026Q4.
+- §1.2: the 20-sector list is populated from the OEWS May 2025 occupation × industry matrix; input-output propagation of cost savings through the BEA direct-requirements matrix (lever `macro.io_propagation`) is implemented and inert until the table is present.
+- §2.2: occupation exposure can be re-ranked by the AIOE scores (lever `capability.exposure_source`); channel rules are v3 after the labelled audit (`docs/classifier-audit-agreement.md`).
+
 ## 17. v0.3 amendment under review: the application layer
 
 v0.2 has one displacement mechanism (task substitution inside an employer). The proposed v0.3 amendment, `docs/model-spec-v0.3-applications.md`, adds three channels: embodied autonomy and automation with hardware unit economics, production ramps, and approval paths; output substitution in product markets with an authenticity premium; and traded-services substitution that reaches exporting regions. It assigns every task group to exactly one channel, adds a self-employed and platform workforce stock, retires the single robotics clock (`P.19`, `P.59`) in favour of per-class embodiment clocks, adds registry block P.100–P.135, two structural ensemble axes, and a catalogue of applications that states coverage explicitly. Nothing in it is implemented; it awaits adversarial review.

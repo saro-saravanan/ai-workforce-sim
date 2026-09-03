@@ -125,9 +125,10 @@ def classifier_sample(root: Path, n: int = 120, seed: int = 20260903, out: Path 
 # ----------------------------------------------------------------------------------------------
 # Phase 9b: 2026 hold-out and the exposure-source swap
 # ----------------------------------------------------------------------------------------------
-def _backtest_rows(ctx: Context, scen: dict[str, Any], regions: tuple[str, ...] = ("US",)) -> list[dict[str, Any]]:
+def _backtest_rows(ctx: Context, scen: dict[str, Any], regions: tuple[str, ...] | None = None) -> list[dict[str, Any]]:
+    """Backtest rows of a central run; all ten regions by default because the revenue row is a world total."""
     from .pipeline import run_scenario
-    d, _ = run_scenario(ctx, ctx.resolve(scen), draws=1, with_channels=False, with_tornado=False, regions=list(regions))
+    d, _ = run_scenario(ctx, ctx.resolve(scen), draws=1, with_channels=False, with_tornado=False, regions=list(regions) if regions else None)
     return d.get("backtest", {}).get("rows", [])
 
 
@@ -138,7 +139,7 @@ def _row(rows: list[dict[str, Any]], sid: str, q: str) -> dict[str, Any] | None:
 def holdout_2026(ctx: Context, scenario: str = "baseline", multiples: tuple[float, ...] = (3.0, 4.0, 5.0, 6.0, 7.0, 8.0),
                  layoff_shares: tuple[float, ...] = (0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5)) -> dict[str, Any]:
     """Refit the two fitted parameters to 2025 only and score the 2026 rows (review §2.2 item 2). The market-price multiple P.143 is refit to
-    the 2025 revenue row, then the layoff-first share to the 2025 Challenger row (a one-dimensional grid each, central U.S.-only runs); the
+    the 2025 revenue row, then the layoff-first share to the 2025 Challenger row (a one-dimensional grid each, central ten-region runs); the
     2026 rows (Challenger 2026Q2, revenue 2026, BTOS 2026Q1) are then reported under the refit and under the shipped fit."""
     base = load_scenario_by_path_or_id(ctx, scenario)
     shipped = _backtest_rows(ctx, copy.deepcopy(base))
@@ -177,7 +178,7 @@ def holdout_2026(ctx: Context, scenario: str = "baseline", multiples: tuple[floa
 
 def holdout_markdown(res: dict[str, Any]) -> str:
     intro = (f"Refit to 2025 only: market-price multiple P.143 = {res['refit']['P.143']:.1f} (shipped {res['shipped']['P.143']:.1f}), layoff-first share = "
-             f"{res['refit']['layoff_first_share']:.2f} (shipped {res['shipped']['layoff_first_share']:.2f}). Central U.S.-only runs; the shipped fit used the 2026 rows too.")
+             f"{res['refit']['layoff_first_share']:.2f} (shipped {res['shipped']['layoff_first_share']:.2f}). Central ten-region runs; the shipped fit used the 2026 rows too.")
     L = ["# 2026 hold-out (review §2.2, item 2)", "", intro, "",
          "| Series | Quarter | Observed | Shipped model | Shipped error | Refit-to-2025 model | Refit error |", "|---|---|---|---|---|---|---|"]
     for r in res["holdout_rows"]:

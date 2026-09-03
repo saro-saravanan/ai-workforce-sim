@@ -100,6 +100,30 @@
   "default": 20
  },
  {
+  "path": "levers.capability.threshold_seed",
+  "label": "Task-threshold seed",
+  "group": "capability",
+  "mechanism": "Seed of the task-threshold draw; the diagnostics vary it to show what resolution the task engine supports.",
+  "type": "number",
+  "min": 0,
+  "max": 999,
+  "step": 1,
+  "unit": "",
+  "default": 0
+ },
+ {
+  "path": "levers.capability.exposure_source",
+  "label": "Exposure source",
+  "group": "capability",
+  "mechanism": "Occupation exposure source (review §2.4): gpts = Eloundou et al. task labels (default); aioe = Felten, Raj and Seamans AIOE scores rank-mapped onto the GPTs beta scale, so only the ordering of occupations changes. Needs the AIOE appendix fetched (aiwsim data fetch).",
+  "type": "enum",
+  "options": [
+   "gpts",
+   "aioe"
+  ],
+  "default": "gpts"
+ },
+ {
   "path": "levers.cost.price_decline_per_year",
   "label": "Inference price decline per year",
   "group": "cost",
@@ -574,6 +598,18 @@
   "default": "demand"
  },
  {
+  "path": "levers.macro.io_propagation",
+  "label": "Io propagation",
+  "group": "macro",
+  "mechanism": "Input-output cost propagation (Phase 9b, review item 10): on passes each sector's labour-cost saving through to the sectors that buy its output via the BEA direct-requirements matrix; off keeps the direct saving only. No effect without data/processed/io_direct_requirements.csv.",
+  "type": "enum",
+  "options": [
+   "on",
+   "off"
+  ],
+  "default": "on"
+ },
+ {
   "path": "levers.applications.embodiment.driving_doubling_months",
   "label": "Driving autonomy doubling time",
   "group": "applications",
@@ -714,6 +750,18 @@
    "local"
   ],
   "default": "global"
+ },
+ {
+  "path": "levers.applications.hardware.cost_floor_scale",
+  "label": "Hardware cost-floor scale",
+  "group": "applications",
+  "mechanism": "Multiplies the embodied classes' cost floors (review §2.8: no $0.04 robot).",
+  "type": "number",
+  "min": 0,
+  "max": 3,
+  "step": 0.05,
+  "unit": "×",
+  "default": 1
  },
  {
   "path": "levers.applications.approval.US",

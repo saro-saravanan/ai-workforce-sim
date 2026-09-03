@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Every value is an estimate written before the data plan ran; unit prices, utilization, ramps and 2025 production are V? (spec §A.10). Replace through the verification items; the registry rows P.108–P.120 carry the ranges.",
-  "built_at": "2026-09-03T19:52:27+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/applications/embodiment_classes.csv",
   "extra": {}
 }

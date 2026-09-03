@@ -13,7 +13,7 @@
   ],
   "status": "partial (derived D)",
   "notes": "VINTAGE: OEWS May 2021 (GPTs-are-GPTs mirror), not May 2025; refreshed when ingest/oews.py replaces the raw file. Fit levels: {'major': 6, 'major_sigma': 18, 'own': 807}. Treating '#' as missing understates dispersion for top-coded occupations. Employment-weighted share per decile (should be ~0.1 each; OEWS excludes the self-employed and the lognormal is an approximation): [0.0627, 0.136, 0.1353, 0.1139, 0.096, 0.0845, 0.0788, 0.0791, 0.0866, 0.1271].",
-  "built_at": "2026-09-03T19:52:26+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/cohorts/occ_decile.csv",
   "extra": {
     "fit_levels": {

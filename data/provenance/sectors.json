@@ -5,7 +5,7 @@
   "license": "n/a (estimates)",
   "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "7eb35a7544b57927bca03a47e8606e7137a96874e549aeb22948bfa8f92f2d83",
+  "sha256": "f05fd7f32bd7e586dea50074eb3ff9713d131145eb5fd232d30f8d97175e5372",
   "transformations": [
     "20 NAICS sectors of spec §1.2 (data/fixtures/sectors_20.csv)",
     "consumption_share normalized to 1",
@@ -13,7 +13,7 @@
   ],
   "status": "partial (E estimates; BEA pending)",
   "notes": "labor_cost_share = compensation / gross output; demand_elasticity and friction are E in every case.",
-  "built_at": "2026-09-03T19:52:26+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/sectors.csv",
   "extra": {}
 }

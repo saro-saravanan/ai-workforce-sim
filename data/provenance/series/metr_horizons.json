@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Doubling time: ~7 months (2019-2025, original paper); ~4 months (2024-2025 subset); Time Horizon 1.1 (Jan 2026): 6.3 months all-time, 4.3 months since 2023, ~3 months since 2024. Only 5 of 228 tasks >= 16 h, so horizons above ~8 h are unstable; software-specific.",
-  "built_at": "2026-09-03T19:52:26+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/series/metr_horizons.csv",
   "extra": {
     "extra_urls": [

@@ -435,7 +435,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     eta = inp.demand_elasticity[None, :] * bp.col("P.60_scale", 1.0)
     if not ch.demand_response:
         eta = np.zeros_like(eta)
-    pi_p = bp.col("P.53", 0.7); s_L = inp.labor_cost_share[None, :]
+    pi_p = bp.col("P.53", 0.7); s_L = inp.labor_cost_share[None, :]; s_VA = inp.labor_share_va[None, :]
     # input-output cost propagation (Phase 9b, review item 10): a sector's price falls with its own labour saving and with the price of its
     # intermediate inputs, dlnP = (I - A^T)^-1 dlnc_direct with A the BEA direct-requirements matrix; identity without the table or when the lever is off
     io_L = None
@@ -946,7 +946,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         y_ratio = Q_ratio @ wY
         Y_task = (Y0[None, :, t] * y_ratio + d_inv + jobs * AI_PRODUCTION_WAGE / 1e9 + hw_val * (1.0 - co[:, None])
                   + adj_jobs * ADJACENT_WAGE / 1e9 + Y_cat)
-        tfp = -(dlnc @ wY)
+        tfp = (s_VA[None] * (auto + aug)) @ wY                                        # productivity gain on value added (labour share of value added, spec §6.2; Phase 9b)
         D_sp = Dr if ch.automation else np.zeros_like(Dr); U_sp = Ur if ch.augmentation else np.zeros_like(Ur)
         spend_auto_occ = N0t * HOURS_PER_YEAR * D_sp * kb / 1e9; spend_aug_occ = N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9)) / 1e9   # [D, R, n_occ]
         spend = spend_auto_occ.sum(axis=2) + spend_aug_occ.sum(axis=2)                                                      # [D, R] at market prices

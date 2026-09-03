@@ -26,31 +26,32 @@ from .ingest.oews import (
 OEWS_VINTAGE_DEFAULT = "May 2025"
 
 # Sector parameters that the BEA use table supplies when present; until then authors' estimates (tag E), by NAICS sector.
-# labor_cost_share: compensation of employees / gross output (BEA GDP-by-industry orders of magnitude); consumption_share:
+# labor_cost_share: compensation of employees / gross output (the unit-cost concept, for prices and demand); labor_share_va: compensation / value added
+# (the productivity concept, for TFP and GDP; the single-sector fixture's 0.58 was this one); both BEA GDP-by-industry orders of magnitude; consumption_share:
 # personal consumption expenditure by producing sector (BEA PCE bridge, rough); demand_elasticity: price elasticity of sector
 # demand (E, literature ranges 0.2-1.2, the single-sector fixture used 0.8); friction: Bass adoption friction phi_s (1.0 = the
 # calibrated single-sector speed; the BTOS sector cuts are not yet used to differentiate it, so 1.0 everywhere).
 SECTOR_E: dict[str, dict[str, float]] = {
-    "11": {"labor_cost_share": 0.20, "consumption_share": 0.010, "demand_elasticity": 0.5},
-    "21": {"labor_cost_share": 0.15, "consumption_share": 0.010, "demand_elasticity": 0.5},
-    "22": {"labor_cost_share": 0.15, "consumption_share": 0.030, "demand_elasticity": 0.3},
-    "23": {"labor_cost_share": 0.35, "consumption_share": 0.010, "demand_elasticity": 0.8},
-    "31-33": {"labor_cost_share": 0.20, "consumption_share": 0.220, "demand_elasticity": 1.0},
-    "42": {"labor_cost_share": 0.40, "consumption_share": 0.050, "demand_elasticity": 0.8},
-    "44-45": {"labor_cost_share": 0.45, "consumption_share": 0.100, "demand_elasticity": 0.8},
-    "48-49": {"labor_cost_share": 0.35, "consumption_share": 0.040, "demand_elasticity": 0.8},
-    "51": {"labor_cost_share": 0.25, "consumption_share": 0.050, "demand_elasticity": 1.2},
-    "52": {"labor_cost_share": 0.30, "consumption_share": 0.090, "demand_elasticity": 0.8},
-    "53": {"labor_cost_share": 0.10, "consumption_share": 0.160, "demand_elasticity": 0.5},
-    "54": {"labor_cost_share": 0.50, "consumption_share": 0.030, "demand_elasticity": 1.0},
-    "55": {"labor_cost_share": 0.60, "consumption_share": 0.000, "demand_elasticity": 0.6},
-    "56": {"labor_cost_share": 0.55, "consumption_share": 0.020, "demand_elasticity": 0.9},
-    "61": {"labor_cost_share": 0.65, "consumption_share": 0.020, "demand_elasticity": 0.4},
-    "62": {"labor_cost_share": 0.55, "consumption_share": 0.160, "demand_elasticity": 0.4},
-    "71": {"labor_cost_share": 0.40, "consumption_share": 0.020, "demand_elasticity": 1.0},
-    "72": {"labor_cost_share": 0.35, "consumption_share": 0.060, "demand_elasticity": 0.9},
-    "81": {"labor_cost_share": 0.45, "consumption_share": 0.040, "demand_elasticity": 0.8},
-    "92": {"labor_cost_share": 0.60, "consumption_share": 0.020, "demand_elasticity": 0.2},
+    "11": {"labor_share_va": 0.35, "labor_cost_share": 0.20, "consumption_share": 0.010, "demand_elasticity": 0.5},
+    "21": {"labor_share_va": 0.25, "labor_cost_share": 0.15, "consumption_share": 0.010, "demand_elasticity": 0.5},
+    "22": {"labor_share_va": 0.30, "labor_cost_share": 0.15, "consumption_share": 0.030, "demand_elasticity": 0.3},
+    "23": {"labor_share_va": 0.65, "labor_cost_share": 0.35, "consumption_share": 0.010, "demand_elasticity": 0.8},
+    "31-33": {"labor_share_va": 0.55, "labor_cost_share": 0.20, "consumption_share": 0.220, "demand_elasticity": 1.0},
+    "42": {"labor_share_va": 0.55, "labor_cost_share": 0.40, "consumption_share": 0.050, "demand_elasticity": 0.8},
+    "44-45": {"labor_share_va": 0.60, "labor_cost_share": 0.45, "consumption_share": 0.100, "demand_elasticity": 0.8},
+    "48-49": {"labor_share_va": 0.65, "labor_cost_share": 0.35, "consumption_share": 0.040, "demand_elasticity": 0.8},
+    "51": {"labor_share_va": 0.40, "labor_cost_share": 0.25, "consumption_share": 0.050, "demand_elasticity": 1.2},
+    "52": {"labor_share_va": 0.45, "labor_cost_share": 0.30, "consumption_share": 0.090, "demand_elasticity": 0.8},
+    "53": {"labor_share_va": 0.10, "labor_cost_share": 0.10, "consumption_share": 0.160, "demand_elasticity": 0.5},
+    "54": {"labor_share_va": 0.70, "labor_cost_share": 0.50, "consumption_share": 0.030, "demand_elasticity": 1.0},
+    "55": {"labor_share_va": 0.75, "labor_cost_share": 0.60, "consumption_share": 0.000, "demand_elasticity": 0.6},
+    "56": {"labor_share_va": 0.75, "labor_cost_share": 0.55, "consumption_share": 0.020, "demand_elasticity": 0.9},
+    "61": {"labor_share_va": 0.85, "labor_cost_share": 0.65, "consumption_share": 0.020, "demand_elasticity": 0.4},
+    "62": {"labor_share_va": 0.75, "labor_cost_share": 0.55, "consumption_share": 0.160, "demand_elasticity": 0.4},
+    "71": {"labor_share_va": 0.60, "labor_cost_share": 0.40, "consumption_share": 0.020, "demand_elasticity": 1.0},
+    "72": {"labor_share_va": 0.65, "labor_cost_share": 0.35, "consumption_share": 0.060, "demand_elasticity": 0.9},
+    "81": {"labor_share_va": 0.65, "labor_cost_share": 0.45, "consumption_share": 0.040, "demand_elasticity": 0.8},
+    "92": {"labor_share_va": 0.75, "labor_cost_share": 0.60, "consumption_share": 0.020, "demand_elasticity": 0.2},
 }
 
 
@@ -124,10 +125,13 @@ def sectors_table(bea: dict[str, Any] | None) -> tuple[pl.DataFrame, str]:
     rows = []
     for s in SECTORS_20:
         code = s["sector_code"]; e = SECTOR_E[code]
-        lcs = e["labor_cost_share"]; cs = e["consumption_share"]; tag = "E (authors' estimate; BEA use table pending)"
+        lcs = e["labor_cost_share"]; sva = e["labor_share_va"]; cs = e["consumption_share"]; tag = "E (authors' estimate; BEA use table pending)"
         if bea and code in bea.get("labor_cost_share", {}):
-            lcs = float(bea["labor_cost_share"][code]); cs = float(bea["consumption_share"].get(code, cs)); tag = f"real:BEA_use_{bea.get('year', '')} (labor_cost_share, consumption_share); E (elasticity, friction)"
-        rows.append({"sector_code": code, "title": s["title"], "labor_cost_share": round(lcs, 4), "demand_elasticity": e["demand_elasticity"],
+            lcs = float(bea["labor_cost_share"][code]); cs = float(bea["consumption_share"].get(code, cs)); tag = f"real:BEA_use_{bea.get('year', '')} (labor_cost_share, labor_share_va, consumption_share); E (elasticity, friction)"
+            vas = bea.get("value_added_share", {}).get(code)
+            if vas:
+                sva = min(0.95, lcs / float(vas))          # compensation / value added = (compensation / output) / (value added / output)
+        rows.append({"sector_code": code, "title": s["title"], "labor_cost_share": round(lcs, 4), "labor_share_va": round(sva, 4), "demand_elasticity": e["demand_elasticity"],
                      "tradable": int(s["tradable"]), "friction": 1.0, "consumption_share": cs, "source_tag": tag})
     df = pl.DataFrame(rows)
     tot = float(df["consumption_share"].sum())

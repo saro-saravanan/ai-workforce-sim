@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Phase 6 implements the embodied rows; output-substitution and traded-services rows arrive in Phase 7. Timings are provisional ranges for the reviewer, not results.",
-  "built_at": "2026-09-03T19:52:27+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/applications/applications.csv",
   "extra": {}
 }

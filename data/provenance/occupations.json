@@ -15,7 +15,7 @@
   ],
   "status": "partial",
   "notes": "VINTAGE: employment and wages are OEWS May 2021 and growth is EP 2020-30, not the May 2025 / 2024-34 vintages required by the spec; replace via aiwsim.data.ingest.oews and ingest.ep. Wages missing in raw: {'wage_mean_annual': 6, 'wage_p10_annual': 6, 'wage_median_annual': 24}; occupations with any imputed wage: 24. Growth match levels: {'broad': 31, 'detailed': 758, 'major': 2, 'minor': 40}. Occupations without O*NET tasks: 47 (2,175,330 heads), beta imputed. Clusters: {'n_clusters': 444, 'anchors': 122, 'merged': 138, 'singles_below_threshold': 184, 'max_size': 16} with params {'emp_threshold': 300000, 'beta_tol': 0.1, 'wage_tol': 0.2, 'family': 'minor', 'stage2_major': False}.",
-  "built_at": "2026-09-03T19:52:26+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/occupations.csv",
   "extra": {
     "occupations_without_onet_tasks": {

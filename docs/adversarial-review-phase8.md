@@ -1,6 +1,6 @@
 # Adversarial review of the model at the end of Phase 8
 
-*Status: the priority plan in §6 was implemented in Phase 9; item by item outcomes are in [findings-phase9.md](findings-phase9.md) §10 (item 10, the sector table, is open).*
+*Status: the priority plan in §6 was implemented in Phase 9 ([findings-phase9.md](findings-phase9.md) §10) and its open items closed in Phase 9b ([findings-phase9b.md](findings-phase9b.md) §7); the BEA columns of the sector table wait on the API key.*
 
 *Written as the review a veteran simulation economist would give before this model is put in front of others. Every claim below was checked against the code, the registry or a diagnostic run made for this review; the diagnostics are listed in §7 so they can be repeated.*
 

@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed)",
   "notes": "Spec §10 says 'Counts: 77 parameters; 18 S, 21 D, 38 E'. The tables as written contain 81 rows (including P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer). Transcribed rows: 118.",
-  "built_at": "2026-09-03T19:52:26+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/params/registry.yaml",
   "extra": {}
 }

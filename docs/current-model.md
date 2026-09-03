@@ -1,4 +1,4 @@
-# The model on one page (Phase 9)
+# The model on one page (Phase 9b)
 
 *What the model is, what it computes, which numbers are fitted, and which numbers are assumed. Read this before any result.*
 
@@ -31,16 +31,17 @@ Everything else is transcribed from a source (tag S), derived from data (D) or e
 2. **The capability clock and the ever-automatable mass** (METR horizons; GPTs-are-GPTs exposure; class clocks for embodied work).
 3. **Hiring-first adjustment** landing on entrants, with an entrant-supply response to relative wages (P.146).
 4. **The regional layer**: shared production ramp (lever: local), rents by assumed market shares, placeholder occupation mixes outside the U.S.
+4b. **The sector layer**: 20 NAICS sectors with the OEWS May 2025 occupation mix; labour's share of gross output (prices, demand) and of value added (the reported productivity gain) are authors' estimates until the BEA use table is fetched, when they and the direct-requirements matrix (input-output propagation) come from it.
 5. **Embodied cost curves** with learning rates, ramp caps, approval paths and cost floors.
 6. **The revenue layer's** multiple and consumer path.
 
 ## How it is tested
 
-- **Backtest** 2024Q1–2026Q2 against BTOS, Challenger, industry revenue and capex (results `backtest`; the Story's "How the model has done so far"); rows used in fitting are marked.
+- **Backtest** 2024Q1–2026Q2 against BTOS, Challenger, industry revenue, capex and the U.S. robotaxi fleet (results `backtest`; the Story's "How the model has done so far"); rows used in fitting are marked; `aiwsim diag holdout` refits to 2025 alone and scores 2026 (`docs/holdout-2026.md`).
 - **Scoreboard** of named forecasts on every run (12 comparisons, 4 calibration targets).
 - **Convergence**: `aiwsim convergence` reports p10/p50/p90 by draw count and seed; the baseline draw count is set so the p90 edge is stable.
 - **Regional decomposition**: `aiwsim regional` reports the U.S. headline under the U.S.-closed configuration, local ramp allocation and traded services off.
-- **Threshold-seed sensitivity** and the classifier audit sample (`aiwsim diag`).
+- **Threshold-seed sensitivity**, the exposure-source swap (GPTs-are-GPTs against AIOE, rank-mapped) and the classifier audit: 120 statements labelled, the rules scored against them (`aiwsim diag threshold-seeds | exposure-source | audit`).
 - Replication presets (Acemoglu, Goldman, IMF) reproduce published totals under those authors' assumptions.
 - 85 Python tests (identities, monotonicity, central-equals-single-run, validity flags) and 159 web tests.
 

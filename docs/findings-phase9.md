@@ -107,7 +107,7 @@ The balanced-budget version takes about 0.4 points off employment: the surcharge
 
 Under the Seba 2026 preset the manipulation cost per worker-hour reached $0.04 by 2034, below the electricity to run the robot. Each embodiment class now carries a floor (`cost_floor_usd_per_hour`: driving $3.0, manipulation $1.5, fixed $1.0, aerial $0.8; authors' estimates for energy, maintenance, insurance and the capital charge at scale) that bounds both the cost the firm tests and the reported series; the lever `applications.hardware.cost_floor_scale` scales it and 0 reproduces the Phase 8 curves. Under the Seba 2026 preset the manipulation cost now sits at the $1.50 floor from 2025 onwards (its learning curve reaches the floor immediately) and driving at $3.00, so the preset's embodied displacement (10.3% of task-hours by 2040, against 2.9% in the baseline) is set by the ramp and approval paths, not by a cost that keeps falling. In the baseline the manipulation cost reaches the floor in 2040 ($4.27 in 2025, $2.75 in 2030, $2.03 in 2034); driving is at $4.28 in 2040, above its floor. The scoreboard row "RethinkX 2025, robot cost by 2035" now reads $2.0 against the claimed $1.0 (model higher).
 
-## 9. What still does not hold
+## 9. What still did not hold after Phase 9 (closed in [findings-phase9b.md](findings-phase9b.md))
 
 - **Item 10, the BEA input-output sector table, is not done.** bea.gov, bls.gov and FRED are unreachable from the build environment, and a transcribed table without the source file would be a fixture with a real-data label. No sectoral claim should be made until it is in.
 - The 2026 hold-out of the backtest is not done, and the graduate-unemployment and software-postings rows have no model counterpart.
@@ -128,4 +128,4 @@ Under the Seba 2026 preset the manipulation cost per worker-hour reached $0.04 b
 | 7 | Balanced-budget policy closure; drop the UBI sign | Done |
 | 8 | Entrant supply response; market-clearing wage variant | Done |
 | 9 | One-page model statement; fitted-parameter table; calibration-target marks | Done ([docs/current-model.md](current-model.md)) |
-| 10 | BEA input-output sector table | Not done (sources unreachable) |
+| 10 | BEA input-output sector table | Phase 9b: OEWS sector tables real via a runner workflow; BEA columns pending the API key (see findings-phase9b) |

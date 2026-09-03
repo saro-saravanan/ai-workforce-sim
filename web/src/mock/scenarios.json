@@ -22,7 +22,8 @@
      "other_cognitive": 0.7,
      "interpersonal": 0.5
     },
-    "clock_saturation_doublings": 20
+    "clock_saturation_doublings": 20,
+    "threshold_seed": 0
    },
    "cost": {
     "price_decline_per_year": 10,
@@ -94,7 +95,8 @@
      "learning_rate": 0.12,
      "utilization_scale": 1,
      "unit_price_scale": 1,
-     "ramp_max_growth_per_year": 0.5
+     "ramp_max_growth_per_year": 0.5,
+     "cost_floor_scale": 1
     },
     "approval": {
      "US": "baseline",
@@ -193,8 +195,32 @@
  {
   "schema_version": "0.3",
   "id": "policy-ubi-ai-tax",
-  "name": "Policy: $500/month basic income, AI-tax financed",
-  "description": "A $500 monthly payment to every adult, with a 30% tax on AI spend toward its cost; the shortfall falls on the deficit.",
+  "name": "Policy: $500/month basic income, tax-financed",
+  "description": "A $500 monthly payment to every adult, financed by an income-tax surcharge that covers the payment in full, with a 30% tax on AI spend covering part of the bill on top. Balanced-budget by construction: the surcharge takes back what the transfer pays out, so the run shows the redistribution, not a deficit stimulus (the deficit-financed version is variant policy-ubi-deficit).",
+  "parent": "baseline",
+  "levers": {
+   "policy": {
+    "US": {
+     "ubi_monthly_usd": 500,
+     "ai_tax_pct_of_ai_spend": 30,
+     "financing": {
+      "retraining": "deficit",
+      "wage_insurance": "ai_tax",
+      "ubi": "income_tax_surcharge",
+      "work_week": "deficit"
+     }
+    }
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "policy-ubi-deficit",
+  "name": "Variant: $500/month basic income, deficit-financed",
+  "description": "The same $500 monthly payment to every adult with the 30% AI tax covering a small part and the deficit the rest. About $1.7 trillion a year of deficit spending is outside the model's fiscal range (it has no inflation, interest-rate or debt response), so its employment effect is overstated; the run is kept only to show the validity flag (meta.validity.fiscal_warning). Read the tax-financed run (policy-ubi-ai-tax) for the policy's effect.",
   "parent": "baseline",
   "levers": {
    "policy": {
@@ -467,6 +493,28 @@
    "labor": {
     "layoff_first_share": 0.5
    }
+  }
+ },
+ {
+  "schema_version": "0.3",
+  "id": "variant-market-clearing-wages",
+  "name": "Variant: market-clearing wages",
+  "description": "The same AI, with wages that absorb excess supply at the top of the elasticity range: wage adjustment toward the wage-curve target at the top of its range (P.73 = 0.6 per quarter), productivity pass-through to wages at the top of its range (P.74 = 0.6), reinstatement of displaced work in new tasks at the top of its range (P.61 = 0.8) and the output demand response to lower costs at the top of the P.60 range (scale 1.5). Read beside the baseline for the wage effect and the under-25 share of jobs lost (review §2.7).",
+  "parent": "baseline",
+  "levers": {
+   "labor": {
+    "wage_pass_through": 0.6,
+    "reinstatement_ratio": 0.8,
+    "demand_elasticity_scale": 1.5
+   }
+  },
+  "overrides": {
+   "P.73": {
+    "central": 0.6
+   }
+  },
+  "ensemble": {
+   "mechanisms": "all"
   }
  }
 ]

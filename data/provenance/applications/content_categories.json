@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Consumption, elasticities, price ratios and authenticity levels are E; replace with BEA PCE, CPI components, platform AI-share statements and willingness-to-pay surveys (§A.10).",
-  "built_at": "2026-09-03T19:52:27+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/applications/content_categories.csv",
   "extra": {}
 }

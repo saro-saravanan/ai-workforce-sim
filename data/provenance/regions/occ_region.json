@@ -13,7 +13,7 @@
   ],
   "status": "FIXTURE",
   "notes": "STRUCTURAL PROXY, not observed: every region carries the U.S. within-group mix. The U.S. rows equal the OEWS mix scaled to employment_total (which exceeds the OEWS wage-and-salary total); the U.S. model keeps occupations.csv / occ_state.csv. Replaced by ingest/ilostat.py and ingest/eurostat_lfs.py through the ISCO->SOC crosswalk chain. Tilt by region (gdp_pc ratio, high-skill share): {'US': {'gdp_pc_ratio': 1.0, 'high_skill_share': 0.36}, 'EU': {'gdp_pc_ratio': 0.5348, 'high_skill_share': 0.2881}, 'UK': {'gdp_pc_ratio': 0.6483, 'high_skill_share': 0.3096}, 'CN': {'gdp_pc_ratio': 0.1608, 'high_skill_share': 0.1723}, 'JP': {'gdp_pc_ratio': 0.6164, 'high_skill_share': 0.3039}, 'KR': {'gdp_pc_ratio': 0.4877, 'high_skill_share': 0.2781}, 'IN': {'gdp_pc_ratio': 0.0322, 'high_skill_share': 0.0742}, 'TW': {'gdp_pc_ratio': 0.7323, 'high_skill_share': 0.3235}, 'SG': {'gdp_pc_ratio': 0.999, 'high_skill_share': 0.3599}, 'RoA': {'gdp_pc_ratio': 0.0474, 'high_skill_share': 0.0922}}.",
-  "built_at": "2026-09-03T19:52:27+00:00",
+  "built_at": "2026-09-03T20:11:08+00:00",
   "output": "data/processed/regions/occ_region.csv",
   "extra": {
     "tilt_exponent": 0.35,

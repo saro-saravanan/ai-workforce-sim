@@ -44,6 +44,7 @@ class Inputs:
     demand_elasticity: np.ndarray
     tradable: np.ndarray
     sector_friction: np.ndarray
+    labor_share_va: np.ndarray            # [n_sec] compensation / value added (the productivity concept, spec §6.2); the fixture's 0.58
     consumption_share: np.ndarray
     occ_sector: np.ndarray      # [n_occ, n_sec] share of occupation employment
     # states
@@ -178,6 +179,8 @@ def load_inputs(root: Path) -> Inputs:
                       else np.zeros(tasks.height, dtype=np.int64)),
         sector_codes=sectors["sector_code"].to_list(),
         labor_cost_share=sectors["labor_cost_share"].cast(pl.Float64).to_numpy(),
+        labor_share_va=(sectors["labor_share_va"].cast(pl.Float64).to_numpy() if "labor_share_va" in sectors.columns
+                        else sectors["labor_cost_share"].cast(pl.Float64).to_numpy()),      # single-sector fixture: 0.58 is the value-added share
         demand_elasticity=sectors["demand_elasticity"].cast(pl.Float64).to_numpy(),
         tradable=sectors["tradable"].cast(pl.Float64).to_numpy(),
         sector_friction=sectors["friction"].cast(pl.Float64).to_numpy(),
