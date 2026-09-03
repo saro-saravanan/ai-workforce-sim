@@ -16,6 +16,9 @@ defineProps<{ beat: StoryBeat; index: number; compact?: boolean }>()
     <div v-if="$slots.default" class="chart">
       <slot />
     </div>
+    <div v-if="$slots.extra" class="chart extra">
+      <slot name="extra" />
+    </div>
     <dl class="facts">
       <div class="fact">
         <dt>Likely range</dt>

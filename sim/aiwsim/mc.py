@@ -171,6 +171,8 @@ class RegionOut:
     approval: dict[str, np.ndarray] = field(default_factory=dict)          # class -> [n_q]
     adjacent_jobs: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q]
     hw_capex_bn: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_q] hardware produced in the region, $bn/yr
+    spend_by_mg: np.ndarray = field(default_factory=lambda: np.zeros(0))   # [D, n_mg, n_q] software AI spend by paying occupation group, $bn/yr
+    spend_aug: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [D, n_q] the augmentation (tools) part of software AI spend, $bn/yr
     self_fte0: np.ndarray = field(default_factory=lambda: np.zeros(0))     # [n_occ] self-employed FTE 2024Q1 (in N0)
     underemp_self: np.ndarray = field(default_factory=lambda: np.zeros(0)) # [D, n_q] self-employed FTE with hours cut, still attached
     cut_cum: np.ndarray = field(default_factory=lambda: np.zeros(0))       # [D, n_q] cumulative FTE lost through the self-employed margin
@@ -232,7 +234,7 @@ class BatchOutput:
                     "laid_off_cum", "unhired_cum", "reemployed_cum", "retraining_cum", "retrained_cum", "exited_cum", "retired_cum",
                     "unemployed_stock", "retraining_stock", "wage_share_pp", "mu", "q_ratio", "dlnc", "nu_mean", "lost_by_age", "lost_by_edu",
                     "lost_by_dec", "lost_by_mg", "N0_age", "N0_edu", "N0_dec", "displaced_cum", "employment_pct", "real_wage_pct", "nominal_wage_pct",
-                    "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "self_fte0", "underemp_self", "cut_cum",
+                    "D_emb", "emb_share", "fleet", "coverage", "approval", "adjacent_jobs", "hw_capex_bn", "spend_by_mg", "spend_aug", "self_fte0", "underemp_self", "cut_cum",
                     "content_share", "content_q", "ai_content_revenue", "consumer_surplus", "D_trade", "trade_share",
                     "transfers_bn", "policy_cost_bn", "ai_tax_revenue_bn", "fiscal_balance_bn"):
             return getattr(self.regions["US"], name)
@@ -639,6 +641,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     rec_cum = {k: np.zeros((D, R, n_q)) for k in cum}
     DE = np.zeros((R, n_occ, n_q), dtype=np.float32)                                     # central-draw embodied displacement per region
     fleet_rec = {c: np.zeros((D, R, n_q)) for c in emb}; cov_rec = {c: np.zeros((D, R, n_q)) for c in emb}
+    rec["spend_mg"] = np.zeros((D, R, len(mg), n_q)); rec["spend_aug"] = np.zeros((D, R, n_q))
     price_rec = {c: np.zeros((D, n_q)) for c in emb}; kappa_rec = {c: np.zeros((D, n_q)) for c in emb}
     occPi_cache: dict[tuple[str, float], tuple[np.ndarray, np.ndarray]] = {}
     LA = np.zeros((D, R, 4, n_q)); LE = np.zeros((D, R, 4, n_q)); LD = np.zeros((D, R, 10, n_q)); LM = np.zeros((D, R, len(mg), n_q))
@@ -889,7 +892,9 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
                   + adj_jobs * ADJACENT_WAGE / 1e9 + Y_cat)
         tfp = -(dlnc @ wY)
         D_sp = Dr if ch.automation else np.zeros_like(Dr); U_sp = Ur if ch.augmentation else np.zeros_like(Ur)
-        spend = ((N0t * HOURS_PER_YEAR * D_sp * kb).sum(axis=2) + (N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9))).sum(axis=2)) / 1e9   # [D, R]
+        spend_auto_occ = N0t * HOURS_PER_YEAR * D_sp * kb / 1e9; spend_aug_occ = N0t * HOURS_PER_YEAR * U_sp * (Aug / np.maximum(G, 1e-9)) / 1e9   # [D, R, n_occ]
+        spend = spend_auto_occ.sum(axis=2) + spend_aug_occ.sum(axis=2)                                                      # [D, R]
+        rec["spend_mg"][:, :, :, t] = (spend_auto_occ + spend_aug_occ) @ MG; rec["spend_aug"][:, :, t] = spend_aug_occ.sum(axis=2)   # who pays (spec §A.16)
         tokens_prev = (N0t * HOURS_PER_YEAR * D_sp * tb).sum(axis=(1, 2))
         received_total = np.zeros((D, R))
         for i_s, stage in enumerate(stages):
@@ -957,6 +962,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         o.N = Nt[k].astype(np.float64); o.ln_w = LNW[k].astype(np.float64); o.ln_P = LNP[:, k]; o.D_ = DD[k].astype(np.float64); o.U = UU[k].astype(np.float64)
         o.gdp_pct = rec["gdp"][:, k]; o.tfp_pct = rec["tfp"][:, k]; o.adoption_emp = rec["adopt_e"][:, k]; o.adoption_firm = rec["adopt_f"][:, k]
         o.ai_spend = rec["spend"][:, k]; o.ai_jobs = rec["jobs"][:, k]; o.net_ai_trade = rec["net"][:, k]; o.C_region = rec["C"][:, k]
+        o.spend_by_mg = rec["spend_mg"][:, k]; o.spend_aug = rec["spend_aug"][:, k]
         o.emp_total = rec["emp"][:, k]; o.mean_ln_w = rec["mlnw"][:, k]
         o.laid_off_cum = rec_cum["laid"][:, k]; o.unhired_cum = rec_cum["unhired"][:, k]; o.reemployed_cum = rec_cum["reemp"][:, k]
         o.retraining_cum = rec_cum["retr_in"][:, k]; o.retrained_cum = rec_cum["retr_done"][:, k]; o.exited_cum = rec_cum["exit"][:, k]; o.retired_cum = rec_cum["retired"][:, k]

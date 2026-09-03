@@ -1,5 +1,5 @@
 {
- "scenario_hash": "sha256:3a3e34132a810bfd5711cf56",
+ "scenario_hash": "sha256:724fee9a596ecd13f2cd37bb",
  "scenario_id": "baseline",
  "scenario_name": "Baseline: central assumptions",
  "region": "US",
@@ -908,7 +908,7 @@
   {
    "id": "money",
    "title": "The money flows to the U.S. and the chip makers",
-   "sentence": "By 2040 US collects about $151 billion a year in AI income; CN $50 billion, EU $35 billion, TW $26 billion. The largest GDP gains are in TW, KR (chip exports); the largest job losses in UK, EU.",
+   "sentence": "By 2040 US collects about $151 billion a year in AI income; CN $50 billion, EU $35 billion, TW $26 billion. The largest GDP gains are in TW, KR (chip exports); the largest job losses in UK, EU. That income is paid by employers replacing tasks with software (84% of the $282 billion spent on AI worldwide in 2040), employers buying tools that speed up workers (11%), and consumers paying for AI-made content (6%); the work being bought is mostly management ($42 billion), business & financial ($34 billion), office & admin support ($33 billion). It lands with the cloud and data-centre operators ($54 billion), the model makers ($47 billion), the chip makers ($38 billion).",
    "range": "Regional splits rest on where models, data centres and chips are made; the country-level job numbers outside the U.S. use placeholder occupation mixes.",
    "sureness": {
     "level": "medium",
@@ -980,6 +980,112 @@
       3.2
      ]
     ]
+   },
+   "extra_chart": {
+    "type": "bars",
+    "title": "Where the money comes from, 2040 ($bn a year, all regions)",
+    "items": [
+     [
+      "Software replacing tasks",
+      235.9
+     ],
+     [
+      "Tools that speed up workers",
+      30.0
+     ],
+     [
+      "AI-made content (consumers)",
+      16.1
+     ],
+     [
+      "Work bought: Management",
+      41.9
+     ],
+     [
+      "Work bought: Business & financial",
+      33.7
+     ],
+     [
+      "Work bought: Office & admin support",
+      33.2
+     ],
+     [
+      "Work bought: Computer & mathematical",
+      26.7
+     ],
+     [
+      "Work bought: Sales",
+      18.8
+     ],
+     [
+      "Work bought: Healthcare practitioners",
+      16.4
+     ]
+    ],
+    "unit": "$bn"
+   },
+   "income": {
+    "sources_world_bn": {
+     "automation": 235.9,
+     "augmentation": 30.0,
+     "content": 16.1
+    },
+    "paying_groups_world_bn": [
+     [
+      "Management",
+      41.9
+     ],
+     [
+      "Business & financial",
+      33.7
+     ],
+     [
+      "Office & admin support",
+      33.2
+     ],
+     [
+      "Computer & mathematical",
+      26.7
+     ],
+     [
+      "Sales",
+      18.8
+     ],
+     [
+      "Healthcare practitioners",
+      16.4
+     ],
+     [
+      "Transportation",
+      14.8
+     ],
+     [
+      "Education",
+      7.8
+     ],
+     [
+      "Production",
+      4.9
+     ],
+     [
+      "Architecture & engineering",
+      3.0
+     ],
+     [
+      "Food preparation",
+      2.3
+     ],
+     [
+      "Construction",
+      2.1
+     ]
+    ],
+    "received_by_stage_bn": {
+     "model": 47.4,
+     "compute": 53.5,
+     "chips": 38.2,
+     "integration": 12.5
+    }
    }
   },
   {
@@ -1139,7 +1245,7 @@
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "RethinkX / Tony Seba, Rethinking Transportation 2020\u20132030 (2017)",
-   "short": "Seba 2017",
+   "short": "Seba 2017, passenger miles",
    "region": "US",
    "year": 2030,
    "metric": "autonomous_share_of_ride_hail",
@@ -1157,7 +1263,7 @@
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
    "source": "RethinkX / Tony Seba, Rethinking Transportation (2017)",
-   "short": "Seba 2017",
+   "short": "Seba 2017, drivers (implied)",
    "region": "US",
    "year": 2030,
    "metric": "ride_hail_driver_displacement",
@@ -1265,7 +1371,7 @@
   {
    "source_tag": "rethinkx.com/blog/rethinkx/disruptive-economics-of-humanoid-robots and /the-disruption-of-labour-by-humanoid-robots (V: page summaries 2026-09-02; full text not fetched)",
    "source": "RethinkX, 'Near-zero cost labor: the disruptive economics of humanoid robots' (2025) and 'This time, we are the horses' (2024, updated Dec 2025)",
-   "short": "RethinkX 2025",
+   "short": "RethinkX 2025, robot cost at entry",
    "region": "US",
    "year": 2025,
    "metric": "humanoid_cost_per_hour_usd",
@@ -1283,7 +1389,7 @@
   {
    "source_tag": "rethinkx.com/labor/in-depth/insights-into-humanoid-robotics (V: page summary 2026-09-02; full text not fetched)",
    "source": "RethinkX, 'Near-zero cost labor' (2025); '15 RethinkX Robotics Insights' (2026)",
-   "short": "RethinkX 2025",
+   "short": "RethinkX 2025, robot cost by 2035",
    "region": "US",
    "year": 2034,
    "metric": "humanoid_cost_per_hour_usd",
@@ -1301,7 +1407,7 @@
   {
    "source_tag": "rethinkx.com/blog/rethinkx/the-painful-truth-about-ai-and-robotics (V: page summary 2026-09-02; full text not fetched)",
    "source": "RethinkX, 'This time, we are the horses' (updated Dec 2025); 'The Painful Truth about AI & Robotics' (2026)",
-   "short": "RethinkX 2026",
+   "short": "RethinkX 2026, robots do half of physical work",
    "region": "US",
    "year": 2039,
    "metric": "physical_work_share",
@@ -1319,7 +1425,7 @@
   {
    "source_tag": "user-supplied summary of the 2026 report (V: summary only; report not fetched)",
    "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
-   "short": "Seba 2026",
+   "short": "Seba 2026, TaaS by 2035",
    "region": "US",
    "year": 2035,
    "metric": "autonomous_share_of_ride_hail",
@@ -1337,7 +1443,7 @@
   {
    "source_tag": "user-supplied summary of the 2026 report (V: summary only; the 50% midpoint is our interpolation)",
    "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
-   "short": "Seba 2026",
+   "short": "Seba 2026, TaaS by 2032",
    "region": "US",
    "year": 2032,
    "metric": "autonomous_share_of_ride_hail",

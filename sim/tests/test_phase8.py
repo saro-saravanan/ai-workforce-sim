@@ -90,11 +90,12 @@ def test_induced_demand_softens_embodied_job_loss(ctx):
 def test_forecast_scoreboard(ctx):
     d = _doc(ctx, "baseline")
     fs = d["forecasts"]
-    assert len(fs) >= 6 and {f["short"] for f in fs} >= {"Seba 2017", "RethinkX 2020", "Acemoglu 2024", "Goldman 2023", "IMF 2024"}
+    assert len(fs) >= 6 and {f["short"] for f in fs} >= {"Seba 2017, passenger miles", "RethinkX 2020", "Acemoglu 2024", "Goldman 2023", "IMF 2024"}
+    assert len({f["short"] for f in fs}) == len(fs), "every scoreboard row needs a distinct label"
     for f in fs:
         assert f["verdict"] in ("within band", "model lower", "model higher") and f["quarter"].endswith("Q4")
         assert (f["model_central"] is None) or (f["model_p10"] <= f["model_central"] + 1e-9 or f["model_p10"] is None)
-    seba = [f for f in fs if f["short"] == "Seba 2017"]
+    seba = [f for f in fs if f["short"].startswith("Seba 2017")]
     assert len(seba) == 2 and any(f["proxy"] for f in seba) and all(f["preset_id"] == "preset-seba-rethinkx" for f in seba)
     # the scoreboard on the preset itself must move toward the claim
     d2 = _doc(ctx, "preset-seba-rethinkx")
@@ -109,12 +110,23 @@ def test_seba_2026_preset_and_rethinkx_rows(ctx):
     e1 = d1["series"]["US"]["embodied_displacement_share"]["central"]; e2 = d2["series"]["US"]["embodied_displacement_share"]["central"]
     assert e2[t35] > e1[t35] and e2[-1] > e1[-1]
     rows = {(f["short"], f["metric"], f["year"]): f for f in d2["forecasts"]}
-    cost10 = rows[("RethinkX 2025", "humanoid_cost_per_hour_usd", 2025)]; cost1 = rows[("RethinkX 2025", "humanoid_cost_per_hour_usd", 2034)]
+    cost10 = rows[("RethinkX 2025, robot cost at entry", "humanoid_cost_per_hour_usd", 2025)]; cost1 = rows[("RethinkX 2025, robot cost by 2035", "humanoid_cost_per_hour_usd", 2034)]
     assert cost10["model_central"] is not None and cost1["model_central"] is not None and cost1["model_central"] < cost10["model_central"]
     assert cost10["verdict"] in ("within band", "model lower", "model higher")
-    half = rows[("RethinkX 2026", "physical_work_share", 2039)]; assert half["claimed"] == 50.0 and half["preset_id"] == "preset-seba-2026"
+    half = rows[("RethinkX 2026, robots do half of physical work", "physical_work_share", 2039)]; assert half["claimed"] == 50.0 and half["preset_id"] == "preset-seba-2026"
     assert half["model_central"] is not None and half["model_central"] > d2["series"]["US"]["embodied_displacement_share"]["central"][q.index("2039Q4")]
-    taas = rows[("Seba 2026", "autonomous_share_of_ride_hail", 2035)]; assert taas["model_central"] is not None
+    taas = rows[("Seba 2026, TaaS by 2035", "autonomous_share_of_ride_hail", 2035)]; assert taas["model_central"] is not None
     assert all(f["source_tag"] for f in d2["forecasts"])
     lv = ctx.resolve(__import__("aiwsim.pipeline", fromlist=["load_scenario_by_path_or_id"]).load_scenario_by_path_or_id(ctx, "preset-seba-2026"))
     assert lv["levers"]["applications"]["embodiment"]["manipulation_automatable_share"] == 0.85
+
+
+def test_ai_spend_sources_add_up(ctx):
+    """Who pays for AI: automation + augmentation + content equals AI spend, and the occupation-group split sums to the software part (A.16)."""
+    d = _doc(ctx, "baseline")
+    us = d["series"]["US"]; src = us["ai_spend_by_source_bn"]; groups = us["ai_spend_by_occupation_group_bn"]
+    tot = src["total"]["central"][-1]
+    assert tot > 10 and abs(src["automation"]["central"][-1] + src["augmentation"]["central"][-1] + src["content"]["central"][-1] - tot) < 0.05 * tot + 0.5
+    soft = sum(g["spend_bn"]["central"][-1] for g in groups)
+    assert abs(soft - (src["automation"]["central"][-1] + src["augmentation"]["central"][-1])) < 0.02 * tot + 0.5
+    assert groups[0]["title"] and groups[-1]["major_group"] == "other" and len(groups) <= 9

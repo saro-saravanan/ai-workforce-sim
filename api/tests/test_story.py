@@ -46,6 +46,8 @@ def test_story_beats_numbers_and_forecasts(run):
     assert st["futures"][0]["employment_pct"] > st["futures"][1]["employment_pct"]
     assert st["forecasts"] and all(f["verdict"] in ("within band", "model lower", "model higher") for f in st["forecasts"])
     assert any(f["short"].startswith("Seba") and f["proxy"] for f in st["forecasts"])
+    money = next(b for b in st["beats"] if b["id"] == "money")
+    assert money["extra_chart"]["type"] == "bars" and len(money["extra_chart"]["items"]) >= 4 and "paid by" in money["sentence"]
     assert st["policies"] == [] and any("AI stopped improving in 2023" in c for c in st["caveats"])
 
 

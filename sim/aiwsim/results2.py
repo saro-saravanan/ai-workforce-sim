@@ -275,7 +275,7 @@ def annotate_diff(d: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def region_series(ro) -> dict[str, Any]:
+def region_series(ro, mg: list[str] | None = None) -> dict[str, Any]:
     return {
         "gdp_pct_vs_baseline": pct(ro.gdp_pct, 100.0), "employment_pct_vs_baseline": pct(ro.employment_pct, 100.0),
         "real_wage_pct_vs_baseline": pct(ro.real_wage_pct, 100.0), "nominal_wage_pct_vs_baseline": pct(ro.nominal_wage_pct, 100.0),
@@ -286,6 +286,8 @@ def region_series(ro) -> dict[str, Any]:
         "adoption_share": pct(ro.adoption_emp, 100.0), "adoption_share_firm_weighted": pct(ro.adoption_firm, 100.0),
         "ai_spend_bn": pct(ro.ai_spend, 1.0, 1), "ai_production_jobs": pct(ro.ai_jobs, 1.0, 0),
         "ai_rents_received_bn": {**{s_: pct(a, 1.0, 1) for s_, a in ro.rents.items()}, "total": pct(sum(ro.rents.values()), 1.0, 1)},
+        "ai_spend_by_source_bn": _spend_sources(ro),
+        "ai_spend_by_occupation_group_bn": _spend_groups(ro, mg or []),
         "net_ai_trade_bn": pct(ro.net_ai_trade, 1.0, 1), "regional_capability_index": pct(ro.C_region, 1.0, 2),
         # ---- v0.3 application layer (spec §A.6.3) ----
         "embodied_displacement_share": pct(ro.emb_share, 100.0) if ro.emb_share.size else {},
@@ -386,6 +388,32 @@ def applications_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[st
     return out
 
 
+def _spend_sources(ro: Any) -> dict[str, Any]:
+    """Who pays for AI (spec §A.16): employers replacing tasks (automation), employers buying tools (augmentation), consumers paying for AI-made content.
+    AI income received by a region (`ai_rents_received_bn`) is the value-chain split of this spending across all regions."""
+    if not ro.spend_aug.size:
+        return {}
+    content = ro.ai_content_revenue if ro.ai_content_revenue.size else np.zeros_like(ro.ai_spend)
+    auto = np.maximum(ro.ai_spend - ro.spend_aug - content, 0.0)
+    return {"automation": pct(auto, 1.0, 2), "augmentation": pct(ro.spend_aug, 1.0, 2), "content": pct(content, 1.0, 2), "total": pct(ro.ai_spend, 1.0, 2)}
+
+
+def _spend_groups(ro: Any, mg: list[str], top: int = 8) -> list[dict[str, Any]]:
+    """Software AI spend by the occupation group whose work it replaces or speeds up, $bn/yr; the largest groups at the horizon plus 'other'."""
+    if not ro.spend_by_mg.size:
+        return []
+    tot = ro.spend_by_mg[0, :, -1]
+    order = np.argsort(-tot)
+    out = []; other = np.zeros_like(ro.spend_by_mg[:, 0, :])
+    for rank, k in enumerate(order):
+        if rank < top and tot[k] > 0.05:
+            out.append({"major_group": mg[k], "title": MG_TITLES.get(mg[k], mg[k]), "spend_bn": pct(ro.spend_by_mg[:, k, :], 1.0, 2)})
+        else:
+            other = other + ro.spend_by_mg[:, k, :]
+    out.append({"major_group": "other", "title": "Other groups", "spend_bn": pct(other, 1.0, 2)})
+    return out
+
+
 def forecasts_section(inp: Inputs, o: BatchOutput, apps: Any) -> list[dict[str, Any]]:
     """Forecaster scoreboard: each named claim against the model's central value and 10–90 band for the same quantity (spec v0.3 §A.16)."""
     if apps is None or not getattr(apps, "forecasts", None):
@@ -449,7 +477,7 @@ def build_results_v3(inp: Inputs, o: BatchOutput, scenario: dict[str, Any], shas
             "channels_task_hours": o.trace.get("channels_task_hours"), "self_employed_fte": o.trace.get("self_employed_fte"),
             "embodied_on": o.trace.get("embodied_on"), "content_categories": o.trace.get("content_categories"), "export_serving_fte": o.trace.get("export_serving_fte"),
             "policy_on": o.trace.get("policy_on"), "policy": o.trace.get("policy")}
-    series = {x: region_series(o.regions[x]) for x in o.order}
+    series = {x: region_series(o.regions[x], o.major_groups) for x in o.order}
     series["US"].update({"capability_index": pct(o.C, 1.0, 2), "capability_horizon_hours": pct(2.0 ** o.C / 60.0, 1.0, 1),
                          "compute_price_multiplier": pct(o.price_mult, 1.0, 3)})
     regions_meta: list[dict[str, Any]] = []

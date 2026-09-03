@@ -134,6 +134,15 @@ function openScenario(id: string) {
           :current-id="results.scenarioId"
           @open="openScenario"
         />
+        <template v-if="b.extra_chart" #extra>
+          <StoryBars
+            :chart="b.extra_chart"
+            :format="(v) => fmtCompact(v)"
+            :mode="theme.mode"
+            :title="b.extra_chart.title ?? ''"
+            :axis-format="(v) => fmtCompact(v)"
+          />
+        </template>
       </StoryBeat>
 
       <section class="card block" aria-labelledby="policies-h">

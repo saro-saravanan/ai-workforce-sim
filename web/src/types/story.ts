@@ -87,6 +87,8 @@ export interface StoryBeat {
   what_changes_it: string
   chart: StoryChart
   occupations?: BeatOccupations
+  /** a second bar chart under the main one (the money beat: where the AI spending comes from) */
+  extra_chart?: BarsChart & { title?: string }
 }
 
 export interface StoryPolicy {

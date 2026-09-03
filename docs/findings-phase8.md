@@ -58,6 +58,16 @@ Three readings.
 
 The 2026 preset costs 2.8 points of 2040 employment against the baseline (−8.4% against −5.6%) and adds 2.8 points of GDP (+10.9%). The two Seba presets are both named futures in the story. The forecast rows for the labour series come from page summaries and the user-supplied summary of the 2026 report; `source_tag` says so on each row, and `docs/data-inventory.md` lists what to fetch to confirm them.
 
+### 2b. Where the AI income comes from
+
+The money beat used to say who receives AI income (the U.S. $151 billion a year by 2040, China $50 billion, the EU $35 billion, Taiwan $26 billion) without saying who pays. The results document now carries the sources (`ai_spend_by_source_bn`, `ai_spend_by_occupation_group_bn`) and the story beat reads them:
+
+- **Who pays.** Of the $282 billion spent on AI worldwide in 2040, 84% is employers replacing tasks with software, 11% is employers buying tools that speed up workers, and 6% is consumers paying for AI-made content. Robot and vehicle hardware is a separate flow (`hardware_capex_bn`), counted as production in the making region rather than as AI income.
+- **Whose work is bought.** The software spend is paid for work in management ($42 billion), business and financial operations ($34 billion), office and administrative support ($33 billion), computer and mathematical work ($27 billion), sales ($19 billion) and healthcare practice ($16 billion). This is the displaced task-hours of each occupation group priced at the tokens they cost, so it is the labour-displacement side of the same ledger as the jobs beats.
+- **Where it lands.** For the U.S., the receipts split into cloud and data-centre operators ($54 billion), model makers ($47 billion), chip makers ($38 billion) and local integrators and platforms ($13 billion).
+
+The sector table is still a single-sector fixture, so the breakdown is by occupation group rather than by industry; an industry split arrives with the occupation-by-sector ingest (`docs/data-inventory.md`).
+
 ## 4. What could be done: the policy runs
 
 | Policy | Jobs vs baseline, 2040 | Unemployed | Pay per head | Cost | Validity |

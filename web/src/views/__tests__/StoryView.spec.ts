@@ -101,7 +101,8 @@ describe('StoryView', () => {
     expect(young.text()).toContain('% of jobs lost')
     expect(w.find('[data-beat="waves"] .timeline').exists()).toBe(true)
     expect(w.findAll('[data-beat="waves"] .timeline circle').length).toBeGreaterThan(5)
-    expect(w.find('[data-beat="money"]').findAll('svg text.name')).toHaveLength(10)
+    expect(w.find('[data-beat="money"] .chart.extra svg').exists()).toBe(true)
+    expect(w.find('[data-beat="money"] .chart:not(.extra)').findAll('svg text.name')).toHaveLength(10)
     expect(w.findAll('[data-beat="futures"] .future')).toHaveLength(story.futures.length)
   })
 

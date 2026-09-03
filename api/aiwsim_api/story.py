@@ -166,13 +166,19 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     rents = {x: _p(doc["series"][x]["ai_rents_received_bn"]["total"], t40) for x in regions}
     remp = {x: _p(doc["series"][x][HEAD], t40) for x in regions}; rgdp = {x: _p(doc["series"][x]["gdp_pct_vs_baseline"], t40) for x in regions}
     top = sorted(rents.items(), key=lambda kv: -kv[1])[:4]
+    src, groups, stages = _income_sources(doc, region, regions, t40)
     beats.append({"id": "money", "title": "The money flows to the U.S. and the chip makers",
                   "sentence": f"By {yr} " + ", ".join(f"{x} collects about ${v:.0f} billion a year in AI income" for x, v in top[:1]) + "; " + ", ".join(f"{x} ${v:.0f} billion" for x, v in top[1:]) + ". "
                               + f"The largest GDP gains are in {', '.join(x for x, _ in sorted(rgdp.items(), key=lambda kv: -kv[1])[:2])} (chip exports); "
-                              + f"the largest job losses in {', '.join(x for x, _ in sorted(remp.items(), key=lambda kv: kv[1])[:2])}.",
+                              + f"the largest job losses in {', '.join(x for x, _ in sorted(remp.items(), key=lambda kv: kv[1])[:2])}. "
+                              + _sources_sentence(src, groups, stages, yr),
                   "range": "Regional splits rest on where models, data centres and chips are made; the country-level job numbers outside the U.S. use placeholder occupation mixes.",
                   "sureness": _sure("medium"), "what_changes_it": "Data-localization rules, export controls, and where the next fabs and data centres are built.",
-                  "chart": {"type": "regions", "items": [[x, remp[x], rgdp[x], rents[x]] for x in regions]}})
+                  "chart": {"type": "regions", "items": [[x, remp[x], rgdp[x], rents[x]] for x in regions]},
+                  "extra_chart": {"type": "bars", "title": f"Where the money comes from, {yr} ($bn a year, all regions)",
+                                  "items": [["Software replacing tasks", src.get("automation", 0.0)], ["Tools that speed up workers", src.get("augmentation", 0.0)],
+                                            ["AI-made content (consumers)", src.get("content", 0.0)]] + [[f"Work bought: {t}", v] for t, v in groups[:6]], "unit": "$bn"},
+                  "income": {"sources_world_bn": src, "paying_groups_world_bn": groups, "received_by_stage_bn": stages}})
     # 7. Two futures, and the difference is a choice
     futures = named_futures(doc, region, futures_docs)
     beats.append({"id": "futures", "title": "Two futures, and the difference is partly a choice",
@@ -220,6 +226,43 @@ def _reconciliation(yr: str, base: float, net: float, displaced: float, reemp: f
     s += (f"Of them, {_millions(reemp)} found other work, {_millions(exited)} left the workforce and {_millions(unemployed)} are unemployed in {yr}. "
           "The two ledgers differ because someone who finds other work fills a position that would otherwise have gone to someone else: the jobs ledger counts positions, the people ledger counts people.")
     return s
+
+
+def _income_sources(doc: dict[str, Any], region: str, regions: list[str], t: int) -> tuple[dict[str, float], list[tuple[str, float]], dict[str, float]]:
+    """World AI spending by who pays (automation, augmentation, content) and by the occupation group whose work is bought, plus the region's receipts by value-chain stage."""
+    src: dict[str, float] = {}; groups: dict[str, float] = {}
+    for x in regions:
+        blk = doc["series"][x]
+        for k, v in (blk.get("ai_spend_by_source_bn") or {}).items():
+            if k != "total":
+                src[k] = src.get(k, 0.0) + _p(v, t)
+        for g in blk.get("ai_spend_by_occupation_group_bn") or []:
+            if g["major_group"] != "other":
+                groups[g["title"]] = groups.get(g["title"], 0.0) + _p(g["spend_bn"], t)
+    rb = doc["series"].get(region) or doc["series"]["US"]
+    stages = {k: _p(v, t) for k, v in (rb.get("ai_rents_received_bn") or {}).items() if k != "total"}
+    src = {k: round(v, 1) for k, v in src.items()}; stages = {k: round(v, 1) for k, v in stages.items()}
+    return src, sorted(((t, round(v, 1)) for t, v in groups.items()), key=lambda kv: -kv[1]), stages
+
+
+def _sources_sentence(src: dict[str, float], groups: list[tuple[str, float]], stages: dict[str, float], yr: str) -> str:
+    tot = sum(src.values())
+    if tot <= 0:
+        return ""
+    share = lambda k: 100 * src.get(k, 0.0) / tot
+    s = (f"That income is paid by employers replacing tasks with software ({share('automation'):.0f}% of the ${tot:.0f} billion spent on AI worldwide in {yr}), "
+         f"employers buying tools that speed up workers ({share('augmentation'):.0f}%), and consumers paying for AI-made content ({share('content'):.0f}%)")
+    if groups:
+        s += "; the work being bought is mostly " + ", ".join(f"{t.lower()} (${v:.0f} billion)" for t, v in groups[:3])
+    if stages:
+        top = sorted(stages.items(), key=lambda kv: -kv[1])[:3]
+        s += ". It lands with " + ", ".join(f"{STAGE_WORDS.get(k, k)} (${v:.0f} billion)" for k, v in top) + "."
+    else:
+        s += "."
+    return s
+
+
+STAGE_WORDS = {"model": "the model makers", "compute": "the cloud and data-centre operators", "chips": "the chip makers", "integration": "local integrators and platforms", "fabs": "the fabs", "energy": "energy suppliers"}
 
 
 def _age_employment_shares(doc: dict[str, Any]) -> list[float]:
@@ -369,6 +412,11 @@ def executive_brief_md(st: dict[str, Any]) -> str:
     L.append("")
     for i, b in enumerate(st["beats"], 1):
         L.append(f"## {i}. {b['title']}"); L.append(""); L.append(b["sentence"]); L.append("")
+        if b.get("extra_chart"):
+            L.append(f"*{b['extra_chart'].get('title', '')}*"); L.append("")
+            for label, v in b["extra_chart"]["items"]:
+                L.append(f"- {label.strip()}: {float(v):,.0f}")
+            L.append("")
         L.append(f"*Likely range:* {b['range']}  ")
         L.append(f"*How sure:* {b['sureness']['label']}.  ")
         L.append(f"*What changes it:* {b['what_changes_it']}"); L.append("")
@@ -518,6 +566,8 @@ def executive_brief_html(st: dict[str, Any]) -> str:
             parts.append("<div class='futures'>" + "".join(f"<div class='card'><b>{e(f['name'])}</b>{e(f['description'])}</div>" for f in b["chart"]["items"]) + "</div>")
         else:
             parts.append(chart_svg(b["chart"]))
+        if b.get("extra_chart"):
+            parts.append(f"<p style='font-size:13.5px;color:#666;margin:10px 0 2px'>{e(b['extra_chart'].get('title', ''))}</p>" + chart_svg(b["extra_chart"]))
         parts.append(f"<div class='meta'><span><b>Likely range:</b> {e(b['range'])}</span><span><b>How sure:</b> <span class='dots'>{'●' * b['sureness']['dots']}{'○' * (3 - b['sureness']['dots'])}</span> {e(b['sureness']['label'])}</span><span><b>What changes it:</b> {e(b['what_changes_it'])}</span></div></div>")
     parts.append("<h2>What could be done</h2>")
     if st["policies"]:
