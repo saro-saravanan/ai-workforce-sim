@@ -3,15 +3,15 @@
   "source": "spec v0.3 §A.3 class parameters (authors' estimates, V? pending §A.10)",
   "source_url": "docs/model-spec-v0.3-applications.md",
   "license": "n/a (estimates)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "f7777cee4e8e5ff2de3141a30c7ce7fb0e32028aa68ee73c40269d472906973e",
+  "sha256": "fd5e9633ad1dbd7459a3c73ba286219ed7051a5a37c6a9f305008dcf10ede9c6",
   "transformations": [
     "one row per embodiment class: a_emb, theta range, clock, unit price 2025, lifetime, opex ratio, utilization, task units per hour, production ramp cap, cumulative production 2025, adjacent jobs per unit, initial stock and production shares by region"
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Every value is an estimate written before the data plan ran; unit prices, utilization, ramps and 2025 production are V? (spec §A.10). Replace through the verification items; the registry rows P.108–P.120 carry the ranges.",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/applications/embodiment_classes.csv",
   "extra": {}
 }

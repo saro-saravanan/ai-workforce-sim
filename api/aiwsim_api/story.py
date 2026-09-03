@@ -20,7 +20,7 @@ FAMILY_WORDS = {"embodied": "robots and vehicles", "output": "AI-made content", 
 POLICY_HOW = {
     "policy-retraining": "Pays half the wage of workers who enrol in retraining, so more of the displaced retrain and more complete it; paid from the deficit.",
     "policy-wage-insurance": "Tops up the pay of displaced workers who take a lower-paid job, half the gap for two years; paid from a tax on AI spending.",
-    "policy-ubi-ai-tax": "Pays every adult $500 a month; a 30% tax on AI spending covers a small part and the deficit the rest.",
+    "policy-ubi-ai-tax": "Pays every adult $500 a month, financed by an income-tax surcharge (balanced budget) with a 30% tax on AI spending on top.",
     "policy-work-week-36": "Shortens the standard week to 36 hours, so the same work is shared among more people; pay per head falls in step and total pay does not.",
 }
 CHANNEL_WORDS = {"automation": "software doing tasks", "augmentation": "faster work needing fewer people", "embodied": "robots and vehicles", "output_substitution": "AI-made content",
@@ -153,7 +153,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                    "is taken as layoffs at once rather than waiting for attrition. The counts are announcements, which include positions closed by attrition and redeployment, so the fit is deliberately loose; "
                    "without it the model's attrition-first rule produced a tenth of the announced layoffs.")
     var_words = ""
-    vdoc = next(iter((variant_docs or {}).values()), None)
+    vdoc = (variant_docs or {}).get("variant-layoffs-first") or next(iter(v for k, v in (variant_docs or {}).items() if "layoff" in k), None)
     if vdoc:
         vb = vdoc["series"].get(region) or vdoc["series"]["US"]; vq = vdoc["meta"]["quarters"]; vt = len(vq) - 1; vt30 = vq.index("2030Q4") if "2030Q4" in vq else vt
         v_laid30 = _p(vb["laid_off_cum"], vt30, "central"); v_laid = _p(vb["laid_off_cum"], vt, "central")
@@ -198,6 +198,18 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                   "range": f"Real pay likely between {rw10:+.0f}% and {rw90:+.0f}%.", "sureness": _sure(conf("real_wage_pct_vs_baseline")),
                   "what_changes_it": "How much of the cost saving reaches prices; if firms keep it as margin, pay rises less and the owner share rises more.",
                   "chart": {"type": "bars", "items": [["Economy (GDP)", g50], ["Real pay", rw50], ["Prices", price], ["Workers' share of income (points)", wshare]], "unit": "% by " + yr}})
+    wdoc = (variant_docs or {}).get("variant-market-clearing-wages")
+    if wdoc:
+        wb = wdoc["series"].get(region) or wdoc["series"]["US"]; wq = wdoc["meta"]["quarters"]; wt = len(wq) - 1
+        w_rw = _p(wb["real_wage_pct_vs_baseline"], wt, "central"); w_e = _p(wb[HEAD], wt, "central"); e_c = _p(blk[HEAD], t40, "central")
+        w_ages = wdoc.get("cohorts", {}).get("age", []); w_young = next((_p(a["share_of_jobs_lost"], wt, "central") for a in w_ages if a["band"] == "16-24"), None)
+        young_c = next((_p(a["share_of_jobs_lost"], t40, "central") for a in doc.get("cohorts", {}).get("age", []) if a["band"] == "16-24"), None)
+        rw_c = _p(blk["real_wage_pct_vs_baseline"], t40, "central")
+        def _cmp(v: float, c: float, unit: str, nd: int = 0) -> str:
+            return "about the same" if abs(v - c) < 0.5 else f"{v:+.{nd}f}{unit} instead of {c:+.{nd}f}{unit}"
+        beats[-1]["sentence"] += (" If wages absorb more of the excess supply (the market-clearing wage variant: wage adjustment, pass-through and reinstatement at the top of their ranges): "
+                                  f"real pay {_cmp(w_rw, rw_c, '%')}, total jobs {'about the same' if abs(w_e - e_c) < 0.5 else f'{w_e - e_c:+.1f} points different'}"
+                                  + (f", and the under-25 share of the shortfall {'about the same' if abs(100*w_young - 100*young_c) < 0.5 else f'{100*w_young:.0f}% instead of {100*young_c:.0f}%'}" if w_young is not None and young_c is not None else "") + ".")
     # 5. Three waves
     apps = doc.get("applications", [])
     waves = []
@@ -416,7 +428,7 @@ def named_futures(doc: dict[str, Any], region: str, futures_docs: dict[str, dict
                              ("no_demand_feedback", "Gains not spent back (no demand feedback)", "the spending feedback is switched off, so only cheaper output and new tasks offset the displacement")):
         c = closure.get(key)
         if c:
-            out.append({"name": name, "employment_pct": c["employment_pct"], "gdp_pct": c.get("gdp_pct"), "jobs": round(-c["employment_pct"] / 100 * base), "source": f"structural ensemble: median of the {c['cells']} cells with this closure",
+            out.append({"name": name, "employment_pct": c["employment_pct"], "gdp_pct": c.get("gdp_pct"), "jobs": round(-c["employment_pct"] / 100 * base), "source": f"structural ensemble: median of the {c['cells']} cells with this closure", "cells": c["cells"],
                         "description": f"{words.capitalize()}. Employment in {yr} is {c['employment_pct']:+.0f}% versus no AI (about {_millions(-c['employment_pct']/100*base)} {'fewer' if c['employment_pct'] < 0 else 'more'} jobs)."})
     if m and not closure:
         lo_e = m["effect_at_low"]; gm = torn_g.get("P.87", {})

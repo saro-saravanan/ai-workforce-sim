@@ -26,7 +26,7 @@ from .levers import lever_definitions
 from .story import executive_brief_html, executive_brief_md, story
 
 DEFAULT_SCENARIOS = ["baseline", "eu-delay-deepseek-2027", "preset-acemoglu-2024", "preset-goldman-2023", "preset-imf-2024", "preset-seba-rethinkx", "preset-seba-2026",
-                     "policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36", "variant-layoffs-first"]
+                     "policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36", "policy-ubi-deficit", "variant-layoffs-first", "variant-market-clearing-wages", "config-us-closed"]
 
 
 def _dump(path: Path, obj: Any) -> None:

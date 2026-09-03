@@ -173,7 +173,7 @@ def compare(a: str, b: str, region: str = "US") -> dict[str, Any]:
 # ---------------------------------------------------------------- Phase 8: companion runs for the story layer
 POLICY_SCENARIOS = ["policy-retraining", "policy-wage-insurance", "policy-ubi-ai-tax", "policy-work-week-36"]
 FUTURE_SCENARIOS = ["preset-seba-rethinkx", "preset-seba-2026"]
-VARIANT_SCENARIOS = ["variant-layoffs-first"]
+VARIANT_SCENARIOS = ["variant-layoffs-first", "variant-market-clearing-wages"]
 COMPANION_DRAWS = 64
 
 

@@ -3,7 +3,7 @@
   "source": "U.S. Census Bureau, 2020 Census apportionment — resident population by state x OEWS May 2021 national employment",
   "source_url": "https://www.census.gov/data/tables/2020/dec/2020-apportionment-data.html",
   "license": "Public domain",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "5008cf5b1ca3e5d301e6d9df499a5c63c4aeec6f1ccd43254dd2c95c1a75c963",
   "transformations": [
@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE",
   "notes": "POPULATION SHARE PROXY FOR EMPLOYMENT SHARE; replace with OEWS state ingest (ingest/oews.py). state_share = 2020 Census apportionment resident population / 331,449,281 (50 states + DC). Populations were transcribed from memory, not fetched: the total matches the published U.S. resident population exactly and each state is believed accurate to well within 5%, but the table has not been checked against the Census page in this sandbox. Same occupational mix in every state.",
-  "built_at": "2026-09-02T13:11:33+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/occ_state.csv",
   "extra": {}
 }

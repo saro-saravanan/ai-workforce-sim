@@ -3,7 +3,7 @@
   "source": "spec v0.3 §A.3.4 approval baseline paths (E, V?)",
   "source_url": "docs/model-spec-v0.3-applications.md",
   "license": "n/a (estimates)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "d035ab3b6a0f3e98647fd310ef93a8ce8f6a4e01db1188cd69388a7ae7ac4804",
   "transformations": [
@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "No dataset of future permits exists; the baseline path is a dated judgement to be replaced by transcribed regulatory timetables (verification item).",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/applications/approval_paths.csv",
   "extra": {}
 }

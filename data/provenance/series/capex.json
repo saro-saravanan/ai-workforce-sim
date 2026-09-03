@@ -3,7 +3,7 @@
   "source": "Hyperscaler capex table, inventory §4",
   "source_url": "https://www.sec.gov/edgar/search/",
   "license": "Public filings",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "67f65a54702c2ce0dc8f0e75741bc04596b60cdeee404a82e36251f2b1cf5b75",
   "transformations": [
@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Key is (company, year, basis): Microsoft is given on both June-fiscal and calendar bases, so (company, year) alone is not unique — a documented deviation from contracts §1. Inventory sums: 2024 ~230 (MSFT FY basis) to ~250 (calendar); 2025 ~384 (FY) to ~413 (calendar); 2026 guidance ~720-760.",
-  "built_at": "2026-09-02T13:11:33+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/series/capex.csv",
   "extra": {}
 }

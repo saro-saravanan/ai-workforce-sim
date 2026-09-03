@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Observed series the model is scored against for 2024Q1-2026Q2 (review §2.2). model_metric names the model quantity: adoption_share_firm_weighted (BTOS share of firms using AI), ai_layoffs_cum (announced AI-cited job cuts since 2023; the model's laid_off_cum plus the 2023 count that precedes the horizon), ai_producer_revenue_bn (world), hyperscaler_capex_bn (the capex path, an input), none (context only: the model does not track the quantity). used_in_fit marks rows that were used to set a parameter.",
-  "built_at": "2026-09-03T15:53:18+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/series/backtest.csv",
   "extra": {}
 }

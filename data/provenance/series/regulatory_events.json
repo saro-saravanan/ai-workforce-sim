@@ -3,7 +3,7 @@
   "source": "Regulatory timeline, inventory §5",
   "source_url": "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
   "license": "Public record",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "3cc34708eb1617cb05050d8437fe425392265cd04d21dc7cb4e4b41867d51539",
   "transformations": [
@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Sources: EU Official Journal (Reg. 2024/1689, Reg. 2026/1744), Colorado and California legislatures, China CAC, BIS press releases.",
-  "built_at": "2026-09-02T13:11:33+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/series/regulatory_events.csv",
   "extra": {}
 }

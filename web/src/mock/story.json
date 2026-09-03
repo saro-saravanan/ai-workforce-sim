@@ -1,5 +1,5 @@
 {
- "scenario_hash": "sha256:784c5f14d7c99687d489210b",
+ "scenario_hash": "sha256:fa2b440d5abe12ed707e9d9a",
  "scenario_id": "baseline",
  "scenario_name": "Baseline: central assumptions",
  "region": "US",
@@ -9,47 +9,47 @@
  ],
  "numbers": {
   "jobs_base": 174177926,
-  "jobs_gap": 9633955,
-  "jobs_gap_low": 18525390,
-  "jobs_gap_high": 635053,
+  "jobs_gap": 12614314,
+  "jobs_gap_low": 18807036,
+  "jobs_gap_high": 6005829,
   "employment_pct": {
-   "p10": -10.6359,
-   "p50": -5.5311,
-   "p90": -0.3646
+   "p10": -10.7976,
+   "p50": -7.2422,
+   "p90": -3.4481
   },
-  "displaced_cum": 11575485,
-  "reemployed": 9240947,
-  "unemployed_extra": 215878,
-  "exited": 1107305,
-  "unfilled": 8058663,
-  "laid_off": 3018962,
-  "hours_cut_self": 366741,
+  "displaced_cum": 11397811,
+  "reemployed": 9161849,
+  "unemployed_extra": 166646,
+  "exited": 1116898,
+  "unfilled": 8052701,
+  "laid_off": 3071253,
+  "hours_cut_self": 371589,
   "jobs_removed_by_channel": {
    "automation": 13597374,
    "augmentation": 1857608,
-   "embodied": 4671975,
-   "output_substitution": 148748
+   "embodied": 4700888,
+   "output_substitution": 148574
   },
   "jobs_added_by_channel": {
-   "demand_response": 5535374,
-   "reinstatement": 2783363,
-   "demand_feedback": 2058086,
-   "ai_investment": 1383844,
-   "adjacent": 431787
+   "demand_response": 5527362,
+   "reinstatement": 2791550,
+   "demand_feedback": 2060699,
+   "ai_investment": 1383495,
+   "adjacent": 433181
   },
   "unemployment_peak": {
-   "quarter": "2037Q1",
-   "extra": 469373
+   "quarter": "2036Q1",
+   "extra": 479307
   },
-  "gdp_pct": 8.252,
+  "gdp_pct": 6.1835,
   "real_wage_pct": {
-   "p10": 1.5772,
-   "p50": 3.7683,
-   "p90": 7.2359
+   "p10": 1.7769,
+   "p50": 3.6585,
+   "p90": 6.8382
   },
-  "price_index_pct": -3.8692,
-  "wage_share_pp": -4.7959,
-  "reconciliation": "Jobs: about 9.6 million fewer exist in 2040 than there would have been; the biggest remover is software doing tasks, the biggest offset cheaper output selling more. People: over the period about 11.6 million found the job they had, or would have had, gone: 8.1 million positions never offered to new entrants, 3.0 million layoffs, 367,000 full-time equivalents of gig and freelance hours cut. Of them, 9.2 million found other work, 1.1 million left the workforce and 216,000 are unemployed in 2040. The two ledgers differ because someone who finds other work fills a position that would otherwise have gone to someone else: the jobs ledger counts positions, the people ledger counts people.",
+  "price_index_pct": -3.8557,
+  "wage_share_pp": -4.536,
+  "reconciliation": "Jobs: about 12.6 million fewer exist in 2040 than there would have been; the biggest remover is software doing tasks, the biggest offset cheaper output selling more. People: over the period about 11.4 million found the job they had, or would have had, gone: 8.1 million positions never offered to new entrants, 3.1 million layoffs, 372,000 full-time equivalents of gig and freelance hours cut. Of them, 9.2 million found other work, 1.1 million left the workforce and 167,000 are unemployed in 2040. The two ledgers differ because someone who finds other work fills a position that would otherwise have gone to someone else: the jobs ledger counts positions, the people ledger counts people.",
   "jobs_today": 152442702,
   "jobs_2040_no_ai": 174177926
  },
@@ -57,439 +57,439 @@
   {
    "id": "jobs",
    "title": "More jobs than today, fewer than there would have been",
-   "sentence": "There are about 152.4 million jobs today. Without further AI progress, population and normal growth would take that to about 174.2 million by 2040. With AI the model's median is about 164.5 million (about 8% more than today; likely between 155.7 million and 173.5 million): about 9.6 million fewer than there would have been, one job in 18 removed. The biggest remover is software doing tasks; the biggest offset is cheaper output selling more.",
-   "range": "Likely between 18.5 million fewer and 635,000 fewer than there would have been; against today, between 2% more and 14% more.",
+   "sentence": "There are about 152.4 million jobs today. Without further AI progress, population and normal growth would take that to about 174.2 million by 2040. With AI the model's median is about 161.6 million (about 6% more than today; likely between 155.4 million and 168.2 million): about 12.6 million fewer than there would have been, one job in 14 removed. The biggest remover is software doing tasks; the biggest offset is cheaper output selling more.",
+   "range": "Across the model's assumptions, between 18.8 million fewer and 6.0 million fewer than there would have been; against today, between 2% more and 10% more. The model's mechanism cells alone span -11.6% to -1.9%.",
    "sureness": {
-    "level": "medium",
-    "label": "leaning this way",
-    "dots": 2
+    "level": "high",
+    "label": "we would bet on it",
+    "dots": 3
    },
-   "what_changes_it": "How much of the productivity gain gets spent back into the economy. Spent back, jobs are flat or up against the no-AI path; pocketed, the loss doubles.",
+   "what_changes_it": "Whether households' spending of the gains feeds back into hiring (the macro closure) and how strongly (the demand multiplier); with the feedback off the gap is about a third larger.",
    "chart": {
     "type": "fan",
     "series": {
      "employment": {
       "p10": [
-       -0.0546,
-       0.0018,
-       0.0043,
-       -0.0171,
-       -0.0452,
-       0.0043,
-       -0.0002,
-       -0.0295,
-       -0.0516,
-       0.0867,
-       0.1181,
-       0.0829,
-       0.0073,
-       -0.0378,
-       -0.1273,
-       -0.2609,
-       -0.4525,
-       -0.6491,
-       -0.876,
-       -1.1226,
-       -1.3621,
-       -1.5682,
-       -1.758,
-       -1.9277,
-       -2.1362,
-       -2.2572,
-       -2.3902,
-       -2.5177,
-       -2.7474,
-       -3.0104,
-       -3.1662,
-       -3.3588,
-       -3.6281,
-       -3.843,
-       -3.9876,
-       -4.254,
-       -4.4759,
-       -4.8313,
-       -5.078,
-       -5.3843,
-       -5.8136,
-       -6.2187,
-       -6.4827,
-       -6.7797,
-       -7.0324,
-       -7.371,
-       -7.7935,
-       -8.2131,
-       -8.5238,
-       -8.8071,
-       -8.8338,
-       -9.2675,
-       -9.4571,
-       -9.5067,
-       -9.6624,
-       -9.7971,
-       -9.7365,
-       -9.8343,
-       -9.9204,
-       -10.0663,
-       -10.2869,
-       -10.3538,
-       -10.289,
-       -10.2912,
-       -10.2398,
-       -10.5635,
-       -10.5941,
-       -10.6359
+       -0.0514,
+       -0.0623,
+       -0.0893,
+       -0.1244,
+       -0.1606,
+       -0.2022,
+       -0.2493,
+       -0.3061,
+       -0.3334,
+       -0.3837,
+       -0.4383,
+       -0.509,
+       -0.5899,
+       -0.7103,
+       -0.8656,
+       -1.0676,
+       -1.2683,
+       -1.4929,
+       -1.7258,
+       -1.952,
+       -2.1196,
+       -2.3101,
+       -2.5701,
+       -2.7149,
+       -2.9127,
+       -3.0832,
+       -3.248,
+       -3.4959,
+       -3.7101,
+       -3.8921,
+       -4.074,
+       -4.3029,
+       -4.5757,
+       -4.817,
+       -5.0109,
+       -5.2281,
+       -5.5148,
+       -5.7699,
+       -6.0616,
+       -6.5053,
+       -6.973,
+       -7.2024,
+       -7.4309,
+       -7.8065,
+       -8.1331,
+       -8.4383,
+       -8.722,
+       -8.8484,
+       -9.0163,
+       -9.2966,
+       -9.3807,
+       -9.3862,
+       -9.4536,
+       -9.6217,
+       -9.6773,
+       -9.772,
+       -10.013,
+       -10.0962,
+       -10.1196,
+       -10.3448,
+       -10.4677,
+       -10.536,
+       -10.7177,
+       -10.7965,
+       -10.8144,
+       -10.7986,
+       -10.7829,
+       -10.7976
       ],
       "p50": [
-       -0.021,
-       0.0598,
-       0.0826,
-       0.0783,
-       0.0664,
-       0.1599,
-       0.1866,
-       0.1884,
-       0.2001,
-       0.4386,
-       0.5448,
-       0.5934,
-       0.5981,
-       0.5828,
-       0.5342,
-       0.445,
-       0.3103,
-       0.2251,
-       0.1097,
-       -0.0166,
-       -0.169,
-       -0.2374,
-       -0.3314,
-       -0.4364,
-       -0.4877,
-       -0.5034,
-       -0.5456,
-       -0.6125,
-       -0.6958,
-       -0.83,
-       -0.9251,
-       -1.0068,
-       -1.1604,
-       -1.2908,
-       -1.3917,
-       -1.5547,
-       -1.6779,
-       -1.8187,
-       -1.9959,
-       -2.1721,
-       -2.3101,
-       -2.423,
-       -2.5984,
-       -2.7935,
-       -2.9945,
-       -3.2328,
-       -3.483,
-       -3.6259,
-       -3.8413,
-       -4.015,
-       -4.0966,
-       -4.2851,
-       -4.4844,
-       -4.5761,
-       -4.7785,
-       -4.7583,
-       -4.8524,
-       -4.9205,
-       -4.7582,
-       -4.8426,
-       -4.9752,
-       -5.1052,
-       -5.2598,
-       -5.2915,
-       -5.4141,
-       -5.4254,
-       -5.4561,
-       -5.5311
+       -0.0247,
+       -0.0044,
+       -0.0169,
+       -0.0388,
+       -0.0569,
+       -0.0585,
+       -0.0787,
+       -0.0996,
+       -0.1076,
+       -0.09,
+       -0.0963,
+       -0.1195,
+       -0.1481,
+       -0.1986,
+       -0.2575,
+       -0.3494,
+       -0.4568,
+       -0.5793,
+       -0.7047,
+       -0.8318,
+       -0.9686,
+       -1.0755,
+       -1.2177,
+       -1.3286,
+       -1.4386,
+       -1.5549,
+       -1.6638,
+       -1.7745,
+       -1.8787,
+       -1.9821,
+       -2.113,
+       -2.2441,
+       -2.3493,
+       -2.5241,
+       -2.6778,
+       -2.8364,
+       -2.9953,
+       -3.1332,
+       -3.3607,
+       -3.5332,
+       -3.7836,
+       -3.9998,
+       -4.194,
+       -4.4057,
+       -4.5971,
+       -4.7931,
+       -4.9669,
+       -5.1874,
+       -5.3212,
+       -5.4769,
+       -5.5813,
+       -5.7628,
+       -5.8072,
+       -5.9597,
+       -6.0532,
+       -6.068,
+       -6.1732,
+       -6.2884,
+       -6.383,
+       -6.4329,
+       -6.5378,
+       -6.7455,
+       -6.8571,
+       -6.79,
+       -6.8401,
+       -6.9625,
+       -7.1338,
+       -7.2422
       ],
       "p90": [
-       0.0039,
+       0.0049,
+       0.0792,
        0.1099,
-       0.1801,
-       0.2327,
-       0.2561,
-       0.4361,
-       0.567,
-       0.6457,
-       0.7315,
-       1.138,
-       1.4518,
-       1.6855,
-       1.8402,
-       1.9897,
-       2.0424,
-       2.0108,
-       1.9081,
-       1.973,
-       1.9856,
-       1.905,
-       1.8333,
-       1.7925,
-       1.7449,
-       1.6716,
-       1.6437,
-       1.5986,
-       1.5461,
-       1.5816,
-       1.6653,
-       1.6196,
-       1.6515,
-       1.5155,
-       1.4061,
-       1.3513,
-       1.3726,
-       1.3823,
-       1.3838,
-       1.2925,
-       1.2077,
-       1.1825,
-       1.1151,
-       1.0325,
-       1.01,
-       1.0904,
-       1.1016,
-       0.8699,
-       0.758,
-       0.7405,
-       0.8027,
-       0.813,
-       0.7469,
-       0.6826,
-       0.5996,
-       0.4481,
-       0.2509,
-       0.1234,
-       0.0872,
-       0.082,
-       0.0534,
-       0.0215,
-       0.019,
-       0.024,
-       -0.0309,
-       -0.1252,
-       -0.1051,
-       -0.162,
-       -0.2612,
-       -0.3646
+       0.1172,
+       0.1084,
+       0.2169,
+       0.2585,
+       0.2673,
+       0.28,
+       0.5226,
+       0.6419,
+       0.6944,
+       0.6926,
+       0.7076,
+       0.6675,
+       0.6598,
+       0.5987,
+       0.5324,
+       0.4483,
+       0.3373,
+       0.2537,
+       0.1924,
+       0.1353,
+       0.0272,
+       -0.1086,
+       -0.1141,
+       -0.1677,
+       -0.1944,
+       -0.2094,
+       -0.2733,
+       -0.3505,
+       -0.4322,
+       -0.5187,
+       -0.5919,
+       -0.6762,
+       -0.8037,
+       -0.9311,
+       -0.9894,
+       -1.1581,
+       -1.2508,
+       -1.3433,
+       -1.3823,
+       -1.485,
+       -1.5436,
+       -1.6089,
+       -1.7159,
+       -1.8132,
+       -1.9883,
+       -2.084,
+       -2.1284,
+       -2.1761,
+       -2.2105,
+       -2.3194,
+       -2.3995,
+       -2.4645,
+       -2.6201,
+       -2.7055,
+       -2.6957,
+       -2.6839,
+       -2.7645,
+       -2.8502,
+       -2.8089,
+       -2.9037,
+       -2.9998,
+       -3.0901,
+       -3.1953,
+       -3.3056,
+       -3.4481
       ]
      },
      "gdp": {
       "p10": [
-       0.2287,
-       0.308,
-       0.3427,
-       0.3595,
-       0.6538,
-       0.7559,
-       0.8058,
-       0.837,
-       1.4722,
-       1.6806,
-       1.7746,
-       1.83,
-       1.9931,
-       2.0655,
-       2.1253,
-       2.1783,
-       2.3685,
-       2.4527,
-       2.5397,
-       2.6104,
-       2.8227,
-       2.9172,
-       3.0139,
-       3.0783,
-       3.2668,
-       3.3879,
-       3.4725,
-       3.5504,
-       3.5951,
-       3.6529,
-       3.7289,
-       3.8153,
-       3.8618,
-       3.9157,
-       3.9684,
-       4.0273,
-       4.0839,
-       4.142,
-       4.185,
-       4.2289,
-       4.2528,
-       4.337,
-       4.3398,
-       4.4073,
-       4.4265,
-       4.5466,
-       4.6273,
-       4.7194,
-       4.7685,
-       4.7169,
-       4.7818,
-       4.8599,
-       4.8672,
-       4.9234,
-       4.9411,
-       4.9891,
-       5.0291,
-       5.0622,
-       5.1089,
-       5.1321,
-       5.1415,
-       5.1572,
-       5.198,
-       5.2063,
-       5.2161,
-       5.2244,
-       5.2775,
-       5.286
+       0.229,
+       0.2414,
+       0.2484,
+       0.2577,
+       0.5496,
+       0.5648,
+       0.5787,
+       0.5987,
+       1.2242,
+       1.242,
+       1.2582,
+       1.2746,
+       1.423,
+       1.4574,
+       1.4899,
+       1.5206,
+       1.7016,
+       1.7484,
+       1.7994,
+       1.8542,
+       2.0658,
+       2.1214,
+       2.1749,
+       2.2302,
+       2.4548,
+       2.5235,
+       2.5797,
+       2.6234,
+       2.6678,
+       2.7344,
+       2.8042,
+       2.871,
+       2.9048,
+       2.9804,
+       3.0365,
+       3.1056,
+       3.1484,
+       3.1891,
+       3.2585,
+       3.3359,
+       3.384,
+       3.4193,
+       3.4583,
+       3.4857,
+       3.4946,
+       3.5301,
+       3.5661,
+       3.5962,
+       3.6351,
+       3.6822,
+       3.7354,
+       3.7784,
+       3.7901,
+       3.8086,
+       3.8371,
+       3.8766,
+       3.9267,
+       3.9556,
+       3.958,
+       3.9862,
+       3.9972,
+       4.0127,
+       4.0167,
+       4.0089,
+       4.0338,
+       4.0635,
+       4.0814,
+       4.1184
       ],
       "p50": [
-       0.2578,
-       0.3576,
-       0.412,
-       0.4447,
-       0.7727,
-       0.9076,
-       0.9951,
-       1.054,
-       1.7671,
-       2.0508,
-       2.2274,
-       2.3312,
-       2.5473,
-       2.6624,
-       2.7492,
-       2.8116,
-       3.0157,
-       3.1169,
-       3.2103,
-       3.2961,
-       3.553,
-       3.6921,
-       3.8191,
-       3.9248,
-       4.2325,
-       4.4115,
-       4.5704,
-       4.7267,
-       4.851,
-       4.9781,
-       5.1204,
-       5.2371,
-       5.3292,
-       5.4503,
-       5.5432,
-       5.6222,
-       5.7015,
-       5.8061,
-       5.9403,
-       6.0235,
-       6.0875,
-       6.1614,
-       6.2393,
-       6.3048,
-       6.3768,
-       6.4755,
-       6.5611,
-       6.5984,
-       6.7042,
-       6.8273,
-       7.0129,
-       7.1878,
-       7.2768,
-       7.3504,
-       7.4186,
-       7.5288,
-       7.5846,
-       7.6866,
-       7.7589,
-       7.9228,
-       7.9823,
-       7.7908,
-       7.9063,
-       8.0111,
-       8.1403,
-       8.1589,
-       8.1853,
-       8.252
+       0.2555,
+       0.298,
+       0.3134,
+       0.3251,
+       0.6495,
+       0.7038,
+       0.7387,
+       0.774,
+       1.4617,
+       1.5643,
+       1.6198,
+       1.6688,
+       1.8363,
+       1.9095,
+       1.9726,
+       2.0205,
+       2.2431,
+       2.3216,
+       2.4103,
+       2.4843,
+       2.7157,
+       2.8429,
+       2.969,
+       3.082,
+       3.3415,
+       3.4603,
+       3.5556,
+       3.66,
+       3.727,
+       3.817,
+       3.9415,
+       4.0274,
+       4.1107,
+       4.1956,
+       4.2563,
+       4.3526,
+       4.4144,
+       4.4779,
+       4.567,
+       4.6641,
+       4.7332,
+       4.7908,
+       4.8766,
+       4.9534,
+       5.0214,
+       5.1299,
+       5.1733,
+       5.221,
+       5.2627,
+       5.3593,
+       5.4357,
+       5.515,
+       5.5691,
+       5.6325,
+       5.7247,
+       5.7875,
+       5.7604,
+       5.7949,
+       5.8047,
+       5.8471,
+       5.8611,
+       5.8988,
+       5.9486,
+       5.9918,
+       6.0205,
+       6.0671,
+       6.128,
+       6.1835
       ],
       "p90": [
-       0.2839,
-       0.4125,
-       0.5152,
-       0.5937,
-       0.9641,
-       1.1874,
-       1.3715,
-       1.5265,
-       2.2985,
-       2.771,
-       3.1302,
-       3.4431,
-       3.8264,
-       4.0934,
-       4.2987,
-       4.4623,
-       4.7465,
-       4.9756,
-       5.1242,
-       5.2733,
-       5.6118,
-       5.7926,
-       6.0058,
-       6.1832,
-       6.5829,
-       6.8973,
-       7.1632,
-       7.4579,
-       7.6714,
-       7.7674,
-       7.909,
-       8.0775,
-       8.2373,
-       8.5022,
-       8.7326,
-       8.9846,
-       9.2277,
-       9.5699,
-       9.8538,
-       10.1903,
-       10.5128,
-       10.7814,
-       11.0668,
-       11.3863,
-       11.6008,
-       11.8385,
-       12.075,
-       12.3042,
-       12.498,
-       12.692,
-       12.8815,
-       13.1191,
-       13.5826,
-       13.9017,
-       14.0723,
-       14.3105,
-       14.5183,
-       14.708,
-       14.8829,
-       15.0498,
-       15.1886,
-       15.3573,
-       15.5396,
-       15.7842,
-       15.7587,
-       15.7372,
-       15.8863,
-       16.0596
+       0.2859,
+       0.3765,
+       0.4347,
+       0.4687,
+       0.8067,
+       0.9538,
+       1.0519,
+       1.123,
+       1.8337,
+       2.1501,
+       2.3491,
+       2.473,
+       2.6863,
+       2.8101,
+       2.9062,
+       2.9838,
+       3.2021,
+       3.3334,
+       3.4334,
+       3.5391,
+       3.8031,
+       3.9584,
+       4.1284,
+       4.2803,
+       4.5954,
+       4.8333,
+       5.0467,
+       5.23,
+       5.3793,
+       5.5352,
+       5.7292,
+       5.9072,
+       6.0706,
+       6.2504,
+       6.4148,
+       6.5976,
+       6.7774,
+       6.9489,
+       7.1679,
+       7.3456,
+       7.53,
+       7.7362,
+       7.9242,
+       8.0974,
+       8.2866,
+       8.4747,
+       8.6392,
+       8.8655,
+       9.0379,
+       9.2466,
+       9.4344,
+       9.6691,
+       9.7953,
+       9.9335,
+       10.0815,
+       10.2366,
+       10.3811,
+       10.536,
+       10.6799,
+       10.759,
+       10.8091,
+       10.8671,
+       10.9236,
+       10.9924,
+       11.1212,
+       11.1988,
+       11.324,
+       11.3769
       ]
      }
     },
@@ -578,15 +578,15 @@
      ],
      [
       "2040 with AI, median",
-      164.5
+      161.6
      ],
      [
       "2040 with AI, low",
-      155.7
+      155.4
      ],
      [
       "2040 with AI, high",
-      173.5
+      168.2
      ]
     ],
     "unit": "M jobs"
@@ -595,16 +595,16 @@
     "today": 152442702,
     "without_ai": 174177926,
     "with_ai": {
-     "p10": 155652552,
-     "p50": 164543935,
-     "p90": 173542826
+     "p10": 155370808,
+     "p50": 161563544,
+     "p90": 168172071
     }
    }
   },
   {
    "id": "hiring",
    "title": "Most of the gap is hiring that never happens; about one position in 4 removed is a layoff",
-   "sentence": "Of the 11.4 million positions AI takes out of the economy by 2040 in the central run, 8.1 million are jobs never offered to new entrants and 3.0 million are layoffs. Unemployment rises by at most 469,000 at its 2037 peak. Of the people affected, 9.2 million find other work and 1.1 million leave the workforce. Reality check: employers announced 54,836 AI-cited job cuts in 2025 (model: 65,643) and 173,568 AI-cited job cuts since 2023 through June 2026 (model: 138,997), by Challenger, Gray & Christmas's count. The baseline's layoff pace is fitted to these counts: a quarter of each required cut is taken as layoffs at once rather than waiting for attrition. The counts are announcements, which include positions closed by attrition and redeployment, so the fit is deliberately loose; without it the model's attrition-first rule produced a tenth of the announced layoffs. If employers cut through layoffs twice as readily (the layoffs-first variant): 1.7 million layoffs by 2030 and 3.8 million by 2040 instead of 3.0 million, unemployment peaking 550,000 above the no-AI path, and total jobs about the same: the same gap, borne by incumbents instead of entrants.",
+   "sentence": "Of the 11.5 million positions AI takes out of the economy by 2040 in the central run, 8.1 million are jobs never offered to new entrants and 3.1 million are layoffs. Unemployment rises by at most 479,000 at its 2036 peak. Of the people affected, 9.2 million find other work and 1.1 million leave the workforce. Reality check: employers announced 54,836 AI-cited job cuts in 2025 (model: 65,660) and 173,568 AI-cited job cuts since 2023 through June 2026 (model: 139,071), by Challenger, Gray & Christmas's count. The baseline's layoff pace is fitted to these counts: a quarter of each required cut is taken as layoffs at once rather than waiting for attrition. The counts are announcements, which include positions closed by attrition and redeployment, so the fit is deliberately loose; without it the model's attrition-first rule produced a tenth of the announced layoffs. If employers cut through layoffs twice as readily (the layoffs-first variant): 1.7 million layoffs by 2030 and 3.8 million by 2040 instead of 3.1 million, unemployment peaking 550,000 above the no-AI path, and total jobs about the same: the same gap, borne by incumbents instead of entrants.",
    "range": "Hiring-first holds in every scenario the model ships; the layoff share is fitted to 2025\u20132026 announcements and is the least certain number here.",
    "sureness": {
     "level": "medium",
@@ -617,23 +617,23 @@
     "items": [
      [
       "Positions never refilled",
-      8058663.0
+      8052701.0
      ],
      [
       "Layoffs",
-      3018962.0
+      3071253.0
      ],
      [
       "Found other work",
-      9240947.0
+      9161849.0
      ],
      [
       "Left the workforce",
-      1107305.0
+      1116898.0
      ],
      [
       "Still unemployed",
-      215878.0
+      166646.0
      ]
     ]
    },
@@ -651,11 +651,11 @@
      ],
      [
       "Model, 2025",
-      65642.81
+      65660.37
      ],
      [
       "Model, 2023 to June 2026",
-      138996.87
+      139070.91
      ]
     ]
    },
@@ -663,15 +663,15 @@
     {
      "short": "Challenger 2025, AI-cited job cuts",
      "claimed": 54836.0,
-     "model_central": 65642.81,
+     "model_central": 65660.37,
      "verdict": "within band",
      "unit": "announced U.S. job cuts citing AI in the calendar year"
     },
     {
      "short": "Challenger 2026, AI-cited cuts since 2023",
      "claimed": 173568.0,
-     "model_central": 138996.87,
-     "verdict": "model lower",
+     "model_central": 139070.91,
+     "verdict": "within band",
      "unit": "announced U.S. job cuts citing AI, 2023 to June 2026"
     }
    ]
@@ -679,12 +679,12 @@
   {
    "id": "young",
    "title": "The young pay first",
-   "sentence": "Workers under 25 carry 35% of the shortfall, about 4% of their group's jobs, against 1% for 25 to 44 and 1% for those over 55. Workers without a degree lose 3 times as much as graduates, and the bottom half of earners lose about 2% of their jobs while the top tenth is barely affected.",
+   "sentence": "Workers under 25 carry 32% of the shortfall, about 4% of their group's jobs, against 1% for 25 to 44 and 1% for those over 55. Workers without a degree lose 3 times as much as graduates, and the bottom half of earners lose about 2% of their jobs while the top tenth is barely affected.",
    "range": "Incumbents are mostly safe; entrants are not. That is the practical advice hidden in the numbers.",
    "sureness": {
-    "level": "medium",
-    "label": "leaning this way",
-    "dots": 2
+    "level": "high",
+    "label": "we would bet on it",
+    "dots": 3
    },
    "what_changes_it": "Whether employers cut through attrition (which lands on entrants) or through layoffs (which lands on incumbents).",
    "chart": {
@@ -692,19 +692,19 @@
     "items": [
      [
       "under 25",
-      34.73
+      32.14
      ],
      [
       "25 to 44",
-      42.29
+      42.54
      ],
      [
       "45 to 54",
-      10.54
+      11.23
      ],
      [
       "55 and over",
-      11.99
+      13.089999999999998
      ]
     ],
     "reference": [
@@ -731,7 +731,7 @@
   {
    "id": "pay",
    "title": "Pay goes up, the worker's share goes down",
-   "sentence": "Real pay is about 4% higher by 2040 (roughly $2,298 a year for a $60,000 earner) because prices fall about 4%. The economy is about 8% larger. But workers' share of national income falls by 4.8 points: the gains are real and they go disproportionately to owners.",
+   "sentence": "Real pay is about 4% higher by 2040 (roughly $2,231 a year for a $60,000 earner) because prices fall about 4%. The economy is about 6% larger. But workers' share of national income falls by 4.5 points: the gains are real and they go disproportionately to owners. If wages absorb more of the excess supply (the market-clearing wage variant: wage adjustment, pass-through and reinstatement at the top of their ranges): real pay about the same, total jobs +4.0 points different, and the under-25 share of the shortfall about the same.",
    "range": "Real pay likely between +2% and +7%.",
    "sureness": {
     "level": "high",
@@ -744,19 +744,19 @@
     "items": [
      [
       "Economy (GDP)",
-      8.252
+      6.1835
      ],
      [
       "Real pay",
-      3.7683
+      3.6585
      ],
      [
       "Prices",
-      -3.8692
+      -3.8557
      ],
      [
       "Workers' share of income (points)",
-      -4.7959
+      -4.536
      ]
     ],
     "unit": "% by 2040"
@@ -765,7 +765,7 @@
   {
    "id": "waves",
    "title": "Three waves, not one",
-   "sentence": "Office and analytical work is being reshaped now: graphic designers (-15%), network and computer systems administrators (-7%), computer occupations, all other (-7%), computer user support specialists (-7%) by 2030. Robots and vehicles arrive later: 0.2% of task-hours in 2030, 6.9% by 2040. AI-made content takes translation and voice first (73% of spending by 2040) and video last (8%). Growing: sales and related workers, all other (+10%), production workers, all other (+10%), nursing assistants (+6%), dental hygienists (+6%).",
+   "sentence": "Office and analytical work is being reshaped now: graphic designers (-16%), network and computer systems administrators (-8%), computer user support specialists (-8%), computer occupations, all other (-8%) by 2030. Robots and vehicles arrive later: 0.2% of task-hours in 2030, 6.2% by 2040. AI-made content takes translation and voice first (73% of spending by 2040) and video last (8%). Growing: sales and related workers, all other (+8%), production workers, all other (+8%), dental hygienists (+4%), nursing assistants (+4%).",
    "range": "Timing of the robot wave depends on how fast fleets can be built and approved, not on the software.",
    "sureness": {
     "level": "medium",
@@ -781,8 +781,8 @@
       "family": "embodied",
       "family_words": "robots and vehicles",
       "first_year": "2030",
-      "share_2030": 1.01,
-      "share_2040": 31.74,
+      "share_2030": 1.02,
+      "share_2040": 31.88,
       "target_jobs": 766953
      },
      {
@@ -790,8 +790,8 @@
       "family": "embodied",
       "family_words": "robots and vehicles",
       "first_year": "2030",
-      "share_2030": 1.26,
-      "share_2040": 34.89,
+      "share_2030": 1.27,
+      "share_2040": 35.27,
       "target_jobs": 2052424
      },
      {
@@ -799,8 +799,8 @@
       "family": "embodied",
       "family_words": "robots and vehicles",
       "first_year": "2030",
-      "share_2030": 1.16,
-      "share_2040": 34.21,
+      "share_2030": 1.18,
+      "share_2040": 34.64,
       "target_jobs": 1953785
      },
      {
@@ -808,17 +808,17 @@
       "family": "embodied",
       "family_words": "robots and vehicles",
       "first_year": "2036",
-      "share_2030": 0.14,
-      "share_2040": 3.9,
+      "share_2030": 0.15,
+      "share_2040": 4.34,
       "target_jobs": 7034713
      },
      {
       "app": "Flexible manufacturing robots",
       "family": "embodied",
       "family_words": "robots and vehicles",
-      "first_year": "2035",
-      "share_2030": 0.2,
-      "share_2040": 4.83,
+      "first_year": "2034",
+      "share_2030": 0.22,
+      "share_2040": 5.29,
       "target_jobs": 1641365
      },
      {
@@ -827,16 +827,16 @@
       "family_words": "robots and vehicles",
       "first_year": "2036",
       "share_2030": 0.12,
-      "share_2040": 3.54,
+      "share_2040": 3.57,
       "target_jobs": 122262658
      },
      {
       "app": "Food-service automation",
       "family": "embodied",
       "family_words": "robots and vehicles",
-      "first_year": "2037",
-      "share_2030": 0.1,
-      "share_2040": 3.3,
+      "first_year": "2036",
+      "share_2030": 0.12,
+      "share_2040": 3.75,
       "target_jobs": 6416304
      },
      {
@@ -844,17 +844,17 @@
       "family": "embodied",
       "family_words": "robots and vehicles",
       "first_year": "2035",
-      "share_2030": 0.21,
-      "share_2040": 5.9,
+      "share_2030": 0.23,
+      "share_2040": 6.51,
       "target_jobs": 420088
      },
      {
       "app": "Construction robotics",
       "family": "embodied",
       "family_words": "robots and vehicles",
-      "first_year": "2035",
-      "share_2030": 0.18,
-      "share_2040": 5.39,
+      "first_year": "2036",
+      "share_2030": 0.12,
+      "share_2040": 3.16,
       "target_jobs": 2159755
      },
      {
@@ -872,7 +872,7 @@
       "family_words": "AI-made content",
       "first_year": "2028",
       "share_2030": 16.51,
-      "share_2040": 24.27,
+      "share_2040": 24.24,
       "target_jobs": 366814
      },
      {
@@ -881,7 +881,7 @@
       "family_words": "AI-made content",
       "first_year": "2025",
       "share_2030": 56.79,
-      "share_2040": 60.54,
+      "share_2040": 60.53,
       "target_jobs": 99280
      },
      {
@@ -915,9 +915,9 @@
       "app": "Retail checkout and shelf automation",
       "family": "embodied",
       "family_words": "robots and vehicles",
-      "first_year": "2039",
-      "share_2030": 0.05,
-      "share_2040": 1.85,
+      "first_year": "2038",
+      "share_2030": 0.06,
+      "share_2040": 2.08,
       "target_jobs": 10340940
      }
     ],
@@ -928,55 +928,55 @@
     "hit_first": [
      [
       "Graphic Designers",
-      -15.371
+      -15.756
      ],
      [
       "Network and Computer Systems Administrators",
-      -7.27
-     ],
-     [
-      "Computer Occupations, All Other",
-      -7.156
+      -8.479
      ],
      [
       "Computer User Support Specialists",
-      -7.118
+      -8.205
+     ],
+     [
+      "Computer Occupations, All Other",
+      -8.202
      ]
     ],
     "hit_most": [
      [
       "Light Truck Drivers",
-      -57.23
+      -57.272
      ],
      [
       "Heavy and Tractor-Trailer Truck Drivers",
-      -53.955
+      -54.074
      ],
      [
       "Driver/Sales Workers",
-      -44.281
+      -45.097
      ],
      [
       "Graphic Designers",
-      -25.78
+      -27.723
      ]
     ],
     "growing": [
      [
       "Sales and Related Workers, All Other",
-      10.299
+      7.993
      ],
      [
       "Production Workers, All Other",
-      10.1
-     ],
-     [
-      "Nursing Assistants",
-      6.371
+      7.808
      ],
      [
       "Dental Hygienists",
-      6.19
+      4.436
+     ],
+     [
+      "Nursing Assistants",
+      4.181
      ]
     ]
    }
@@ -984,7 +984,7 @@
   {
    "id": "money",
    "title": "The money flows to the U.S. and the chip makers",
-   "sentence": "By 2040 US collects about $339 billion a year in AI income; CN $112 billion, EU $78 billion, TW $60 billion. The largest GDP gains are in TW, KR (chip exports); the largest job losses in UK, EU. That income is paid by employers replacing tasks with software (65% of the $637 billion spent on AI worldwide in 2040), employers buying tools that speed up workers (9%), consumers paying for AI subscriptions and services (23%), and consumers paying for AI-made content (3%); the work being bought is mostly management ($76 billion), business & financial ($61 billion), office & admin support ($60 billion). It lands with the cloud and data-centre operators ($122 billion), the model makers ($101 billion), the chip makers ($87 billion).",
+   "sentence": "By 2040 US collects about $339 billion a year in AI income; CN $112 billion, EU $78 billion, TW $60 billion. The largest GDP gains are in TW, KR (chip exports); the largest job losses in US, SG. That income is paid by employers replacing tasks with software (64% of the $622 billion spent on AI worldwide in 2040), employers buying tools that speed up workers (9%), consumers paying for AI subscriptions and services (24%), and consumers paying for AI-made content (3%); the work being bought is mostly management ($75 billion), business & financial ($61 billion), office & admin support ($60 billion). It lands with the cloud and data-centre operators ($124 billion), the model makers ($101 billion), the chip makers ($88 billion).",
    "range": "Regional splits rest on where models, data centres and chips are made; the country-level job numbers outside the U.S. use placeholder occupation mixes.",
    "sureness": {
     "level": "medium",
@@ -997,63 +997,63 @@
     "items": [
      [
       "US",
-      -5.5311,
-      8.252,
-      338.9
+      -7.2422,
+      6.1835,
+      339.2
      ],
      [
       "EU",
-      -6.1659,
-      3.9525,
-      77.8
+      -6.4413,
+      3.4159,
+      78.0
      ],
      [
       "UK",
-      -6.5259,
-      3.7039,
+      -6.7786,
+      3.3666,
       13.9
      ],
      [
       "CN",
-      -2.8347,
-      4.8829,
-      112.1
+      -3.9717,
+      3.5705,
+      112.4
      ],
      [
       "JP",
-      -2.9584,
-      5.0463,
+      -3.9332,
+      3.7452,
       20.9
      ],
      [
       "KR",
-      -2.3585,
-      9.7591,
+      -4.3359,
+      7.0023,
       9.0
      ],
      [
       "IN",
-      -3.7391,
-      4.5969,
-      11.4
+      -4.0367,
+      2.7489,
+      11.6
      ],
      [
       "TW",
-      1.1566,
-      19.1922,
-      59.7
+      -2.888,
+      13.2322,
+      60.1
      ],
      [
       "SG",
-      -5.7328,
-      6.5013,
+      -6.7822,
+      5.1824,
       5.1
      ],
      [
       "RoA",
-      -4.1116,
-      3.672,
-      7.1
+      -4.2076,
+      2.4049,
+      7.3
      ]
     ]
    },
@@ -1063,11 +1063,11 @@
     "items": [
      [
       "Software replacing tasks",
-      416.3
+      398.6
      ],
      [
       "Tools that speed up workers",
-      55.9
+      58.4
      ],
      [
       "AI subscriptions and services (consumers)",
@@ -1075,74 +1075,74 @@
      ],
      [
       "AI-made content (consumers)",
-      16.3
+      16.5
      ],
      [
       "Work bought: Management",
-      75.5
+      74.8
      ],
      [
       "Work bought: Business & financial",
-      61.2
+      60.8
      ],
      [
       "Work bought: Office & admin support",
-      59.9
+      59.7
      ],
      [
       "Work bought: Computer & mathematical",
-      49.0
+      48.5
      ],
      [
       "Work bought: Sales",
-      33.4
+      33.6
      ],
      [
       "Work bought: Healthcare practitioners",
-      28.8
+      28.6
      ]
     ],
     "unit": "$bn"
    },
    "income": {
     "sources_world_bn": {
-     "automation": 416.3,
-     "augmentation": 55.9,
-     "content": 16.3,
+     "automation": 398.6,
+     "augmentation": 58.4,
+     "content": 16.5,
      "consumer": 148.7
     },
     "paying_groups_world_bn": [
      [
       "Management",
-      75.5
+      74.8
      ],
      [
       "Business & financial",
-      61.2
+      60.8
      ],
      [
       "Office & admin support",
-      59.9
+      59.7
      ],
      [
       "Computer & mathematical",
-      49.0
+      48.5
      ],
      [
       "Sales",
-      33.4
+      33.6
      ],
      [
       "Healthcare practitioners",
-      28.8
+      28.6
      ],
      [
       "Transportation",
-      25.0
+      25.2
      ],
      [
       "Education",
-      14.1
+      14.0
      ],
      [
       "Production",
@@ -1150,7 +1150,7 @@
      ],
      [
       "Architecture & engineering",
-      5.5
+      5.4
      ],
      [
       "Food preparation",
@@ -1163,16 +1163,16 @@
     ],
     "received_by_stage_bn": {
      "model": 101.1,
-     "compute": 122.4,
-     "chips": 87.4,
-     "integration": 27.4
+     "compute": 123.7,
+     "chips": 88.3,
+     "integration": 27.5
     }
    }
   },
   {
    "id": "futures",
    "title": "Two futures, and the difference is partly a choice",
-   "sentence": "Gains spent back: If productivity gains are spent back into the economy, employment in 2040 is +13% versus no AI (about 23.0 million more jobs). Gains pocketed: If the gains are saved or paid out as rents, employment is -6% (about 10.3 million fewer jobs). Preset: Seba / RethinkX disruption: With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030. Preset: Seba / RethinkX 2026 (humanoids and TaaS): With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030.",
+   "sentence": "Gains spent back (demand closure): Households spend the productivity gains and firms hire against that demand; the model's default closure. Employment in 2040 is -6% versus no AI (about 10.9 million fewer jobs). Gains not spent back (no demand feedback): The spending feedback is switched off, so only cheaper output and new tasks offset the displacement. Employment in 2040 is -9% versus no AI (about 15.2 million fewer jobs). Preset: Seba / RethinkX disruption: With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 8% of task-hours; robotaxis pass 10% of driver work in 2030. Preset: Seba / RethinkX 2026 (humanoids and TaaS): With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 10% of task-hours; robotaxis pass 10% of driver work in 2030.",
    "range": "The model's biggest uncertainty is whether the gains are spent back into the economy or pocketed; that is partly policy, partly corporate behaviour, and partly what people choose to pay for.",
    "sureness": {
     "level": "low",
@@ -1184,38 +1184,40 @@
     "type": "futures",
     "items": [
      {
-      "name": "Gains spent back",
-      "employment_pct": 13.1988,
-      "gdp_pct": 29.299,
-      "jobs": -22989396,
-      "source": "sensitivity: demand multiplier at the top of its range",
-      "description": "If productivity gains are spent back into the economy, employment in 2040 is +13% versus no AI (about 23.0 million more jobs)."
+      "name": "Gains spent back (demand closure)",
+      "employment_pct": -6.2299,
+      "gdp_pct": 7.1072,
+      "jobs": 10851111,
+      "source": "structural ensemble: median of the 32 cells with this closure",
+      "cells": 32,
+      "description": "Households spend the productivity gains and firms hire against that demand; the model's default closure. Employment in 2040 is -6% versus no AI (about 10.9 million fewer jobs)."
      },
      {
-      "name": "Gains pocketed",
-      "employment_pct": -5.9117,
-      "gdp_pct": 6.5458,
-      "jobs": 10296876,
-      "source": "sensitivity: demand multiplier at the bottom of its range",
-      "description": "If the gains are saved or paid out as rents, employment is -6% (about 10.3 million fewer jobs)."
+      "name": "Gains not spent back (no demand feedback)",
+      "employment_pct": -8.69975,
+      "gdp_pct": 5.5222999999999995,
+      "jobs": 15153044,
+      "source": "structural ensemble: median of the 32 cells with this closure",
+      "cells": 32,
+      "description": "The spending feedback is switched off, so only cheaper output and new tasks offset the displacement. Employment in 2040 is -9% versus no AI (about 15.2 million fewer jobs)."
      },
      {
       "name": "Preset: Seba / RethinkX disruption",
       "scenario_id": "preset-seba-rethinkx",
-      "employment_pct": -7.2632,
-      "gdp_pct": 10.0468,
-      "jobs": 12650891,
+      "employment_pct": -7.0724,
+      "gdp_pct": 9.52,
+      "jobs": 12318560,
       "source": "scenario run",
-      "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030."
+      "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 8% of task-hours; robotaxis pass 10% of driver work in 2030."
      },
      {
       "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
       "scenario_id": "preset-seba-2026",
-      "employment_pct": -8.4151,
-      "gdp_pct": 11.0106,
-      "jobs": 14657247,
+      "employment_pct": -8.1275,
+      "gdp_pct": 10.2781,
+      "jobs": 14156311,
       "source": "scenario run",
-      "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030."
+      "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 10% of task-hours; robotaxis pass 10% of driver work in 2030."
      }
     ]
    }
@@ -1223,38 +1225,40 @@
  ],
  "futures": [
   {
-   "name": "Gains spent back",
-   "employment_pct": 13.1988,
-   "gdp_pct": 29.299,
-   "jobs": -22989396,
-   "source": "sensitivity: demand multiplier at the top of its range",
-   "description": "If productivity gains are spent back into the economy, employment in 2040 is +13% versus no AI (about 23.0 million more jobs)."
+   "name": "Gains spent back (demand closure)",
+   "employment_pct": -6.2299,
+   "gdp_pct": 7.1072,
+   "jobs": 10851111,
+   "source": "structural ensemble: median of the 32 cells with this closure",
+   "cells": 32,
+   "description": "Households spend the productivity gains and firms hire against that demand; the model's default closure. Employment in 2040 is -6% versus no AI (about 10.9 million fewer jobs)."
   },
   {
-   "name": "Gains pocketed",
-   "employment_pct": -5.9117,
-   "gdp_pct": 6.5458,
-   "jobs": 10296876,
-   "source": "sensitivity: demand multiplier at the bottom of its range",
-   "description": "If the gains are saved or paid out as rents, employment is -6% (about 10.3 million fewer jobs)."
+   "name": "Gains not spent back (no demand feedback)",
+   "employment_pct": -8.69975,
+   "gdp_pct": 5.5222999999999995,
+   "jobs": 15153044,
+   "source": "structural ensemble: median of the 32 cells with this closure",
+   "cells": 32,
+   "description": "The spending feedback is switched off, so only cheaper output and new tasks offset the displacement. Employment in 2040 is -9% versus no AI (about 15.2 million fewer jobs)."
   },
   {
    "name": "Preset: Seba / RethinkX disruption",
    "scenario_id": "preset-seba-rethinkx",
-   "employment_pct": -7.2632,
-   "gdp_pct": 10.0468,
-   "jobs": 12650891,
+   "employment_pct": -7.0724,
+   "gdp_pct": 9.52,
+   "jobs": 12318560,
    "source": "scenario run",
-   "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 9% of task-hours; robotaxis pass 10% of driver work in 2030."
+   "description": "With Seba / RethinkX disruption assumptions, employment in 2040 is -7% and robots and vehicles do 8% of task-hours; robotaxis pass 10% of driver work in 2030."
   },
   {
    "name": "Preset: Seba / RethinkX 2026 (humanoids and TaaS)",
    "scenario_id": "preset-seba-2026",
-   "employment_pct": -8.4151,
-   "gdp_pct": 11.0106,
-   "jobs": 14657247,
+   "employment_pct": -8.1275,
+   "gdp_pct": 10.2781,
+   "jobs": 14156311,
    "source": "scenario run",
-   "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 11% of task-hours; robotaxis pass 10% of driver work in 2030."
+   "description": "With Seba / RethinkX 2026 (humanoids and TaaS) assumptions, employment in 2040 is -8% and robots and vehicles do 10% of task-hours; robotaxis pass 10% of driver work in 2030."
   }
  ],
  "policies": [
@@ -1262,15 +1266,15 @@
    "scenario_id": "policy-retraining",
    "name": "retraining subsidy 50% of wage",
    "description": "",
-   "jobs_delta": 3309,
+   "jobs_delta": 3135,
    "employment_delta_pp": 0.0,
-   "unemployed_delta": -37719,
+   "unemployed_delta": -36626,
    "real_wage_delta_pp": 0.03,
-   "cost_bn_per_year": 5.1,
+   "cost_bn_per_year": 5.0,
    "ai_tax_revenue_bn": 0.0,
-   "fiscal_balance_bn": -5.1,
+   "fiscal_balance_bn": -5.0,
    "validity_note": "",
-   "sentence": "retraining subsidy 50% of wage: no measurable change in total jobs, 38,000 fewer unemployed; costs about $5 billion a year, of which the deficit carries $5 billion. Pays half the wage of workers who enrol in retraining, so more of the displaced retrain and more complete it; paid from the deficit."
+   "sentence": "retraining subsidy 50% of wage: no measurable change in total jobs, 37,000 fewer unemployed; costs about $5 billion a year, of which the deficit carries $5 billion. Pays half the wage of workers who enrol in retraining, so more of the displaced retrain and more complete it; paid from the deficit."
   },
   {
    "scenario_id": "policy-wage-insurance",
@@ -1278,7 +1282,7 @@
    "description": "",
    "jobs_delta": -4006,
    "employment_delta_pp": -0.0,
-   "unemployed_delta": -747,
+   "unemployed_delta": -700,
    "real_wage_delta_pp": -0.0,
    "cost_bn_per_year": 3.1,
    "ai_tax_revenue_bn": 8.3,
@@ -1288,23 +1292,23 @@
   },
   {
    "scenario_id": "policy-ubi-ai-tax",
-   "name": "$500/month basic income, AI-tax financed",
+   "name": "$500/month basic income, tax-financed",
    "description": "",
-   "jobs_delta": 14061036,
-   "employment_delta_pp": 8.07,
-   "unemployed_delta": 69515,
-   "real_wage_delta_pp": -0.04,
+   "jobs_delta": -816024,
+   "employment_delta_pp": -0.47,
+   "unemployed_delta": -4243,
+   "real_wage_delta_pp": -0.01,
    "cost_bn_per_year": 1741.8,
    "ai_tax_revenue_bn": 49.9,
-   "fiscal_balance_bn": -1691.9,
-   "validity_note": "deficit-financed transfers above 3% of GDP are outside the model's validity: it has no inflation or interest-rate response, so their demand effect is overstated",
-   "sentence": "$500/month basic income, AI-tax financed: 14.1 million more jobs than the baseline by 2040, 70,000 more unemployed; costs about $1742 billion a year, of which the deficit carries $1692 billion. Pays every adult $500 a month; a 30% tax on AI spending covers a small part and the deficit the rest. A deficit this large is outside what the model can judge: it has no inflation or interest-rate response, so the jobs effect is overstated."
+   "fiscal_balance_bn": 49.9,
+   "validity_note": "",
+   "sentence": "$500/month basic income, tax-financed: 816,000 fewer jobs than the baseline by 2040; costs about $1742 billion a year. Pays every adult $500 a month, financed by an income-tax surcharge (balanced budget) with a 30% tax on AI spending on top."
   },
   {
    "scenario_id": "policy-work-week-36",
    "name": "36-hour standard week",
    "description": "",
-   "jobs_delta": 18407123,
+   "jobs_delta": 18404162,
    "employment_delta_pp": 10.57,
    "unemployed_delta": 0,
    "real_wage_delta_pp": -10.48,
@@ -1345,8 +1349,8 @@
     "ai_spend_bn": 91.6,
     "consumer_revenue_bn": 29.0,
     "spend_at_cost_bn": 13.1,
-    "gdp_gain_bn": 762.5,
-    "productivity_gain_bn": 92.8,
+    "gdp_gain_bn": 762.6,
+    "productivity_gain_bn": 92.7,
     "investment_in_gdp_bn": 669.8,
     "price_multiple": 4.246
    },
@@ -1358,9 +1362,9 @@
     "ai_spend_bn": 306.6,
     "consumer_revenue_bn": 54.9,
     "spend_at_cost_bn": 66.2,
-    "gdp_gain_bn": 1068.0,
+    "gdp_gain_bn": 1068.6,
     "productivity_gain_bn": 357.1,
-    "investment_in_gdp_bn": 710.8,
+    "investment_in_gdp_bn": 711.5,
     "price_multiple": 3.581
    },
    {
@@ -1371,9 +1375,9 @@
     "ai_spend_bn": 476.0,
     "consumer_revenue_bn": 87.2,
     "spend_at_cost_bn": 119.8,
-    "gdp_gain_bn": 1743.0,
-    "productivity_gain_bn": 1200.9,
-    "investment_in_gdp_bn": 542.2,
+    "gdp_gain_bn": 1745.0,
+    "productivity_gain_bn": 1200.8,
+    "investment_in_gdp_bn": 544.1,
     "price_multiple": 3.077
    },
    {
@@ -1384,9 +1388,9 @@
     "ai_spend_bn": 602.9,
     "consumer_revenue_bn": 138.9,
     "spend_at_cost_bn": 192.9,
-    "gdp_gain_bn": 3295.3,
-    "productivity_gain_bn": 2916.4,
-    "investment_in_gdp_bn": 378.9,
+    "gdp_gain_bn": 3297.2,
+    "productivity_gain_bn": 2916.5,
+    "investment_in_gdp_bn": 380.7,
     "price_multiple": 2.289
    },
    {
@@ -1397,17 +1401,17 @@
     "ai_spend_bn": 608.5,
     "consumer_revenue_bn": 148.7,
     "spend_at_cost_bn": 230.7,
-    "gdp_gain_bn": 4224.6,
-    "productivity_gain_bn": 3933.7,
-    "investment_in_gdp_bn": 290.9,
+    "gdp_gain_bn": 4221.9,
+    "productivity_gain_bn": 3924.0,
+    "investment_in_gdp_bn": 297.9,
     "price_multiple": 1.894
    }
   ],
   "cumulative": {
    "capex_model_bn": 15587.7,
    "producer_revenue_bn": 7420.7,
-   "gdp_gain_bn": 39493.4,
-   "productivity_gain_bn": 32032.1
+   "gdp_gain_bn": 39503.4,
+   "productivity_gain_bn": 32007.2
   },
   "payback_year_revenue": null,
   "payback_year_productivity": 2033,
@@ -1437,7 +1441,7 @@
     ],
     [
      "2026 productivity gain",
-     92.8
+     92.7
     ],
     [
      "2028 capex",
@@ -1461,7 +1465,7 @@
     ],
     [
      "2030 productivity gain",
-     1200.9
+     1200.8
     ],
     [
      "2035 capex",
@@ -1473,7 +1477,7 @@
     ],
     [
      "2035 productivity gain",
-     2916.4
+     2916.5
     ],
     [
      "2040 capex",
@@ -1485,14 +1489,357 @@
     ],
     [
      "2040 productivity gain",
-     3933.7
+     3924.0
     ]
    ],
    "unit": "$bn"
   },
   "definition": "AI producers' revenue (called AI rents by value-chain stage in the technical documents) is what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive: employers' spending on AI at market prices, consumers' spending on AI subscriptions and services, and payments for AI-made content, split across the four stages and allocated to the regions whose companies hold the market share. It is gross revenue, not profit and not economic rent in the textbook sense."
  },
+ "backtest": {
+  "horizon": [
+   "2024Q1",
+   "2026Q2"
+  ],
+  "rows": [
+   {
+    "series_id": "btos_firm",
+    "label": "Firms using AI (BTOS, %)",
+    "quarter": "2024Q1",
+    "value": 5.4,
+    "unit": "% of firms",
+    "model_metric": "adoption_share_firm_weighted",
+    "source": "Census BTOS, Feb 2024 reference period",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 1,
+    "model_central": 5.55,
+    "error": 0.15,
+    "error_pct": 2.8,
+    "note": ""
+   },
+   {
+    "series_id": "btos_firm",
+    "label": "Firms using AI (BTOS, %)",
+    "quarter": "2025Q3",
+    "value": 10.0,
+    "unit": "% of firms",
+    "model_metric": "adoption_share_firm_weighted",
+    "source": "Census BTOS, Sep 2025 (~10%)",
+    "source_tag": "real (transcribed; approximate)",
+    "used_in_fit": 1,
+    "model_central": 10.81,
+    "error": 0.81,
+    "error_pct": 8.1,
+    "note": ""
+   },
+   {
+    "series_id": "btos_firm",
+    "label": "Firms using AI (BTOS, %)",
+    "quarter": "2025Q4",
+    "value": 17.3,
+    "unit": "% of firms",
+    "model_metric": "adoption_share_firm_weighted",
+    "source": "Census BTOS, Nov 2025, business-functions wording (not comparable with earlier rows)",
+    "source_tag": "real (transcribed; wording change)",
+    "used_in_fit": 1,
+    "model_central": 11.79,
+    "error": -5.51,
+    "error_pct": -31.9,
+    "note": ""
+   },
+   {
+    "series_id": "btos_firm",
+    "label": "Firms using AI (BTOS, %)",
+    "quarter": "2026Q1",
+    "value": 18.0,
+    "unit": "% of firms",
+    "model_metric": "adoption_share_firm_weighted",
+    "source": "Census BTOS, Nov 2025-Jan 2026 pooled",
+    "source_tag": "real (transcribed; wording change)",
+    "used_in_fit": 1,
+    "model_central": 12.79,
+    "error": -5.21,
+    "error_pct": -28.9,
+    "note": ""
+   },
+   {
+    "series_id": "challenger_ai_cum",
+    "label": "Announced AI-cited job cuts since 2023 (Challenger)",
+    "quarter": "2023Q4",
+    "value": 3900.0,
+    "unit": "cuts",
+    "model_metric": "ai_layoffs_cum",
+    "source": "Challenger 2023 total (before the model horizon; carried as the offset)",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": "before the model horizon"
+   },
+   {
+    "series_id": "challenger_ai_cum",
+    "label": "Announced AI-cited job cuts since 2023 (Challenger)",
+    "quarter": "2024Q4",
+    "value": 16989.0,
+    "unit": "cuts",
+    "model_metric": "ai_layoffs_cum",
+    "source": "Challenger 2024 total 13,089 plus 2023",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": 56087.92,
+    "error": 39098.92,
+    "error_pct": 230.1,
+    "note": "model layoffs since 2024Q1 plus the 2023 count"
+   },
+   {
+    "series_id": "challenger_ai_cum",
+    "label": "Announced AI-cited job cuts since 2023 (Challenger)",
+    "quarter": "2025Q4",
+    "value": 71825.0,
+    "unit": "cuts",
+    "model_metric": "ai_layoffs_cum",
+    "source": "Challenger 2025 total 54,836 plus prior",
+    "source_tag": "real (transcribed; report)",
+    "used_in_fit": 1,
+    "model_central": 121748.29,
+    "error": 49923.29,
+    "error_pct": 69.5,
+    "note": "model layoffs since 2024Q1 plus the 2023 count"
+   },
+   {
+    "series_id": "challenger_ai_cum",
+    "label": "Announced AI-cited job cuts since 2023 (Challenger)",
+    "quarter": "2026Q2",
+    "value": 173568.0,
+    "unit": "cuts",
+    "model_metric": "ai_layoffs_cum",
+    "source": "Challenger cumulative since 2023 through June 2026",
+    "source_tag": "real (transcribed; report)",
+    "used_in_fit": 1,
+    "model_central": 142970.91,
+    "error": -30597.09,
+    "error_pct": -17.6,
+    "note": "model layoffs since 2024Q1 plus the 2023 count"
+   },
+   {
+    "series_id": "ai_revenue",
+    "label": "AI industry revenue (world, $bn/yr)",
+    "quarter": "2025Q4",
+    "value": 60.0,
+    "unit": "$bn/yr",
+    "model_metric": "ai_producer_revenue_bn",
+    "source": "OpenAI $13.1bn (FT-verified), Anthropic ~$5bn, Microsoft and Google AI lines, Menlo Ventures enterprise estimate; range 45-80",
+    "source_tag": "press summaries (V: secondary)",
+    "used_in_fit": 1,
+    "model_central": 53.02,
+    "error": -6.98,
+    "error_pct": -11.6,
+    "note": ""
+   },
+   {
+    "series_id": "ai_revenue",
+    "label": "AI industry revenue (world, $bn/yr)",
+    "quarter": "2026Q4",
+    "value": 140.0,
+    "unit": "$bn/yr",
+    "model_metric": "ai_producer_revenue_bn",
+    "source": "run rates mid-2026 (OpenAI ~$40bn, Anthropic ~$47bn gross) and market estimates; range 90-200",
+    "source_tag": "press summaries (V: secondary; run rates)",
+    "used_in_fit": 1,
+    "model_central": 91.61,
+    "error": -48.39,
+    "error_pct": -34.6,
+    "note": ""
+   },
+   {
+    "series_id": "capex",
+    "label": "Hyperscaler capex, four companies ($bn/yr)",
+    "quarter": "2024Q4",
+    "value": 250.7,
+    "unit": "$bn/yr",
+    "model_metric": "hyperscaler_capex_bn",
+    "source": "company reports (data/processed/series/capex.csv)",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 1,
+    "model_central": 250.0,
+    "error": -0.7,
+    "error_pct": -0.3,
+    "note": "input path, not a prediction"
+   },
+   {
+    "series_id": "capex",
+    "label": "Hyperscaler capex, four companies ($bn/yr)",
+    "quarter": "2025Q4",
+    "value": 413.4,
+    "unit": "$bn/yr",
+    "model_metric": "hyperscaler_capex_bn",
+    "source": "company reports",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 1,
+    "model_central": 400.0,
+    "error": -13.4,
+    "error_pct": -3.2,
+    "note": "input path, not a prediction"
+   },
+   {
+    "series_id": "capex",
+    "label": "Hyperscaler capex, four companies ($bn/yr)",
+    "quarter": "2026Q4",
+    "value": 732.5,
+    "unit": "$bn/yr",
+    "model_metric": "hyperscaler_capex_bn",
+    "source": "July 2026 guidance",
+    "source_tag": "real (transcribed; guidance)",
+    "used_in_fit": 1,
+    "model_central": 720.0,
+    "error": -12.5,
+    "error_pct": -1.7,
+    "note": "input path, not a prediction"
+   },
+   {
+    "series_id": "grad_unemployment",
+    "label": "Unemployment rate, recent college graduates 22-27 (NY Fed, %)",
+    "quarter": "2025Q2",
+    "value": 4.8,
+    "unit": "%",
+    "model_metric": "none",
+    "source": "NY Fed, The Labor Market for Recent College Graduates",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": ""
+   },
+   {
+    "series_id": "grad_unemployment",
+    "label": "Unemployment rate, recent college graduates 22-27 (NY Fed, %)",
+    "quarter": "2025Q4",
+    "value": 5.7,
+    "unit": "%",
+    "model_metric": "none",
+    "source": "NY Fed",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": ""
+   },
+   {
+    "series_id": "grad_unemployment",
+    "label": "Unemployment rate, recent college graduates 22-27 (NY Fed, %)",
+    "quarter": "2026Q1",
+    "value": 5.6,
+    "unit": "%",
+    "model_metric": "none",
+    "source": "NY Fed",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": ""
+   },
+   {
+    "series_id": "grad_unemployment",
+    "label": "Unemployment rate, recent college graduates 22-27 (NY Fed, %)",
+    "quarter": "2026Q2",
+    "value": 5.6,
+    "unit": "%",
+    "model_metric": "none",
+    "source": "NY Fed",
+    "source_tag": "real (transcribed; secondary confirmation)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": ""
+   },
+   {
+    "series_id": "indeed_software",
+    "label": "Software development job postings, Indeed index (Feb 2020 = 100)",
+    "quarter": "2026Q1",
+    "value": 70.9,
+    "unit": "index",
+    "model_metric": "none",
+    "source": "Indeed Hiring Lab via FRED (IHLIDXUSTPSOFTDEVE), 13 Mar 2026",
+    "source_tag": "real (transcribed; single point)",
+    "used_in_fit": 0,
+    "model_central": null,
+    "error": null,
+    "error_pct": null,
+    "note": ""
+   }
+  ],
+  "summary": {
+   "ai_revenue": {
+    "label": "AI industry revenue (world, $bn/yr)",
+    "n": 2,
+    "mape_pct": 23.1,
+    "bias_pct": -23.1,
+    "used_in_fit": true
+   },
+   "btos_firm": {
+    "label": "Firms using AI (BTOS, %)",
+    "n": 4,
+    "mape_pct": 17.9,
+    "bias_pct": -12.5,
+    "used_in_fit": true
+   },
+   "capex": {
+    "label": "Hyperscaler capex, four companies ($bn/yr)",
+    "n": 3,
+    "mape_pct": 1.7,
+    "bias_pct": -1.7,
+    "used_in_fit": true
+   },
+   "challenger_ai_cum": {
+    "label": "Announced AI-cited job cuts since 2023 (Challenger)",
+    "n": 3,
+    "mape_pct": 105.7,
+    "bias_pct": 94.0,
+    "used_in_fit": true
+   },
+   "grad_unemployment": {
+    "label": "Unemployment rate, recent college graduates 22-27 (NY Fed, %)",
+    "n": 0,
+    "mape_pct": null,
+    "bias_pct": null,
+    "used_in_fit": false,
+    "note": "not tracked by the model"
+   },
+   "indeed_software": {
+    "label": "Software development job postings, Indeed index (Feb 2020 = 100)",
+    "n": 0,
+    "mape_pct": null,
+    "bias_pct": null,
+    "used_in_fit": false,
+    "note": "not tracked by the model"
+   }
+  },
+  "sentences": [
+   "AI industry revenue (world, $bn/yr): the model is off by 23% on average over 2 observations, below the observed values (a calibration target, so not evidence).",
+   "Firms using AI (BTOS, %): the model is off by 18% on average over 4 observations, below the observed values (a calibration target, so not evidence).",
+   "Hyperscaler capex, four companies ($bn/yr): the model is off by 2% on average over 3 observations, below the observed values (a calibration target, so not evidence).",
+   "Announced AI-cited job cuts since 2023 (Challenger): the model is off by 106% on average over 3 observations, above the observed values (a calibration target, so not evidence).",
+   "Unemployment rate, recent college graduates 22-27 (NY Fed, %): the model does not track this quantity; shown for context.",
+   "Software development job postings, Indeed index (Feb 2020 = 100): the model does not track this quantity; shown for context."
+  ],
+  "notes": [
+   "Central run. Rows marked used_in_fit set a parameter (BTOS: adoption q; Challenger 2025 and 2026Q2: layoff_first_share; revenue: P.140 and P.143), so their errors are not evidence.",
+   "A true hold-out would refit on 2024-2025 and score 2026; the fitted parameters used 2026 rows and this is stated on the page."
+  ]
+ },
+ "structural_spread": {
+  "min": -11.6043,
+  "max": -1.9305,
+  "cells": 64,
+  "agree_on_sign": true
+ },
  "caveats": [
+  "This is a structured scenario model, not an estimated forecasting model: its ranges are ranges over its own assumptions and exclude model error.",
   "Every number is a difference from a world in which AI stopped improving in 2023, not a forecast of the level of jobs or output.",
   "The headline counts jobs as full-time equivalents and includes gig and freelance work.",
   "Placeholder inputs, to be replaced with measured data: cohorts, occ_sector, occ_state, sectors, states. Robot, content and trade parameters are the authors' estimates.",
@@ -1501,6 +1848,7 @@
  "forecasts": [
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "RethinkX / Tony Seba, Rethinking Transportation 2020\u20132030 (2017)",
    "short": "Seba 2017, passenger miles",
    "region": "US",
@@ -1515,12 +1863,13 @@
    "claimed_high": null,
    "quarter": "2030Q4",
    "model_central": 1.6,
-   "model_p10": 1.38,
-   "model_p90": 9.64,
+   "model_p10": 1.27,
+   "model_p90": 9.03,
    "verdict": "model lower"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "RethinkX / Tony Seba, Rethinking Transportation (2017)",
    "short": "Seba 2017, drivers (implied)",
    "region": "US",
@@ -1534,13 +1883,14 @@
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2030Q4",
-   "model_central": 1.01,
-   "model_p10": 1.01,
-   "model_p90": 1.01,
+   "model_central": 1.02,
+   "model_p10": 1.02,
+   "model_p90": 1.02,
    "verdict": "model lower"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "RethinkX, Rethinking Humanity (2020)",
    "short": "RethinkX 2020",
    "region": "US",
@@ -1554,13 +1904,14 @@
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2035Q4",
-   "model_central": 0.56,
-   "model_p10": 0.42,
-   "model_p90": 7.21,
+   "model_central": 0.58,
+   "model_p10": 0.41,
+   "model_p90": 6.85,
    "verdict": "model lower"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "Acemoglu (2024), 'The Simple Macroeconomics of AI'",
    "short": "Acemoglu 2024",
    "region": "US",
@@ -1575,12 +1926,13 @@
    "claimed_high": null,
    "quarter": "2034Q4",
    "model_central": 4.31,
-   "model_p10": 2.39,
-   "model_p90": 5.43,
+   "model_p10": 2.5,
+   "model_p90": 5.38,
    "verdict": "model higher"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "Goldman Sachs (2023), 'The Potentially Large Effects of AI on Economic Growth'",
    "short": "Goldman 2023",
    "region": "US",
@@ -1595,12 +1947,13 @@
    "claimed_high": null,
    "quarter": "2033Q4",
    "model_central": 6.41,
-   "model_p10": 4.23,
-   "model_p90": 10.19,
+   "model_p10": 3.34,
+   "model_p90": 7.35,
    "verdict": "within band"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "IMF (2024), 'Gen-AI: Artificial Intelligence and the Future of Work'",
    "short": "IMF 2024",
    "region": "US",
@@ -1614,13 +1967,14 @@
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2034Q4",
-   "model_central": 30.07,
-   "model_p10": 25.21,
-   "model_p90": 31.89,
+   "model_central": 29.34,
+   "model_p10": 24.6,
+   "model_p90": 31.06,
    "verdict": "model lower"
   },
   {
    "source_tag": "transcribed from recollection (V?); fetch and cite before use",
+   "role": "comparison",
    "source": "Brynjolfsson, Chandar, Chen (2025), 'Canaries in the Coal Mine'",
    "short": "Canaries 2025",
    "region": "US",
@@ -1635,12 +1989,13 @@
    "claimed_high": null,
    "quarter": "2025Q4",
    "model_central": -0.5,
-   "model_p10": -0.54,
-   "model_p90": -0.27,
+   "model_p10": -0.64,
+   "model_p90": -0.4,
    "verdict": "model higher"
   },
   {
    "source_tag": "company 10-K/10-Q figures transcribed in capex.csv (real; secondary confirmation)",
+   "role": "comparison",
    "source": "Company reports and guidance (Alphabet, Amazon, Meta, Microsoft), calendar 2025",
    "short": "Hyperscaler capex 2025",
    "region": "US",
@@ -1661,6 +2016,7 @@
   },
   {
    "source_tag": "Jul 2026 guidance via press summaries (V: page summaries 2026-09-03)",
+   "role": "comparison",
    "source": "Company guidance (Jul 2026 earnings calls), calendar 2026",
    "short": "Hyperscaler capex 2026 guidance",
    "region": "US",
@@ -1681,6 +2037,7 @@
   },
   {
    "source_tag": "press summaries and Menlo Ventures 2025 (V: secondary; scope varies by source, hence the range)",
+   "role": "target",
    "source": "Generative-AI industry revenue 2025: OpenAI $13.1bn (FT-verified statements), Anthropic about $5bn, Microsoft and Google AI lines, Menlo Ventures' enterprise estimate; consumer plus enterprise",
    "short": "AI industry revenue 2025",
    "region": "US",
@@ -1695,12 +2052,13 @@
    "claimed_high": 80.0,
    "quarter": "2025Q4",
    "model_central": 53.02,
-   "model_p10": 39.42,
-   "model_p90": 77.98,
+   "model_p10": 38.94,
+   "model_p90": 77.95,
    "verdict": "within band"
   },
   {
    "source_tag": "press summaries (V: secondary; run rates are not calendar revenue, hence the range)",
+   "role": "target",
    "source": "Generative-AI industry revenue 2026 (estimate): OpenAI about $40bn annualized (Jul 2026), Anthropic about $47bn gross run rate (Aug 2026), Microsoft, Google and others; estimates in circulation run from about $90bn to about $200bn",
    "short": "AI industry revenue 2026 (est.)",
    "region": "US",
@@ -1715,12 +2073,13 @@
    "claimed_high": 200.0,
    "quarter": "2026Q4",
    "model_central": 91.61,
-   "model_p10": 64.4,
-   "model_p90": 142.55,
+   "model_p10": 63.54,
+   "model_p90": 145.47,
    "verdict": "within band"
   },
   {
    "source_tag": "challengergray.com monthly reports (V: page summaries 2026-09-03; report PDFs not fetched)",
+   "role": "target",
    "source": "Challenger, Gray & Christmas, job cut announcement reports (2025 annual; monthly through June 2026)",
    "short": "Challenger 2025, AI-cited job cuts",
    "region": "US",
@@ -1734,13 +2093,14 @@
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2025Q4",
-   "model_central": 65642.81,
-   "model_p10": 36427.85,
-   "model_p90": 68822.06,
+   "model_central": 65660.37,
+   "model_p10": 47712.45,
+   "model_p90": 81078.99,
    "verdict": "within band"
   },
   {
    "source_tag": "challengergray.com June 2026 report and coverage (V: page summaries 2026-09-03; report PDFs not fetched)",
+   "role": "target",
    "source": "Challenger, Gray & Christmas, job cut announcement reports (cumulative since AI was first tracked in 2023)",
    "short": "Challenger 2026, AI-cited cuts since 2023",
    "region": "US",
@@ -1754,13 +2114,14 @@
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2026Q2",
-   "model_central": 138996.87,
-   "model_p10": 85642.84,
-   "model_p90": 149339.43,
-   "verdict": "model lower"
+   "model_central": 139070.91,
+   "model_p10": 109032.85,
+   "model_p90": 181701.63,
+   "verdict": "within band"
   },
   {
    "source_tag": "rethinkx.com/blog/rethinkx/disruptive-economics-of-humanoid-robots and /the-disruption-of-labour-by-humanoid-robots (V: page summaries 2026-09-02; full text not fetched)",
+   "role": "comparison",
    "source": "RethinkX, 'Near-zero cost labor: the disruptive economics of humanoid robots' (2025) and 'This time, we are the horses' (2024, updated Dec 2025)",
    "short": "RethinkX 2025, robot cost at entry",
    "region": "US",
@@ -1775,12 +2136,13 @@
    "claimed_high": null,
    "quarter": "2025Q4",
    "model_central": 4.27,
-   "model_p10": 3.54,
-   "model_p90": 4.48,
+   "model_p10": 3.55,
+   "model_p90": 4.47,
    "verdict": "model lower"
   },
   {
    "source_tag": "rethinkx.com/labor/in-depth/insights-into-humanoid-robotics (V: page summary 2026-09-02; full text not fetched)",
+   "role": "comparison",
    "source": "RethinkX, 'Near-zero cost labor' (2025); '15 RethinkX Robotics Insights' (2026)",
    "short": "RethinkX 2025, robot cost by 2035",
    "region": "US",
@@ -1795,12 +2157,13 @@
    "claimed_high": null,
    "quarter": "2034Q4",
    "model_central": 2.03,
-   "model_p10": 0.44,
-   "model_p90": 2.72,
-   "verdict": "within band"
+   "model_p10": 1.5,
+   "model_p90": 2.69,
+   "verdict": "model higher"
   },
   {
    "source_tag": "rethinkx.com/blog/rethinkx/the-painful-truth-about-ai-and-robotics (V: page summary 2026-09-02; full text not fetched)",
+   "role": "comparison",
    "source": "RethinkX, 'This time, we are the horses' (updated Dec 2025); 'The Painful Truth about AI & Robotics' (2026)",
    "short": "RethinkX 2026, robots do half of physical work",
    "region": "US",
@@ -1810,17 +2173,18 @@
    "preset_id": "preset-seba-2026",
    "claimed": 50.0,
    "unit": "% of physical task-hours",
-   "note": "'by the end of the 2030s robots are likely to be performing as much total labor as human beings'; read as half of physical task-hours done by robots and vehicles at 2039Q4 (office and analytical work is the software channel, not this claim); model quantity: robots' and vehicles' share of physical task-hours (embodied channels are 24% of all task-hours; the rest is office and analytical work done by software)",
+   "note": "'by the end of the 2030s robots are likely to be performing as much total labor as human beings'; read as half of physical task-hours done by robots and vehicles at 2039Q4 (office and analytical work is the software channel, not this claim); model quantity: robots' and vehicles' share of physical task-hours (embodied channels are 21% of all task-hours; the rest is office and analytical work done by software)",
    "claimed_low": null,
    "claimed_high": null,
    "quarter": "2039Q4",
-   "model_central": 8.83,
-   "model_p10": 6.5,
-   "model_p90": 36.87,
+   "model_central": 9.84,
+   "model_p10": 6.76,
+   "model_p90": 36.88,
    "verdict": "model lower"
   },
   {
    "source_tag": "user-supplied summary of the 2026 report (V: summary only; report not fetched)",
+   "role": "comparison",
    "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
    "short": "Seba 2026, TaaS by 2035",
    "region": "US",
@@ -1835,12 +2199,13 @@
    "claimed_high": null,
    "quarter": "2035Q4",
    "model_central": 7.6,
-   "model_p10": 6.27,
+   "model_p10": 5.22,
    "model_p90": 68.6,
    "verdict": "model lower"
   },
   {
    "source_tag": "user-supplied summary of the 2026 report (V: summary only; the 50% midpoint is our interpolation)",
+   "role": "comparison",
    "source": "Seba / RethinkX, 'Rethinking Energy, Mobility, and Materials' (2026), decadal roadmap",
    "short": "Seba 2026, TaaS by 2032",
    "region": "US",
@@ -1855,14 +2220,14 @@
    "claimed_high": null,
    "quarter": "2032Q4",
    "model_central": 2.9,
-   "model_p10": 2.44,
-   "model_p90": 32.13,
+   "model_p10": 2.16,
+   "model_p90": 31.37,
    "verdict": "model lower"
   }
  ],
  "glossary": {
   "versus no AI": "compared with a world in which AI stopped improving in 2023; population and normal growth are the same in both",
-  "likely range": "the middle 80% of the model's runs; one run in ten falls above it and one in ten below",
+  "range of the model's assumptions": "the middle 80% of the model's runs across its parameter draws and mechanism cells; one run in ten falls above it and one in ten below. It is not a forecast interval: it excludes model error, data error and events outside the model",
   "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
   "AI income (AI producers' revenue)": "what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive; in the model this equals what employers and consumers spend on AI, split by stage and allocated to the regions whose companies hold the market share; gross revenue, not profit and not economic rent in the textbook sense",
   "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",

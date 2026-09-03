@@ -92,11 +92,11 @@ describe('StoryView', () => {
   it('fills the sureness dots per beat', async () => {
     const { w } = await mountStory()
     const filled = (id: string) => w.find(`[data-beat="${id}"]`).findAll('.dot.on').length
-    expect(filled('jobs')).toBe(2)
+    expect(filled('jobs')).toBe(story.beats[0]!.sureness.dots)
     const hiring = story.beats[1]!
     expect(filled('hiring')).toBe(hiring.sureness.dots)
     expect(filled('futures')).toBe(1)
-    expect(w.find('[data-beat="jobs"]').text()).toContain('leaning this way')
+    expect(w.find('[data-beat="jobs"]').text()).toContain(story.beats[0]!.sureness.label)
     expect(w.find('[data-beat="hiring"]').text()).toContain(hiring.sureness.label)
     expect(w.find('[data-beat="jobs"]').findAll('.dot')).toHaveLength(3)
   })
@@ -125,11 +125,16 @@ describe('StoryView', () => {
   })
 
   it('renders the policy cards with their stats and the validity ribbon', async () => {
+    // the shipped basic income is balanced-budget, so flag one policy here to exercise the ribbon
+    const st = structuredClone(story)
+    const flaggedIdx = st.policies.findIndex((p) => p.scenario_id === 'policy-ubi-ai-tax')
+    st.policies[flaggedIdx]!.validity_note = 'Deficit above the model\'s validity range'
+    fetchStory.mockImplementationOnce(async () => st)
     const { w } = await mountStory()
     const cards = w.findAll('.policy')
-    expect(cards).toHaveLength(4)
+    expect(cards).toHaveLength(story.policies.length)
     expect(cards.map((c) => c.find('h4').text())).toEqual(story.policies.map((p) => p.name))
-    const flagged = story.policies.filter((p) => p.validity_note)
+    const flagged = st.policies.filter((p) => p.validity_note)
     expect(w.findAll('.policy .ribbon')).toHaveLength(flagged.length)
     expect(flagged.length).toBeGreaterThan(0)
     expect(w.find('.policy .ribbon').text()).toBe(flagged[0]!.validity_note)
@@ -160,7 +165,7 @@ describe('StoryView', () => {
     expect(rows).toHaveLength(story.forecasts.length)
     story.forecasts.forEach((f, i) => {
       const row = rows[i]!
-      expect(row.find('td').text()).toBe(f.short)
+      expect(row.find('td').text().startsWith(f.short)).toBe(true)
       expect(row.find('td').attributes('title')).toBe(f.source)
       const num = (v: number) => pyFixed(v, Number.isInteger(v) ? 0 : 1)
       const range =
@@ -173,8 +178,9 @@ describe('StoryView', () => {
           ? pyFixed(f.model_central, Number.isInteger(f.model_central) ? 0 : 1)
           : 'n/a',
       )
-      expect(row.find('.chip').text()).toBe(f.verdict)
-      expect(row.find('.chip').classes()).toContain(f.verdict === 'within band' ? 'within' : 'off')
+      const verdict = row.find('.chip:not(.target)')
+      expect(verdict.text()).toBe(f.verdict)
+      expect(verdict.classes()).toContain(f.verdict === 'within band' ? 'within' : 'off')
       expect(row.find('.star').exists()).toBe(!!f.proxy)
       expect(row.find('.link-btn').exists()).toBe(!!f.preset_id)
     })
@@ -237,9 +243,9 @@ describe('StoryView', () => {
     expect(w.find('[aria-labelledby="backtest-h"]').exists()).toBe(false)
     expect(w.text()).not.toContain('How the model has done so far')
     expect(w.find('.range-note').exists()).toBe(false)
-    // and the same when the fields are absent altogether (the mock story)
+    // and the shipped mock, which carries both, shows the section
     const { w: w2 } = await mountStory()
-    expect(w2.find('[aria-labelledby="backtest-h"]').exists()).toBe(false)
+    expect(w2.find('[aria-labelledby="backtest-h"]').exists()).toBe(Boolean(story.backtest))
   })
 
   it('marks calibration targets on the scoreboard and counts them in the footer', async () => {
@@ -251,7 +257,10 @@ describe('StoryView', () => {
     const rows = w.findAll('table.forecasts tbody tr')
     expect(rows[0]!.find('.chip.target').text()).toBe('calibration target')
     expect(rows[1]!.find('.chip.target').exists()).toBe(false)
-    expect(w.find('.counts').text()).toContain(`${st.forecasts.length - 1} comparisons, 1 calibration target`)
+    const targets = st.forecasts.filter((f) => f.role === 'target').length
+    expect(w.find('.counts').text()).toContain(
+      `${st.forecasts.length - targets} comparisons, ${targets} calibration target${targets === 1 ? '' : 's'}`,
+    )
   })
 
   it('lists the caveats and the glossary', async () => {

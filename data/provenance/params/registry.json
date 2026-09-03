@@ -3,15 +3,15 @@
   "source": "docs/model-spec.md §10 parameter registry (v0.2)",
   "source_url": "docs/model-spec.md",
   "license": "project",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "43a47c15efd15e6839657785d7021036cd76e4fb23b852ccce5d060151892e8b",
+  "sha256": "86161eb74cb493710a1ac9d421bd7b2a00440e596539d43b67f3fa18522093bf",
   "transformations": [
     "transcribed row by row; class/modality/size/stage centrals as `by` mappings with top-level central null; textual centrals kept in `note`"
   ],
   "status": "real (transcribed)",
-  "notes": "Spec §10 says 'Counts: 77 parameters; 18 S, 21 D, 38 E'. The tables as written contain 81 rows (including P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer). Transcribed rows: 110.",
-  "built_at": "2026-09-02T13:11:33+00:00",
+  "notes": "Spec §10 says 'Counts: 77 parameters; 18 S, 21 D, 38 E'. The tables as written contain 81 rows (including P.32a and P.32b); all rows are transcribed verbatim. v0.3 adds P.100–P.128 (application layer). Transcribed rows: 118.",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/params/registry.yaml",
   "extra": {}
 }

@@ -3,7 +3,7 @@
   "source": "spec §6.3 table (P.85) from Public gross margins (NVIDIA, TSMC, ASML, Microsoft, Alphabet, Amazon)",
   "source_url": "https://www.sec.gov/edgar/search/",
   "license": "Public filings; press estimates flagged E",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "893244e2a076fecdbcbd21f8a95823027fd312fdc6d507f664631f7eb8c561c7",
   "transformations": [
@@ -12,7 +12,7 @@
   ],
   "status": "partial (D, public gross margins, approximate)",
   "notes": "Shares are the spec's central values derived from public gross margins (D); not fitted here.",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/regions/value_chain.csv",
   "extra": {}
 }

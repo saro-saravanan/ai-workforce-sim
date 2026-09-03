@@ -21,7 +21,7 @@ def ctx():
 @pytest.fixture(scope="module")
 def baseline_doc(ctx):
     scen = load_scenario_by_path_or_id(ctx, "baseline")
-    return run_scenario(ctx, scen, draws=64, with_tornado=False)
+    return run_scenario(ctx, scen, draws=129, with_tornado=False)   # draw 0 is central; 128 more give two draws per cell, so the within-cell spread is defined
 
 
 def test_monte_carlo_budget(ctx):
@@ -68,7 +68,7 @@ def test_validity_flag_present(baseline_doc):
 
 def test_ensemble_cells_and_confidence(baseline_doc):
     doc, _ = baseline_doc
-    assert len(doc["meta"]["cells"]) == 64 == len(cells())      # 2×2×2 (v0.2) × hardware learning rate (v0.3 §A.7)
+    assert len(doc["meta"]["cells"]) == 64 == len(cells())      # 2×2×2 (v0.2) × hardware learning rate (v0.3 §A.7) × authenticity × closure (Phase 9)
     st = doc["structural"]["employment_pct_vs_baseline"]
     assert set(st["by_cell"]) == set(doc["meta"]["cells"])
     assert st["spread"]["2040Q4"]["structural_pp"] > 0 and st["spread"]["2040Q4"]["parametric_pp"] > 0

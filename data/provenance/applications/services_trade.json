@@ -3,7 +3,7 @@
   "source": "spec v0.3 §A.5.3 traded services (authors' estimates, V?)",
   "source_url": "docs/model-spec-v0.3-applications.md",
   "license": "n/a (estimates)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "6f15f429e1732be6a1140cc66b58b934491e1f327bed73fac9c0fe2d6e0f5083",
   "transformations": [
@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Replace with UNCTAD/WTO BPM6 services trade, NASSCOM, IBPAP and Eurostat ITS (§A.10).",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/applications/services_trade.csv",
   "extra": {}
 }

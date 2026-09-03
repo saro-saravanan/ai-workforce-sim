@@ -3,7 +3,7 @@
   "source": "OEWS May 2021 national detailed occupation percentiles (national_May2021_dl.csv, GPTs-are-GPTs mirror)",
   "source_url": "https://github.com/openai/GPTs-are-GPTs",
   "license": "MIT (repo mirror); underlying BLS data public domain (https://www.bls.gov/oes/)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
   "sha256": "b010cfb2eb121bb78a2452ddbabf0ba599e417af49645459807f1c028f8331ce",
   "transformations": [
@@ -13,7 +13,7 @@
   ],
   "status": "partial (derived D)",
   "notes": "VINTAGE: OEWS May 2021 (GPTs-are-GPTs mirror), not May 2025; refreshed when ingest/oews.py replaces the raw file. Fit levels: {'major': 6, 'major_sigma': 18, 'own': 807}. Treating '#' as missing understates dispersion for top-coded occupations. Employment-weighted share per decile (should be ~0.1 each; OEWS excludes the self-employed and the lognormal is an approximation): [0.0614, 0.1351, 0.1369, 0.1169, 0.0991, 0.0868, 0.08, 0.079, 0.0848, 0.1201].",
-  "built_at": "2026-09-02T13:11:33+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/cohorts/occ_decile.csv",
   "extra": {
     "fit_levels": {

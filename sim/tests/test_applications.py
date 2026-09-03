@@ -170,7 +170,7 @@ def test_traded_services_reach_exporters(ctx):
 def test_ensemble_has_authenticity_and_hardware_axes():
     from aiwsim.sampling import cells
     ids = [c["id"] for c in cells()]
-    assert len(ids) == 32 and any(i.endswith("|persistent") for i in ids) and any("|electronics|" in i for i in ids)
+    assert len(ids) == 64 and any("|persistent|" in i for i in ids) and any("|electronics|" in i for i in ids) and any(i.endswith("|no_demand_feedback") for i in ids)
 
 
 def test_applications_section_covers_all_families(ctx):

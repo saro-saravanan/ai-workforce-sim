@@ -3,15 +3,15 @@
   "source": "spec v0.3 §A.8 application catalogue",
   "source_url": "docs/model-spec-v0.3-applications.md",
   "license": "n/a (catalogue)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "f1e22b3d931127714d48deabc1065444a37fe365cb6f9224e8f0e8a7da1fa8b1",
+  "sha256": "6357eb21456bb5561319f1d03d3becc7f24213eefd3d5cea9cefadd1debbb800",
   "transformations": [
     "one row per application: family, embodiment class(es), target occupation codes, platform flag, regions first, anchor series, constraints, provisional timings"
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Phase 6 implements the embodied rows; output-substitution and traded-services rows arrive in Phase 7. Timings are provisional ranges for the reviewer, not results.",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/applications/applications.csv",
   "extra": {}
 }

@@ -3,7 +3,7 @@
   "source": "FIXTURE: CPS-based self-employment shares by SOC major group (E) with platform add-ons (E, V?)",
   "source_url": "https://cps.ipums.org/cps/",
   "license": "n/a (fixture)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "2f6437ca4e11f829987fc4b1028ca44f4890b54380fbe6d2b8d797dc5bc8c273",
   "transformations": [
@@ -13,7 +13,7 @@
   ],
   "status": "FIXTURE",
   "notes": "Replaced by ingest/cps_selfemp.py (IPUMS CPS class of worker, hours, multiple job holding) and Census Nonemployer Statistics. FTE by region: {'US': 11557131, 'EU': 17393461, 'UK': 2969319, 'CN': 95539859, 'JP': 3877988, 'KR': 3577982, 'IN': 135362767, 'TW': 974373, 'SG': 228497, 'RoA': 103923669}.",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/applications/self_employed.csv",
   "extra": {
     "fte_by_region": {

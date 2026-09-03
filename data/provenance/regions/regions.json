@@ -3,7 +3,7 @@
   "source": "Natural Earth admin-0 (population, GDP) aggregated over region_members.csv; other columns are the constant tables in aiwsim.data.regions",
   "source_url": "https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_50m_admin_0_countries.geojson",
   "license": "Public domain (Natural Earth); n/a (estimates)",
-  "pulled_at": "2026-09-02",
+  "pulled_at": "2026-09-03",
   "commit": "",
   "sha256": "026463224379a57eb562b87a0bd755082f9535b06a2ab10725d832c43497702d",
   "transformations": [
@@ -14,7 +14,7 @@
   ],
   "status": "partial (Natural Earth pop/GDP real; other columns E)",
   "notes": "Natural Earth POP_EST / GDP_MD are mostly 2019 estimates (pop_year / gdp_year columns). EMP_TO_POP_RATIO is employment over TOTAL population, not the 15+/16+ headline ratio. import_share is replaced by ingest/oecd_tiva.py; epl_multiplier is an approximate reading of OECD EPL strictness ratios (D); regime and avail_delay_quarters follow spec §8.2 / P.30.",
-  "built_at": "2026-09-02T13:11:34+00:00",
+  "built_at": "2026-09-03T17:18:03+00:00",
   "output": "data/processed/regions/regions.csv",
   "extra": {
     "column_tags": {
