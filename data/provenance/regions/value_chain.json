@@ -12,7 +12,7 @@
   ],
   "status": "partial (D, public gross margins, approximate)",
   "notes": "Shares are the spec's central values derived from public gross margins (D); not fitted here.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/regions/value_chain.csv",
   "extra": {}
 }

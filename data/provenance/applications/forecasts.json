@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (transcribed from recollection, V?)",
   "notes": "Every claimed value is V? until the source document is fetched and quoted; the scoreboard compares each with the model's central value and band.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/applications/forecasts.csv",
   "extra": {}
 }

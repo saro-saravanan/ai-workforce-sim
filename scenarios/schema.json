@@ -156,6 +156,13 @@
               "maximum": 999,
               "default": 0,
               "description": "Re-seeds the hash that spreads per-task feasibility thresholds (spec §2.2); 0 is the reference hash. Used for the threshold-seed sensitivity (review §2.4)."
+            },
+            "exposure_source": {
+              "enum": [
+                "gpts",
+                "aioe"
+              ],
+              "description": "Occupation exposure source (review §2.4): gpts = Eloundou et al. task labels (default); aioe = Felten, Raj and Seamans AIOE scores rank-mapped onto the GPTs beta scale, so only the ordering of occupations changes. Needs the AIOE appendix fetched (aiwsim data fetch)."
             }
           }
         },
@@ -440,6 +447,13 @@
                 "no_demand_feedback"
               ],
               "description": "Macro closure (review 2.1): demand keeps the household demand multiplier (P.87); no_demand_feedback sets it to zero so displacement is absorbed by wages and flows."
+            },
+            "io_propagation": {
+              "enum": [
+                "on",
+                "off"
+              ],
+              "description": "Input-output cost propagation (Phase 9b, review item 10): on passes each sector's labour-cost saving through to the sectors that buy its output via the BEA direct-requirements matrix; off keeps the direct saving only. No effect without data/processed/io_direct_requirements.csv."
             }
           }
         },
@@ -818,7 +832,7 @@
     "preset": {
       "type": "boolean",
       "default": false,
-      "description": "Report-replication preset (spec \u00a78.4)."
+      "description": "Report-replication preset (spec §8.4)."
     },
     "user": {
       "type": "boolean",

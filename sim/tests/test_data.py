@@ -11,6 +11,7 @@ import polars as pl
 import pytest
 from aiwsim.data.build import TABLES, build_all
 from aiwsim.data.classify import MODALITIES, USE_CASES
+from aiwsim.data.fixtures import SECTORS_20
 from aiwsim.data.provenance import STATUS_VALUES, list_provenance, status_kind
 from aiwsim.data.registry import load_registry
 
@@ -152,10 +153,14 @@ def test_classifier_columns_take_allowed_values(built):
     assert set(t["modality"]) == set(MODALITIES) and set(t["use_case"]) == set(USE_CASES)
 
 
-def test_sectors_fixture(built):
+def test_sectors_table(built):
     s = _read("sectors.csv")
-    assert s.height == 1 and s["sector_code"][0] == "ALL"
-    assert float(s["labor_cost_share"][0]) == 0.58 and float(s["demand_elasticity"][0]) == 0.8
+    if (ROOT / "data" / "external" / "bls").exists() and list((ROOT / "data" / "external" / "bls").glob("natsector_M20*_dl.xlsx")):
+        assert s.height == 20 and set(s["sector_code"]) == {r["sector_code"] for r in SECTORS_20}          # real OEWS sectors (Phase 9b)
+        assert abs(float(s["consumption_share"].cast(pl.Float64).sum()) - 1.0) < 1e-3
+    else:
+        assert s.height == 1 and s["sector_code"][0] == "ALL"
+        assert float(s["labor_cost_share"][0]) == 0.58 and float(s["demand_elasticity"][0]) == 0.8
     s20 = pl.read_csv(ROOT / "data" / "fixtures" / "sectors_20.csv", infer_schema_length=0)
     assert s20.height == 20 and s20["sector_code"].n_unique() == 20
 
@@ -378,7 +383,7 @@ def test_geo_world_matches_members(built):
 def test_raw_manifest_matches_local_inputs():
     """The pinned fetch manifest describes exactly the raw files the shipped tables were built from."""
     from aiwsim.data.fetch import MANIFEST, missing
-    assert len(MANIFEST) == 13 and len({f.dest for f in MANIFEST}) == 13
+    assert len(MANIFEST) == 14 and len({f.dest for f in MANIFEST}) == 14
     if not (ROOT / "data" / "raw" / "gpts_are_gpts" / "full_labelset.tsv").exists():
         pytest.skip("raw inputs not present")
     assert missing(ROOT) == []

@@ -5,7 +5,7 @@
   "license": "MIT (repo mirror); underlying BLS data public domain (https://www.bls.gov/oes/; https://www.bls.gov/emp/)",
   "pulled_at": "2026-09-03",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
-  "sha256": "0e173a91445481af87c047493f1dc88c9cab2efe5d8606eb85752b1f7dc0fc2d",
+  "sha256": "2a632460b222fac6817dc6a363940737af3620fb49f8ec18597a8c398b248e3f",
   "transformations": [
     "OEWS detailed rows only (831 occupations, SOC 2018 hybrid); TOT_EMP -> emp_national",
     "wages A_MEAN/A_PCT10/A_MEDIAN; '#' and '*' treated as missing; fill order: occupation's other reported wage (median<-mean, mean<-median), then major-group value; flagged in wage_imputed",
@@ -14,8 +14,8 @@
     "clusters per spec §1.1 (aiwsim.data.clusters): anchors >= 300k, merge within minor group when |Δbeta| < 0.1 and |Δmedian wage| < 20%, never across major groups"
   ],
   "status": "partial",
-  "notes": "VINTAGE: employment and wages are OEWS May 2021 and growth is EP 2020-30, not the May 2025 / 2024-34 vintages required by the spec; replace via aiwsim.data.ingest.oews and ingest.ep. Wages missing in raw: {'wage_mean_annual': 6, 'wage_p10_annual': 6, 'wage_median_annual': 24}; occupations with any imputed wage: 24. Growth match levels: {'broad': 31, 'detailed': 758, 'major': 2, 'minor': 40}. Occupations without O*NET tasks: 47 (2,175,330 heads), beta imputed. Clusters: {'n_clusters': 450, 'anchors': 109, 'merged': 145, 'singles_below_threshold': 196, 'max_size': 17} with params {'emp_threshold': 300000, 'beta_tol': 0.1, 'wage_tol': 0.2, 'family': 'minor', 'stage2_major': False}.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "VINTAGE: employment and wages are OEWS May 2021 and growth is EP 2020-30, not the May 2025 / 2024-34 vintages required by the spec; replace via aiwsim.data.ingest.oews and ingest.ep. Wages missing in raw: {'wage_mean_annual': 6, 'wage_p10_annual': 6, 'wage_median_annual': 24}; occupations with any imputed wage: 24. Growth match levels: {'broad': 31, 'detailed': 758, 'major': 2, 'minor': 40}. Occupations without O*NET tasks: 47 (2,175,330 heads), beta imputed. Clusters: {'n_clusters': 444, 'anchors': 122, 'merged': 138, 'singles_below_threshold': 184, 'max_size': 16} with params {'emp_threshold': 300000, 'beta_tol': 0.1, 'wage_tol': 0.2, 'family': 'minor', 'stage2_major': False}.",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/occupations.csv",
   "extra": {
     "occupations_without_onet_tasks": {
@@ -72,11 +72,11 @@
       ]
     },
     "clusters": {
-      "n_clusters": 450,
-      "anchors": 109,
-      "merged": 145,
-      "singles_below_threshold": 196,
-      "max_size": 17
+      "n_clusters": 444,
+      "anchors": 122,
+      "merged": 138,
+      "singles_below_threshold": 184,
+      "max_size": 16
     },
     "cluster_params": {
       "emp_threshold": 300000,

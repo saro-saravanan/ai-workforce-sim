@@ -11,7 +11,7 @@
   ],
   "status": "FIXTURE (E: authors' estimates, spec v0.3)",
   "notes": "Replace with UNCTAD/WTO BPM6 services trade, NASSCOM, IBPAP and Eurostat ITS (§A.10).",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/applications/services_trade.csv",
   "extra": {}
 }

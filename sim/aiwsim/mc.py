@@ -313,6 +313,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     sw = tg.channel == 0                       # software channel; embodied and 'none' task groups never enter the software layer (spec v0.3 §A.2)
     nonsw = ~sw
     a[:, nonsw] = 0.0
+    if p.flags.get("exposure_source", "gpts") == "aioe" and inp.occ_beta_alt is not None:
+        # exposure-source swap (review §2.4): scale every occupation's ever-automatable mass by the ratio of its AIOE exposure (rank-mapped onto the
+        # GPTs-are-GPTs beta scale) to its GPTs beta; occupations without an AIOE score keep their mass; the total mass is close to unchanged
+        b0 = inp.occ_exposure_beta; b1 = inp.occ_beta_alt
+        ratio = np.where(np.isfinite(b1) & (b0 > 1e-6), np.clip(b1 / np.maximum(b0, 1e-6), 0.25, 4.0), 1.0)
+        a = np.minimum(a * ratio[tg.occ][None, :].astype(TDTYPE), 1.0).astype(TDTYPE)
     g_mod = np.stack([np.ones(D), bp.vec("P.34.other_cognitive", 0.7), bp.vec("P.34.interpersonal", 0.5), np.ones(D)], axis=1)
     g = g_mod[:, tg.modality].astype(TDTYPE)
     i_ref = min(9, n_q - 1); C_ref = C[:, i_ref:i_ref + 1]
@@ -430,6 +436,12 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
     if not ch.demand_response:
         eta = np.zeros_like(eta)
     pi_p = bp.col("P.53", 0.7); s_L = inp.labor_cost_share[None, :]
+    # input-output cost propagation (Phase 9b, review item 10): a sector's price falls with its own labour saving and with the price of its
+    # intermediate inputs, dlnP = (I - A^T)^-1 dlnc_direct with A the BEA direct-requirements matrix; identity without the table or when the lever is off
+    io_L = None
+    if inp.io_direct_requirements is not None and p.flags.get("io_propagation", "on") != "off":
+        A = np.clip(inp.io_direct_requirements, 0.0, 0.95)
+        io_L = np.linalg.inv(np.eye(A.shape[0]) - A.T)
     attr = bp.col("P.63", 2.5) / 100.0; lay = bp.col("P.64", 0.25); phi_lay = float(p.flags.get("layoff_first_share", 0.0))
     hazard_self = bp.col("P.121", 0.3) / 4.0; lay_conv = bp.col("P.122", 0.6)
     eps_w = bp.col("P.73", 0.3); beta_w = bp.col("P.74", 0.3)
@@ -813,6 +825,8 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         auto = np.einsum("dro,so->drs", zeta_lag, W) if ch.automation else 0.0
         aug = np.einsum("dro,so->drs", psi[:, None, :] * U_lag / (1.0 + psi[:, None, :] * U_lag), W) if ch.augmentation else 0.0
         dlnc = -s_L[None] * (auto + aug)                                             # [D, R, n_sec]
+        if io_L is not None:
+            dlnc = dlnc @ io_L.T                                                      # direct plus upstream cost pass-through (spec §6.2, Phase 9b)
         Q_ratio = np.exp(-eta[:, None, :] * pi_p[:, None, :] * dlnc) * (1.0 + (mu if ch.demand_feedback else 0.0))
         rec["q"][:, :, t] = Q_ratio.mean(axis=2); rec["dlnc"][:, :, t] = dlnc @ wY
         q_occ = Q_ratio @ inp.occ_sector.T
@@ -837,7 +851,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
             emp_w = N0t[:, :, None, :] * cat_mask[None, None, :, :]                        # [1, R, n_cat, n_occ] weights
             Fbar = (emp_w * feas[:, :, None, :]).sum(axis=3) / np.maximum(emp_w.sum(axis=3), 1.0)            # [D, R, n_cat]
             zbar = (emp_w * zetaR[:, :, None, :]).sum(axis=3) / np.maximum(emp_w.sum(axis=3), 1.0)
-            ln_pH = -pi_p[:, 0][:, None, None] * float(inp.labor_cost_share.mean()) * zbar                    # human price falls with AI-tool cost savings
+            ln_pH = -pi_p[:, 0][:, None, None] * inp.labor_cost_share_mean * zbar                    # human price falls with AI-tool cost savings
             # AI content price to consumers: distribution, curation and platform margin dominate, so it tracks the token price weakly (E: exponent 0.1) and never
             # falls below half its 2024 ratio; the 2024 ratio itself is the category's ratio0 (spec §A.4, attack 8)
             ln_pAI = np.maximum(ln_ratio0[None, None, :] + 0.1 * np.log(price_fixed[t] / price_fixed[0]), ln_ratio0[None, None, :] + np.log(0.5)) + np.log1p(margin_s)[:, None, None]
@@ -860,7 +874,7 @@ def run_batch(inp: Inputs, p: Params, scenario: dict[str, Any], draws: DrawSet |
         DT[:, :, t] = D_trade[0]
         # ---- application-level induced demand (spec §A.3.5; Seba-style: a service that gets much cheaper is used much more) ----
         if app_eta_extra is not None:
-            dlnc_app = -float(inp.labor_cost_share.mean()) * zeta_emb                       # cost change of the application's own service
+            dlnc_app = -inp.labor_cost_share_mean * zeta_emb                       # cost change of the application's own service
             q_out = q_out * np.exp(-app_eta_extra[None, None, :] * pi_p[:, 0][:, None, None] * dlnc_app)
         N_star = N0t * q_occ * q_out * (1.0 - D_use) / (1.0 + psi[:, None, :] * U_use) * (1.0 + nu)
 

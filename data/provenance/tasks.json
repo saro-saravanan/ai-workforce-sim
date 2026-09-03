@@ -5,7 +5,7 @@
   "license": "MIT",
   "pulled_at": "2026-09-03",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
-  "sha256": "518192ba1ef679ed44daa251f28a3b595cee395a95c012221c2ad2afe2749e58",
+  "sha256": "158f3224ce3bb5645ffdd2f4b9234d93c5a8b31028ff82314346eddb06690b31",
   "transformations": [
     "O*NET-SOC code -> 6-digit SOC -> OEWS May 2021 code (broad code where OEWS publishes the broad occupation; explicit crosswalk ONET_TO_OEWS_2021 for SOC-2010-era codes)",
     "weight = Core 2 / Supplemental 1 (Eloundou coreweight; missing Task Type -> 1), normalized within occ_code",
@@ -15,11 +15,11 @@
     "presence keyword-rules v1 (E)",
     "use_case (EU AI Act Annex III / Art. 50) keyword-rules v1 (E)",
     "consequence_high keyword-rules v1 (E)",
-    "channel channel-rules v2 (E, spec v0.3 §A.2; trades cap, Phase 9)"
+    "channel channel-rules v3 (E, spec v0.3 §A.2; trades cap, handling cue, group gates; Phase 9b audit)"
   ],
   "status": "real",
-  "notes": "Labels and weights are real (status real); modality, presence, use_case and consequence_high are E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. Label source counts: {'human_labels': 19235}. Tasks dropped because the SOC is not published in OEWS: 30 (['45-3031']). Rows with missing Task Type given weight 1: 1310. Classifier distribution (row shares): {'modality': {'interpersonal': 0.2594, 'other_cognitive': 0.2332, 'physical': 0.2278, 'software': 0.2796}, 'use_case': {'high_risk': 0.0477, 'transparency': 0.0193, 'unregulated': 0.933}, 'consequence_high': {'0': 0.7697, '1': 0.2303}, 'channel': {'emb_aerial': 0.0001, 'emb_driving': 0.0113, 'emb_fixed': 0.024, 'emb_manip': 0.1662, 'none': 0.0357, 'software': 0.7628}, 'presence': {'mean': 0.422, 'p10': 0.1, 'p50': 0.45, 'p90': 0.7}}",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "Labels and weights are real (status real); modality, presence, use_case and consequence_high are E-tagged keyword rules (aiwsim.data.classify) to be replaced by O*NET Work Context / GWA on ingest. Label source counts: {'human_labels': 19235}. Tasks dropped because the SOC is not published in OEWS: 30 (['45-3031']). Rows with missing Task Type given weight 1: 1310. Classifier distribution (row shares): {'modality': {'interpersonal': 0.2594, 'other_cognitive': 0.2332, 'physical': 0.2278, 'software': 0.2796}, 'use_case': {'high_risk': 0.0477, 'transparency': 0.0193, 'unregulated': 0.933}, 'consequence_high': {'0': 0.7697, '1': 0.2303}, 'channel': {'emb_aerial': 0.0003, 'emb_driving': 0.0087, 'emb_fixed': 0.0305, 'emb_manip': 0.1035, 'none': 0.0946, 'software': 0.7625}, 'presence': {'mean': 0.422, 'p10': 0.1, 'p50': 0.45, 'p90': 0.7}}",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/tasks.csv",
   "extra": {
     "classifier_distribution": {
@@ -39,12 +39,12 @@
         "1": 0.2303
       },
       "channel": {
-        "emb_aerial": 0.0001,
-        "emb_driving": 0.0113,
-        "emb_fixed": 0.024,
-        "emb_manip": 0.1662,
-        "none": 0.0357,
-        "software": 0.7628
+        "emb_aerial": 0.0003,
+        "emb_driving": 0.0087,
+        "emb_fixed": 0.0305,
+        "emb_manip": 0.1035,
+        "none": 0.0946,
+        "software": 0.7625
       },
       "presence": {
         "mean": 0.422,
@@ -70,12 +70,12 @@
         "1": 0.2255
       },
       "channel": {
-        "emb_aerial": 0.0,
-        "emb_driving": 0.0129,
-        "emb_fixed": 0.0275,
-        "emb_manip": 0.1793,
-        "none": 0.0453,
-        "software": 0.735
+        "emb_aerial": 0.0003,
+        "emb_driving": 0.0108,
+        "emb_fixed": 0.0355,
+        "emb_manip": 0.1185,
+        "none": 0.106,
+        "software": 0.729
       },
       "presence": {
         "mean": 0.422,

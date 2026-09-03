@@ -5,28 +5,28 @@
   "license": "n/a (fixture)",
   "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "2f6437ca4e11f829987fc4b1028ca44f4890b54380fbe6d2b8d797dc5bc8c273",
+  "sha256": "278ad293ab763414f0a6a5fa406b683281b1125a9bde53e844abd305640da819",
   "transformations": [
     "heads = regional occupation employment × major-group self-employed share × regional multiplier (cap 0.6)",
     "platform add-on heads attached to 53-3054, 43-5021, 53-3033 (U.S.) scaled to other regions by employment ratio and a platform scale",
     "fte = heads × mean weekly hours / 40"
   ],
   "status": "FIXTURE",
-  "notes": "Replaced by ingest/cps_selfemp.py (IPUMS CPS class of worker, hours, multiple job holding) and Census Nonemployer Statistics. FTE by region: {'US': 11557131, 'EU': 17393461, 'UK': 2969319, 'CN': 95539859, 'JP': 3877988, 'KR': 3577982, 'IN': 135362767, 'TW': 974373, 'SG': 228497, 'RoA': 103923669}.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "Replaced by ingest/cps_selfemp.py (IPUMS CPS class of worker, hours, multiple job holding) and Census Nonemployer Statistics. FTE by region: {'US': 11687949, 'EU': 17563359, 'UK': 3001203, 'CN': 96097936, 'JP': 3919031, 'KR': 3613248, 'IN': 135370655, 'TW': 985291, 'SG': 231268, 'RoA': 104098947}.",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/applications/self_employed.csv",
   "extra": {
     "fte_by_region": {
-      "US": 11557131,
-      "EU": 17393461,
-      "UK": 2969319,
-      "CN": 95539859,
-      "JP": 3877988,
-      "KR": 3577982,
-      "IN": 135362767,
-      "TW": 974373,
-      "SG": 228497,
-      "RoA": 103923669
+      "US": 11687949,
+      "EU": 17563359,
+      "UK": 3001203,
+      "CN": 96097936,
+      "JP": 3919031,
+      "KR": 3613248,
+      "IN": 135370655,
+      "TW": 985291,
+      "SG": 231268,
+      "RoA": 104098947
     },
     "platform_addon_us": {
       "53-3054": [

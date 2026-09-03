@@ -13,7 +13,7 @@
   ],
   "status": "real",
   "notes": "Natural Earth POP_EST / GDP_MD are mostly 2019 estimates (pop_year / gdp_year columns). Members per region: {'': 185, 'CN': 3, 'EU': 27, 'IN': 1, 'JP': 1, 'KR': 1, 'RoA': 19, 'SG': 1, 'TW': 1, 'UK': 1, 'US': 1}.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/regions/region_members.csv",
   "extra": {
     "members_per_region": {

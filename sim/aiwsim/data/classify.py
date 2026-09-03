@@ -48,7 +48,7 @@ import polars as pl
 MODALITIES = ("software", "other_cognitive", "interpersonal", "physical")
 USE_CASES = ("high_risk", "transparency", "unregulated")
 CLASSIFIER_VERSION = "keyword-rules v1 (E)"
-CHANNEL_VERSION = "channel-rules v2 (E, spec v0.3 §A.2; trades cap, Phase 9)"
+CHANNEL_VERSION = "channel-rules v3 (E, spec v0.3 §A.2; trades cap, handling cue, group gates; Phase 9b audit)"
 CHANNELS = ("software", "emb_driving", "emb_manip", "emb_fixed", "emb_aerial", "none")
 
 _F = re.IGNORECASE
@@ -162,52 +162,88 @@ MODALITY_TIEBREAK = ("physical", "interpersonal", "software")
 # software channel (unchanged v0.2 behaviour).
 # ----------------------------------------------------------------------------------------------
 _VEH = (r"(vehicles?|trucks?|tractor[- ]trailers?|semi[- ]?trucks?|buses|bus\b|taxis?|taxicabs?|cabs?|limousines?|shuttles?|vans?|"
-        r"automobiles?|cars?|ambulances?|delivery (vehicles?|trucks?|vans?)|routes?)")
+        r"automobiles?|cars?|ambulances?|tractors?|delivery (vehicles?|trucks?|vans?)|routes?)")
+_VEH_CUE = re.compile(rf"\b(driv(e|es|ing|en)|{_VEH}|tractors?|forklifts?|loaders?|boom trucks?|road|highway|traffic)\b", _F)
+_MANUAL_CUE = re.compile(r"\b(manually|by hand|hand ?trucks?|carts?|dollies|dolly|pallet jacks?|conveyors?|hoists?|wheelchairs?|stretchers?|gurneys?|on foot)\b", _F)
 CHANNEL_DRIVING = [
     rf"\b(driv(e|es|ing)|operat\w*|steer\w*|maneuver\w*|navigat\w*|park\w*)\b[^.;]{{0,30}}\b{_VEH}",
-    (r"\b(transport\w*|convey\w*|haul\w*|shuttl\w*|chauffeur\w*)\b[^.;]{0,25}\b(passengers?|customers?|clients?|patients?|goods|freight|cargo|merchandise|materials?|"
+    # v3: the transport rule needs a vehicle cue in the statement and no manual-handling cue (audit rows: "transport materials manually", "transport records")
+    (r"\b(transport(s|ed|ing)?|convey(s|ed|ing)?|haul\w*|shuttl\w*|chauffeur\w*)\b[^.;]{0,25}\b(passengers?|customers?|clients?|patients?|goods|freight|cargo|merchandise|materials?|"
     r"products?|shipments?|loads?|mail|packages?|parcels?|equipment)\b"),
-    r"\b(pick(s|ing)? up|drop(s|ping)? off|collect\w*)\b[^.;]{0,20}\b(passengers?|fares?|customers?|riders?)\b",
-    r"\b(deliver\w*)\b[^.;]{0,25}\b(packages?|parcels?|mail|goods|food|meals?|orders?|newspapers?|merchandise|shipments?|products?|groceries)\b",
+    r"\b(pick(s|ing)? up|drop(s|ping)? off|collect\w*)\b[^.;]{0,20}\b(passengers?(?! (boarding|passes|tickets))|fares?|riders?)\b",   # v3: "collect ... customers" (payments) dropped
+    r"\b(deliver(s|ed|ing)?)\b[^.;]{0,25}\b(packages?|parcels?|mail|goods|food|meals?|orders?|newspapers?|merchandise|shipments?|products?|groceries)\b",   # v3: verb forms only ("deliveries" are received)
     r"\b(follow|plan|maintain)\w*\b[^.;]{0,15}\b(delivery |bus |truck |driving )?routes?\b",
     r"\b(traffic laws|road conditions|driving records?|mileage|odometer|dispatch\w* (calls|instructions)|taxi ?meters?)\b",
 ]
+_DRV_NEEDS_VEHICLE = {1}   # indexes of CHANNEL_DRIVING that only fire with a vehicle cue and without a manual cue
 CHANNEL_AERIAL = [r"\b(drones?|unmanned (aerial|aircraft)|uas\b|uav\b|aerial (delivery|inspection|survey\w*|spraying|application))\b"]
+CHANNEL_AERIAL_AG = [r"\b(spray\w*|dust\w*|appl(y|ies|ying))\b[^.;]{0,30}\b(crops?|fields?|orchards?|vegetation|pesticides?|insecticides?|herbicides?|fungicides?|fertiliz\w*)\b"]   # v3: agriculture only
 CHANNEL_NONE = [   # care, dexterity and safety-critical bodily work: outside the embodied horizon at central (spec §A.2 rule 5)
     r"\b(patients?|residents?|infants?|children|elderly|clients?)\b[^.;]{0,25}\b(bath\w*|feed\w*|dress\w*|lift\w*|turn\w*|groom\w*|toilet\w*|comfort\w*|assist\w*)\b",
     r"\b(bath\w*|feed\w*|dress\w*|lift\w*|turn\w*|groom\w*|toilet\w*)\b[^.;]{0,25}\b(patients?|residents?|infants?|children|elderly)\b",
     (r"\b(surg\w*|incisions?|sutur\w*|inject\w*|intravenous|catheter\w*|dental|teeth|hair|nails?|manicur\w*|pedicur\w*|massag\w*|tattoo\w*|"
-    r"pierc\w*|makeup|cosmetolog\w*|barber\w*|embalm\w*|physical therapy|chiropract\w*|acupunctur\w*|midwif\w*)\b"),
+    r"pierc\w*|makeup|cosmetolog\w*|barber\w*|embalm\w*|physical therapy|chiropract\w*|acupunctur\w*|midwif\w*|pallbearers?)\b"),
     r"\b(fight\w* fires?|extinguish\w*|rescu(e|es|ing)|apprehend\w*|arrest\w*|restrain\w* (suspects?|offenders?|inmates?|patients?)|combat|firearms?)\b",
     r"\b(fly|flies|flying|pilot\w*)\b[^.;]{0,20}\b(aircraft|airplanes?|planes?|helicopters?|jets?)\b",
 ]
 CHANNEL_FIXED = [   # structured environments: the baseline automation trend already reaches these (spec §A.2 rule 3)
-    (r"\b(production lines?|assembly lines?|conveyors?|presses?|stamping|injection[- ]mold\w*|extrud\w*|cnc\b|lathes?|milling machines?|"
+    (r"\b(production lines?|assembly lines?|stamping|injection[- ]mold\w*|extrud\w*|cnc\b|lathes?|milling machines?|"
     r"looms?|spinning|knitting machines?|bottling|canning|packaging (machines?|equipment|lines?)|labeling machines?|sewing machines?|"
     r"furnaces?|kilns?|ovens?|boilers?|reactors?|distill\w*|smelt\w*|roll(ing)? mills?|paper machines?|printing presses?|"
-    r"automated (equipment|machinery|systems?)|control panels?|gauges?|meters?|dials?)\b"),
-    r"\b(tend\w*|feed\w*|monitor\w*|set up|adjust\w*|calibrat\w*|start\w*|stop\w*|regulat\w*)\b[^.;]{0,25}\b(machines?|machinery|equipment)\b",
+    r"automated (equipment|machinery|systems?)|embossing machines?|typewriters?)\b"),
+    r"\b(control panels?|gauges?|meters?|dials?|conveyors?|presses?)\b",                                                 # v3: production and technician groups only
+    r"\b(tend\w*|feed\w*|monitor\w*|set up|adjust\w*|calibrat\w*|start\w*|stop\w*|regulat\w*|activat\w*|operat\w*|switch\w*)\b[^.;]{0,25}\b(machines?|machinery|equipment)\b",   # v3: production groups only
 ]
+_FIXED_GROUP_ONLY = {1, 2}   # indexes of CHANNEL_FIXED gated to the production / material-moving / farm-operator / technician groups
+# v3 (Phase 9b audit): a "physical" statement outside the production groups goes to the manipulation channel only with a handling cue on a
+# physical object; statements with a cognitive object and no handling cue were false physical votes (HR orientation, HTTP servers, dosages)
+_HANDLING_VERB = re.compile(r"\b(load\w*|unload\w*|lift\w*|carr(y|ies|ying|ied)|stack\w*|pick(s|ed|ing)?|plac(e|es|ed|ing)|pack\w*|unpack\w*|sort\w*|palletiz\w*|"
+                            r"mov(e|es|ed|ing)|transfer\w*|transport\w*|push\w*|pull\w*|wrap\w*|clean\w*|sweep\w*|mop\w*|scrub\w*|wash\w*|remov\w*|retriev\w*|"
+                            r"fetch\w*|restock\w*|shelv\w*|fold\w*|position\w*|assembl\w*|hand\b|deliver\w*|distribut\w*|collect\w*|gather\w*|harvest\w*|"
+                            r"insert\w*|attach\w*|fill\w*|empty|empties|emptying|bag\w*|box\w*|label\w*)\b", _F)
+_PHYS_OBJECT = re.compile(r"\b(materials?|products?|parts?|components?|items?|goods|merchandise|boxes|cartons?|crates?|pallets?|packages?|parcels?|bags?|containers?|"
+                          r"supplies|tools?|pipes?|articles?|workpieces?|stock|inventory|luggage|baggage|cargo|freight|dishes|linens?|trays?|samples?|specimens?|"
+                          r"doors?|hatches|brackets?|clips?|tires?|work areas?|floors?|rooms?|surfaces?|shelves|racks?|bins?|trucks?|vehicles?|carts?|tanks?|furniture|"
+                          r"cabinets?|lumber|bricks?|cables?|crops?|plants?|trees?|laundry|garments?|fabric|meat|food|orders?|totes?|drums?|barrels?)\b", _F)
+_COGNITIVE_OBJECT = re.compile(r"\b(data|reports?|records?|programs?|software|servers?|computer\w*|orientation|dosages?|plans?|budgets?|research|develop\w*|"
+                               r"calculat\w*|analy[sz]\w*|design\w*|schedules?|documents?|information|instructions?|policies|procedures|activities of|"
+                               r"activities|workers who|direct\w* (workers|staff|crews?|activities)|systems?)\b", _F)
+_PRODUCTION_GROUPS = ("51-", "53-7", "45-")
+_DRIVER_GROUPS = ("53-3",)
+_AG_GROUPS = ("45-",)
 _CH_DRV = [re.compile(p, _F) for p in CHANNEL_DRIVING]
 _CH_AIR = [re.compile(p, _F) for p in CHANNEL_AERIAL]
+_CH_AIR_AG = [re.compile(p, _F) for p in CHANNEL_AERIAL_AG]
 _CH_NONE = [re.compile(p, _F) for p in CHANNEL_NONE]
 _CH_FIX = [re.compile(p, _F) for p in CHANNEL_FIXED]
 
 
-def classify_channel(text: str, modality: str) -> str:
-    """Channel assignment chi_k (spec v0.3 §A.2). Deterministic keyword rules, tagged E."""
-    t = text or ""
+def classify_channel(text: str, modality: str, occ_code: str = "") -> str:
+    """Channel assignment chi_k (spec v0.3 §A.2). Deterministic keyword rules, tagged E; v3 gates by SOC major group (Phase 9b audit)."""
+    t = text or ""; occ = str(occ_code or "")
+    production = occ.startswith(_PRODUCTION_GROUPS)
     if any(r.search(t) for r in _CH_NONE):
         return "none" if modality in ("physical", "interpersonal") else "software"
-    if any(r.search(t) for r in _CH_AIR):
+    if any(r.search(t) for r in _CH_AIR) or (occ.startswith(_AG_GROUPS) and any(r.search(t) for r in _CH_AIR_AG)):
         return "emb_aerial"
-    if any(r.search(t) for r in _CH_DRV):
-        return "emb_driving"
-    if modality != "physical":
-        return "software"
-    if any(r.search(t) for r in _CH_FIX):
+    vehicle = bool(_VEH_CUE.search(t)); manual = bool(_MANUAL_CUE.search(t))
+    for i, r in enumerate(_CH_DRV):
+        if r.search(t) and (i not in _DRV_NEEDS_VEHICLE or (vehicle and not manual)):
+            return "emb_driving"
+    handling = bool(_HANDLING_VERB.search(t) and _PHYS_OBJECT.search(t) and not _COGNITIVE_OBJECT.search(t))
+    if production and any(r.search(t) for r in _CH_FIX):          # production groups: machinery terms mean fixed automation whatever the modality vote
         return "emb_fixed"
-    return "emb_manip"
+    if modality != "physical" and not handling:
+        return "software"
+    if occ.startswith(_DRIVER_GROUPS) and vehicle:
+        return "emb_driving"
+    if not production and any(r.search(t) for i, r in enumerate(_CH_FIX) if i not in _FIXED_GROUP_ONLY):
+        return "emb_fixed"
+    if production or handling:
+        return "emb_manip"
+    if _COGNITIVE_OBJECT.search(t):
+        return "software"
+    return "none"
 
 
 # ----------------------------------------------------------------------------------------------
@@ -421,7 +457,7 @@ def explain(text: str) -> dict:
     }
 
 
-def classify_text(text: str) -> dict:
+def classify_text(text: str, occ_code: str = "") -> dict:
     m = classify_modality(text)
     u = classify_use_case(text)
     return {
@@ -429,13 +465,14 @@ def classify_text(text: str) -> dict:
         "presence": presence(text, m),
         "use_case": u,
         "consequence_high": consequence_high(text, u),
-        "channel": classify_channel(text, m),
+        "channel": classify_channel(text, m, occ_code),
     }
 
 
 def classify_frame(df: pl.DataFrame, text_col: str = "task_text") -> pl.DataFrame:
     """Append ``modality``, ``presence``, ``use_case``, ``consequence_high``, ``channel`` to ``df``."""
-    rows = [classify_text(t or "") for t in df[text_col].to_list()]
+    occs = df["occ_code"].to_list() if "occ_code" in df.columns else [""] * df.height
+    rows = [classify_text(t or "", str(o or "")) for t, o in zip(df[text_col].to_list(), occs, strict=True)]
     cols = pl.DataFrame(rows, schema={"modality": pl.Utf8, "presence": pl.Float64,
                                        "use_case": pl.Utf8, "consequence_high": pl.Int64, "channel": pl.Utf8})
     return cap_trades_manipulation(df.hstack(cols), text_col=text_col)

@@ -5,14 +5,14 @@
   "license": "MIT (repo mirror); underlying O*NET data CC BY 4.0 (https://www.onetcenter.org/database.html)",
   "pulled_at": "2026-09-03",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
-  "sha256": "db7be04addade939c7fcf896f7b7a8d77a04f5f2dd37bbe8795c992e0316d110",
+  "sha256": "b1cecbc96f84ecc63eeb14cc035a24f73d2dede1445135aca6e43d2dc9148040",
   "transformations": [
     "Job Zone -> education mix rows (lt_hs, hs, some_college, ba_plus): JZ1: 0.25/0.55/0.15/0.05; JZ2: 0.10/0.55/0.25/0.10; JZ3: 0.03/0.35/0.42/0.20; JZ4: 0.01/0.10/0.24/0.65; JZ5: 0.00/0.02/0.08/0.90",
     "an OEWS code carrying several O*NET titles takes the equal-weight mixture of their Job Zone rows"
   ],
   "status": "partial (estimated E)",
-  "notes": "MAPPING MATRIX IS AN ESTIMATE (E), not fitted to microdata. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0418, 'jz2': 0.3449, 'jz3': 0.2393, 'jz4': 0.2052, 'jz5': 0.1688}. Employment-weighted education shares: {'lt_hs': 0.067, 'hs': 0.3667, 'some_college': 0.2616, 'ba_plus': 0.3047}. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "MAPPING MATRIX IS AN ESTIMATE (E), not fitted to microdata. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0419, 'jz2': 0.3449, 'jz3': 0.2392, 'jz4': 0.2045, 'jz5': 0.1695}. Employment-weighted education shares: {'lt_hs': 0.0666, 'hs': 0.3615, 'some_college': 0.2598, 'ba_plus': 0.3122}. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real.",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/cohorts/occ_education.csv",
   "extra": {
     "job_zone_unmatched": {
@@ -120,10 +120,10 @@
       ]
     },
     "education_employment_weighted": {
-      "lt_hs": 0.067,
-      "hs": 0.3667,
-      "some_college": 0.2616,
-      "ba_plus": 0.3047
+      "lt_hs": 0.0666,
+      "hs": 0.3615,
+      "some_college": 0.2598,
+      "ba_plus": 0.3122
     },
     "job_zone_education": {
       "1": [

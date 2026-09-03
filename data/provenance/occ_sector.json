@@ -1,17 +1,21 @@
 {
   "table": "occ_sector",
-  "source": "contracts §1 Phase 1 sector fixture",
-  "source_url": "docs/contracts.md",
-  "license": "n/a (fixture)",
+  "source": "OEWS May 2025 national occupation x industry (data/external/bls/natsector_M2025_dl.xlsx)",
+  "source_url": "https://www.bls.gov/oes/",
+  "license": "Public domain (U.S. Government work)",
   "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "c605483b9dec13fe5ec3b568676809a4dbf4013f0458d6bd42165a5c5ff5f8be",
+  "sha256": "8724dd3b51712cca55960f7fa9e53308dcb18424098c831318fa014348294583",
   "transformations": [
-    "every occupation -> sector ALL with emp_share 1.0"
+    "I_GROUP == 'sector' rows (+ NAICS 999xxx government -> 92) mapped to the 20 sectors of spec §1.2",
+    "emp_share renormalized within occupation over published cells"
   ],
-  "status": "FIXTURE",
-  "notes": "Replaced by ingest/oews.py (OEWS national occupation x industry).",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "status": "real",
+  "notes": "Fetched by .github/workflows/external-data.yml. Sectors present: ['11', '21', '22', '23', '31-33', '42', '44-45', '48-49', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81', '92']",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/occ_sector.csv",
-  "extra": {}
+  "extra": {
+    "ingested": true,
+    "vintage": "May 2025"
+  }
 }

@@ -5,15 +5,15 @@
   "license": "n/a (fixture); O*NET data CC BY 4.0 (https://www.onetcenter.org/database.html)",
   "pulled_at": "2026-09-03",
   "commit": "0471612fef3cc22b74fb884d27bff9dbd3770582",
-  "sha256": "ab87d617a77c9f9a670c4d54c2f3f740e399ef5cbac1211740cb9ba2030bfcb2",
+  "sha256": "f0697a4b17de403732c788cd04a7452bef2a8aba01c197e6ccea8d2278398e7e",
   "transformations": [
     "national bands 16-24 0.125, 25-44 0.440, 45-54 0.200, 55+ 0.235",
     "16-24 share multiplied by the Job Zone tilt JZ1 1.6, JZ2 1.3, JZ3 1.0, JZ4 0.6, JZ5 0.4, then renormalised",
     "an OEWS code carrying several O*NET titles takes the equal-weight mixture of their Job Zone rows"
   ],
   "status": "FIXTURE",
-  "notes": "FIXTURE: the national vector is approximate (transcribed, not fetched) and the tilt is a guess. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0418, 'jz2': 0.3449, 'jz3': 0.2393, 'jz4': 0.2052, 'jz5': 0.1688}. Employment-weighted age shares: {'16-24': 0.1264, '25-44': 0.4393, '45-54': 0.1997, '55+': 0.2346}.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "FIXTURE: the national vector is approximate (transcribed, not fetched) and the tilt is a guess. Replaced by aiwsim.data.ingest.cps_asec (IPUMS CPS ASEC, five pooled years) with status real. O*NET titles matched to OEWS codes through occupations_onet_bls_matched.csv; unmatched occupations (99) take the employment-weighted major-group Job Zone mix (jz_imputed). Job Zone mix over occupations (unweighted): {'jz1': 0.0419, 'jz2': 0.3449, 'jz3': 0.2392, 'jz4': 0.2045, 'jz5': 0.1695}. Employment-weighted age shares: {'16-24': 0.1256, '25-44': 0.4397, '45-54': 0.1999, '55+': 0.2348}.",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/cohorts/occ_age.csv",
   "extra": {
     "job_zone_unmatched": {
@@ -121,10 +121,10 @@
       ]
     },
     "age_employment_weighted": {
-      "16-24": 0.1264,
-      "25-44": 0.4393,
-      "45-54": 0.1997,
-      "55+": 0.2346
+      "16-24": 0.1256,
+      "25-44": 0.4397,
+      "45-54": 0.1999,
+      "55+": 0.2348
     }
   }
 }

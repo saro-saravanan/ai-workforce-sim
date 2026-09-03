@@ -7,6 +7,9 @@ challenger_ai_cum,Announced AI-cited job cuts since 2023 (Challenger),2023Q4,390
 challenger_ai_cum,Announced AI-cited job cuts since 2023 (Challenger),2024Q4,16989.0,cuts,ai_layoffs_cum,"Challenger 2024 total 13,089 plus 2023",real (transcribed; secondary confirmation),0
 challenger_ai_cum,Announced AI-cited job cuts since 2023 (Challenger),2025Q4,71825.0,cuts,ai_layoffs_cum,"Challenger 2025 total 54,836 plus prior",real (transcribed; report),1
 challenger_ai_cum,Announced AI-cited job cuts since 2023 (Challenger),2026Q2,173568.0,cuts,ai_layoffs_cum,Challenger cumulative since 2023 through June 2026,real (transcribed; report),1
+robotaxi_fleet_us,U.S. robotaxi fleet (Waymo vehicles),2024Q3,700.0,vehicles,driving_fleet_units_us,"Waymo statements, Aug 2024 (about 700 vehicles)",V? (transcribed from recollection),0
+robotaxi_fleet_us,U.S. robotaxi fleet (Waymo vehicles),2025Q2,1500.0,vehicles,driving_fleet_units_us,"Waymo statements, mid-2025 (about 1,500 vehicles)",V? (transcribed from recollection),0
+robotaxi_fleet_us,U.S. robotaxi fleet (Waymo vehicles),2025Q4,2500.0,vehicles,driving_fleet_units_us,"Waymo statements, late 2025 (about 2,500 vehicles; 2026 plans above 3,500)",V? (transcribed from recollection),0
 ai_revenue,"AI industry revenue (world, $bn/yr)",2025Q4,60.0,$bn/yr,ai_producer_revenue_bn,"OpenAI $13.1bn (FT-verified), Anthropic ~$5bn, Microsoft and Google AI lines, Menlo Ventures enterprise estimate; range 45-80",press summaries (V: secondary),1
 ai_revenue,"AI industry revenue (world, $bn/yr)",2026Q4,140.0,$bn/yr,ai_producer_revenue_bn,"run rates mid-2026 (OpenAI ~$40bn, Anthropic ~$47bn gross) and market estimates; range 90-200",press summaries (V: secondary; run rates),1
 capex,"Hyperscaler capex, four companies ($bn/yr)",2024Q4,250.7,$bn/yr,hyperscaler_capex_bn,company reports (data/processed/series/capex.csv),real (transcribed; secondary confirmation),1

@@ -81,13 +81,35 @@ def cmd_data(args: argparse.Namespace) -> int:
 
 def cmd_diag(args: argparse.Namespace) -> int:
     """Phase 9 diagnostics (review §2.4): threshold-seed sensitivity and the classifier audit sample."""
-    from .diagnostics import classifier_sample, seed_table, threshold_seed_sensitivity
+    from .diagnostics import (
+        classifier_sample,
+        exposure_source_sensitivity,
+        exposure_table,
+        holdout_2026,
+        holdout_markdown,
+        seed_table,
+        threshold_seed_sensitivity,
+    )
     root = find_root()
     if args.action == "threshold-seeds":
         from .pipeline import Context
         ctx = Context(root)
         rows = threshold_seed_sensitivity(ctx, seeds=tuple(int(s) for s in args.seeds.split(",")), regions=tuple(args.regions.split(",")), scenario=args.scenario)
         print(seed_table(rows))
+    elif args.action == "holdout":
+        from .pipeline import Context
+        md = holdout_markdown(holdout_2026(Context(root), scenario=args.scenario))
+        if args.out:
+            Path(args.out).write_text(md)
+        print(md)
+    elif args.action == "exposure-source":
+        from .pipeline import Context
+        print(exposure_table(exposure_source_sensitivity(Context(root), regions=tuple(args.regions.split(",")), scenario=args.scenario)))
+    elif args.action == "audit":
+        from .audit import audit_agreement, audit_markdown
+        md = audit_markdown(audit_agreement(root))
+        out = Path(args.out) if args.out else root / "docs" / "classifier-audit-agreement.md"
+        out.write_text(md); print(md.split("## Remaining")[0]); print(f"-> {out}")
     else:
         out = Path(args.out) if args.out else root / "docs" / "classifier-audit-sample.md"
         classifier_sample(root, n=args.n, seed=args.seed, out=out)
@@ -144,8 +166,8 @@ def main(argv: list[str] | None = None) -> int:
     cv.add_argument("--draws", default="64,128,256"); cv.add_argument("--seeds", default="42,7,99"); cv.add_argument("--out", default=None); cv.set_defaults(fn=cmd_convergence)
     rg = sub.add_parser("regional", help="regional decomposition of the U.S. headline (review 2.3)")
     rg.add_argument("--out", default=None); rg.set_defaults(fn=cmd_regional)
-    g = sub.add_parser("diag", help="Phase 9 diagnostics: threshold-seeds (markdown table), classifier-sample (audit table)")
-    g.add_argument("action", choices=["threshold-seeds", "classifier-sample"])
+    g = sub.add_parser("diag", help="Diagnostics: threshold-seeds, classifier-sample, audit (rules vs labels), holdout (refit to 2025, score 2026), exposure-source")
+    g.add_argument("action", choices=["threshold-seeds", "classifier-sample", "audit", "holdout", "exposure-source"])
     g.add_argument("--seeds", default="0,1,2", help="threshold-seeds: comma-separated seeds (0 = reference hash)")
     g.add_argument("--regions", default="US", help="threshold-seeds: comma-separated regions to run"); g.add_argument("--scenario", default="baseline")
     g.add_argument("--n", type=int, default=120, help="classifier-sample: statements to sample, stratified by channel")

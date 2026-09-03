@@ -79,13 +79,14 @@ def build_occ_sector(ind: pl.DataFrame) -> tuple[pl.DataFrame, dict]:
 
 def build_occ_state(st: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
     det = st.filter((pl.col("O_GROUP") == "detailed") & (pl.col("AREA_TYPE").cast(pl.Utf8) == "2"))
-    det = det.with_columns(pl.col("AREA").cast(pl.Utf8).str.zfill(7).str.slice(0, 2).alias("fips"),
-                           _num("TOT_EMP").alias("emp"))
+    fips = (pl.when(pl.col("AREA").cast(pl.Utf8).str.len_chars() <= 2).then(pl.col("AREA").cast(pl.Utf8).str.zfill(2))
+            .otherwise(pl.col("AREA").cast(pl.Utf8).str.zfill(7).str.slice(0, 2)))            # state files carry the 2-digit FIPS ("1".."56"); older files 7 digits
+    det = det.with_columns(fips.alias("fips"), _num("TOT_EMP").alias("emp"))
     det = det.filter(pl.col("emp").is_not_null())
     occ_state = det.select(pl.col("OCC_CODE").alias("occ_code"), "fips", pl.col("emp").cast(pl.Int64)).with_columns(
         pl.lit(f"real:OEWS_{VINTAGE.replace(' ', '')}_state").alias("source_tag")).sort(["occ_code", "fips"])
     tot = st.filter((pl.col("O_GROUP") == "total") & (pl.col("AREA_TYPE").cast(pl.Utf8) == "2")).select(
-        pl.col("AREA").cast(pl.Utf8).str.zfill(7).str.slice(0, 2).alias("fips"),
+        fips.alias("fips"),
         pl.col("AREA_TITLE").alias("name"), pl.col("PRIM_STATE").alias("abbrev"),
         _num("TOT_EMP").cast(pl.Int64).alias("emp_total"),
     ).with_columns(pl.lit(f"real:OEWS_{VINTAGE.replace(' ', '')}_state").alias("source_tag")).sort("fips")
@@ -118,9 +119,20 @@ def main(argv: list[str] | None = None) -> int:
     root = resolve_root(args)
     raw_dir = root / "data" / "raw" / "oews"
     src = SOURCES["bls_oews"]
-    zips = {k: download(u, raw_dir / Path(u).name, force=args.force) for k, u in URLS.items()}
+    ext = root / "data" / "external" / "bls"
+    ext_files = {"national_by_industry": "natsector", "state": "state", "national_cross_industry": "national"}
+    tables: dict[str, pl.DataFrame] = {}
+    if ext.exists() and all(list(ext.glob(f"{v}_M20*_dl.xlsx")) for v in ext_files.values()):
+        # the external-data workflow fetched the extracted spreadsheets on a runner (BLS is unreachable from the build environment)
+        for k, v in ext_files.items():
+            f = max(ext.glob(f"{v}_M20*_dl.xlsx"))
+            print(f"  external {f}")
+            df = read_excel_bytes(f.read_bytes()); df.columns = [c.strip().upper().lstrip("\ufeff") for c in df.columns]; tables[k] = df
+        zips = {}
+    else:
+        zips = {k: download(u, raw_dir / Path(u).name, force=args.force) for k, u in URLS.items()}
 
-    ind = _load_zip_table(zips["national_by_industry"])
+    ind = tables.get("national_by_industry") if tables else _load_zip_table(zips["national_by_industry"])
     occ_sector, info = build_occ_sector(ind)
     print(f"  occ_sector: {info}")
     p = write_csv(occ_sector, root / "data" / "processed" / "occ_sector.csv", args.dry_run)
@@ -133,7 +145,7 @@ def main(argv: list[str] | None = None) -> int:
                          notes=f"{NOT_IN_INVENTORY}. Sectors present: {info['sectors_present']}",
                          extra={"ingested": True, "vintage": VINTAGE})
 
-    st = _load_zip_table(zips["state"])
+    st = tables.get("state") if tables else _load_zip_table(zips["state"])
     occ_state, states = build_occ_state(st)
     p1 = write_csv(occ_state, root / "data" / "processed" / "occ_state.csv", args.dry_run)
     p2 = write_csv(states, root / "data" / "processed" / "states.csv", args.dry_run)
@@ -145,7 +157,7 @@ def main(argv: list[str] | None = None) -> int:
                                               "suppressed cells dropped (state sums < national)"],
                              notes=NOT_IN_INVENTORY, extra={"ingested": True, "vintage": VINTAGE})
 
-    nat = _load_zip_table(zips["national_cross_industry"])
+    nat = tables.get("national_cross_industry") if tables else _load_zip_table(zips["national_cross_industry"])
     refresh_occupations(root, nat, args.dry_run)
     return 0
 

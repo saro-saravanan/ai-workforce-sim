@@ -1,17 +1,19 @@
 {
   "table": "sectors",
-  "source": "contracts §1 Phase 1 sector fixture",
-  "source_url": "docs/contracts.md",
-  "license": "n/a (fixture)",
+  "source": "authors' estimates by NAICS sector (aiwsim.data.external.SECTOR_E); BEA use table pending",
+  "source_url": "https://www.bea.gov/industry/input-output-accounts-data",
+  "license": "n/a (estimates)",
   "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "250fad608d83457202eddf6ec781e626484f27ecca96c064ec19102e9f80c60a",
+  "sha256": "7eb35a7544b57927bca03a47e8606e7137a96874e549aeb22948bfa8f92f2d83",
   "transformations": [
-    "single sector ALL: labor_cost_share 0.58, demand_elasticity 0.8, tradable 0, friction 1.0, consumption_share 1.0"
+    "20 NAICS sectors of spec §1.2 (data/fixtures/sectors_20.csv)",
+    "consumption_share normalized to 1",
+    "friction 1.0 in every sector (the calibrated single-sector adoption speed; BTOS sector cuts not yet used)"
   ],
-  "status": "FIXTURE",
-  "notes": "Replaced by the OEWS occupation x industry matrix (ingest/oews.py) mapped to the 20 sectors of spec §1.2 listed in data/fixtures/sectors_20.csv; labor_cost_share from BEA I-O, consumption_share from CPI relative importance.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "status": "partial (E estimates; BEA pending)",
+  "notes": "labor_cost_share = compensation / gross output; demand_elasticity and friction are E in every case.",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/sectors.csv",
   "extra": {}
 }

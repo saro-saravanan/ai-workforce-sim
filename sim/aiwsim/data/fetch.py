@@ -39,6 +39,8 @@ MANIFEST: list[RawFile] = [
     RawFile("data/raw/gpts_are_gpts/occupations_projections_processed.csv", f"{_GPTS}/data/occupations_projections_processed.csv", "d1f2a237e8ee0016e1ef656f9e453efdfffc48fcc0a8d4b15697fdd57995f730"),
     RawFile("data/raw/gpts_are_gpts/bls_occupation_demographics_2022.xlsx", f"{_GPTS}/data/bls_occupation_demographics_2022.xlsx", "507754314560a648964ea89fde4e7cbb8fe1f2c885fac76ce99d657b31e609e7"),
     RawFile("data/raw/gpts_are_gpts/cpsaat11.xlsx", f"{_GPTS}/data/cpsaat11.xlsx", "e17b2584151d251aa19b9d7dd03b69bf2b7ba786d66f0226299ab3bf5e5bc625"),
+    RawFile("data/raw/aioe/AIOE_DataAppendix.xlsx", "https://raw.githubusercontent.com/AIOE-Data/AIOE/main/AIOE_DataAppendix.xlsx",
+            "c123b4c64840aff3568ae6c97256678719b88a74d45b6362dbefb5af34667b95"),   # Felten, Raj, Seamans AIOE; no license file: cross-check only, never redistributed
     RawFile("data/raw/natural_earth/ne_50m_admin_0_countries.geojson", f"{_NE}/ne_50m_admin_0_countries.geojson", "3e458fc036ad0a66411f2c1e6cac49c5d7bfb81cb1123bc513b22511a2b7fdeb"),
     RawFile("data/raw/natural_earth/ne_admin0_110m.geojson", f"{_NE}/ne_110m_admin_0_countries.geojson", "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f"),
     RawFile("data/raw/natural_earth/ne_admin1_110m.geojson", f"{_NE}/ne_110m_admin_1_states_provinces.geojson", "0067dec6a2c4f9c7a644bf7a9a46163d8d881595953326d0c67d89934190aefe"),

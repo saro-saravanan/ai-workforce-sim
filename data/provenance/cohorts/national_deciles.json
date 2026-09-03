@@ -12,7 +12,7 @@
   ],
   "status": "partial (derived D)",
   "notes": "VINTAGE: OEWS May 2021 (GPTs-are-GPTs mirror), not May 2025; refreshed when ingest/oews.py replaces the raw file. Fit: mu=10.7600, sigma=0.5780. OEWS covers wage and salary workers only (no self-employed); the cutpoints are a lognormal approximation of the OEWS wage distribution, not CPS individual-earnings deciles.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/cohorts/national_deciles.csv",
   "extra": {
     "fit": {

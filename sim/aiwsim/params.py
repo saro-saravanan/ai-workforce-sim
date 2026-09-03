@@ -157,6 +157,7 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
         q.set("P.19", float(cap["robotics_doubling_months"]))
     q.flags["capability_feedback"] = "on" if cap.get("feedback_from_revenue") else "off"
     q.flags["threshold_seed"] = int(cap.get("threshold_seed", 0) or 0)      # re-seeds the per-task thresholds (review §2.4); 0 = the v0.2 hash
+    q.flags["exposure_source"] = str(cap.get("exposure_source", "gpts"))   # gpts (Eloundou et al. task labels) or aioe (Felten-Raj-Seamans, rank-mapped); review §2.4
 
     cost = levers.get("cost", {})
     if "price_decline_per_year" in cost:
@@ -243,6 +244,7 @@ def apply_levers(p: Params, levers: dict[str, Any]) -> Params:
     q.flags["induced_demand_scale"] = float(app.get("induced_demand_scale", 1.0))
     macro = levers.get("macro", {})
     q.flags["closure"] = macro.get("closure", "demand")
+    q.flags["io_propagation"] = str(macro.get("io_propagation", "on"))     # input-output cost pass-through through the BEA direct-requirements matrix (Phase 9b)
     if q.flags["closure"] == "no_demand_feedback":
         q.set("P.87", 0.0)
     q.flags["ramp_allocation"] = app.get("hardware", {}).get("ramp_allocation", "global")

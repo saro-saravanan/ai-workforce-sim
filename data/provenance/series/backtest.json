@@ -5,13 +5,13 @@
   "license": "Public filings",
   "pulled_at": "2026-09-03",
   "commit": "",
-  "sha256": "f5479e821ff6c7e8f59e2beb93be02d7f4b5d8bf82407a77635299a9b9f46b81",
+  "sha256": "f52b34faf613b73defc41661b4a626446579e3f0e69866fe958eda7dc5b33fbc",
   "transformations": [
     "transcribed from Census BTOS, Challenger reports, company reports, press summaries and the NY Fed; see docs/data-inventory.md"
   ],
   "status": "real (transcribed; secondary confirmation)",
-  "notes": "Observed series the model is scored against for 2024Q1-2026Q2 (review §2.2). model_metric names the model quantity: adoption_share_firm_weighted (BTOS share of firms using AI), ai_layoffs_cum (announced AI-cited job cuts since 2023; the model's laid_off_cum plus the 2023 count that precedes the horizon), ai_producer_revenue_bn (world), hyperscaler_capex_bn (the capex path, an input), none (context only: the model does not track the quantity). used_in_fit marks rows that were used to set a parameter.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "notes": "Observed series the model is scored against for 2024Q1-2026Q2 (review §2.2). model_metric names the model quantity: adoption_share_firm_weighted (BTOS share of firms using AI), ai_layoffs_cum (announced AI-cited job cuts since 2023; the model's laid_off_cum plus the 2023 count that precedes the horizon), ai_producer_revenue_bn (world), hyperscaler_capex_bn (the capex path, an input), driving_fleet_units_us (deployed driving-class units in the U.S.), none (context only: the model does not track the quantity). used_in_fit marks rows that were used to set a parameter.",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/series/backtest.csv",
   "extra": {}
 }

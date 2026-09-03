@@ -58,6 +58,8 @@ class Inputs:
     data_flags: dict[str, str] = field(default_factory=dict)
     data_version: str = ""
 
+    io_direct_requirements: np.ndarray | None = None   # [n_sec, n_sec] a_ij, intermediate use of i per dollar of j's output (BEA; None without the table)
+    occ_beta_alt: np.ndarray | None = None             # [n_occ] alternative occupation exposure (AIOE, rank-mapped to the GPTs-are-GPTs scale); lever capability.exposure_source
     @property
     def n_occ(self) -> int:
         return len(self.occ_codes)
@@ -75,6 +77,12 @@ class Inputs:
         out = np.zeros(self.n_occ)
         np.add.at(out, self.task_occ, self.task_weight * self.task_beta)
         return out
+
+    @property
+    def labor_cost_share_mean(self) -> float:
+        """Employment-weighted mean labour-cost share across sectors (the single-sector fixture's 0.58 when there is one sector)."""
+        w = self.emp0 @ self.occ_sector
+        return float((w * self.labor_cost_share).sum() / max(w.sum(), 1e-9)) if w.sum() > 0 else float(self.labor_cost_share.mean())
 
 
 def _hash_dir(d: Path) -> str:
@@ -115,7 +123,25 @@ def load_inputs(root: Path) -> Inputs:
     for r in os_.iter_rows(named=True):
         if r["occ_code"] in occ_index and r["sector_code"] in sec_index:
             occ_sector[occ_index[r["occ_code"]], sec_index[r["sector_code"]]] = float(r["emp_share"])
+    row_sum = occ_sector.sum(axis=1, keepdims=True)
+    fallback = occ_sector.sum(axis=0); fallback = fallback / max(fallback.sum(), 1e-9)
+    occ_sector = np.where(row_sum > 0, occ_sector / np.maximum(row_sum, 1e-12), fallback[None, :])   # rows sum to one exactly (task-unit conservation)
 
+    io_mat = None
+    if (proc / "io_direct_requirements.csv").exists():
+        io_df = pl.read_csv(proc / "io_direct_requirements.csv", schema_overrides={"from_sector": pl.Utf8})
+        codes = sectors["sector_code"].to_list(); io_mat = np.zeros((len(codes), len(codes)))
+        for r in io_df.iter_rows(named=True):
+            if r["from_sector"] in sec_index:
+                for j, c in enumerate(codes):
+                    io_mat[sec_index[r["from_sector"]], j] = float(r.get(c) or 0.0)
+    beta_alt = None
+    if (proc / "exposure_aioe.csv").exists():
+        alt = pl.read_csv(proc / "exposure_aioe.csv", schema_overrides={"occ_code": pl.Utf8})
+        beta_alt = np.full(len(occ_codes), np.nan)
+        for r in alt.iter_rows(named=True):
+            if r["occ_code"] in occ_index and r["beta_rank_mapped"] is not None:
+                beta_alt[occ_index[r["occ_code"]]] = float(r["beta_rank_mapped"])
     states = pl.read_csv(proc / "states.csv", schema_overrides={"fips": pl.Utf8}).sort("fips")
     st_index = {c: i for i, c in enumerate(states["fips"].to_list())}
     ost = pl.read_csv(proc / "occ_state.csv", schema_overrides={"occ_code": pl.Utf8, "fips": pl.Utf8})
@@ -157,6 +183,8 @@ def load_inputs(root: Path) -> Inputs:
         sector_friction=sectors["friction"].cast(pl.Float64).to_numpy(),
         consumption_share=sectors["consumption_share"].cast(pl.Float64).to_numpy(),
         occ_sector=occ_sector,
+        io_direct_requirements=io_mat,
+        occ_beta_alt=beta_alt,
         state_fips=states["fips"].to_list(),
         state_names=states["name"].to_list(),
         state_abbrev=states["abbrev"].to_list(),

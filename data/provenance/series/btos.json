@@ -11,7 +11,7 @@
   ],
   "status": "real (transcribed; secondary confirmation)",
   "notes": "Sector cuts for the period ending 3 May 2026 (Information 39.7%, Finance and Insurance 33.9%) are in the row note, not separate rows. Wording change 17 Nov 2025 -> two series (wording column). Full biweekly series to be pulled by ingest/btos.py.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:26+00:00",
   "output": "data/processed/series/btos.csv",
   "extra": {}
 }

@@ -152,7 +152,7 @@ def regulatory_events() -> pl.DataFrame:
 
 BACKTEST_NOTES = ("Observed series the model is scored against for 2024Q1-2026Q2 (review §2.2). model_metric names the model quantity: "
                   "adoption_share_firm_weighted (BTOS share of firms using AI), ai_layoffs_cum (announced AI-cited job cuts since 2023; the model's laid_off_cum "
-                  "plus the 2023 count that precedes the horizon), ai_producer_revenue_bn (world), hyperscaler_capex_bn (the capex path, an input), none (context only: "
+                  "plus the 2023 count that precedes the horizon), ai_producer_revenue_bn (world), hyperscaler_capex_bn (the capex path, an input), driving_fleet_units_us (deployed driving-class units in the U.S.), none (context only: "
                   "the model does not track the quantity). used_in_fit marks rows that were used to set a parameter.")
 
 
@@ -170,6 +170,11 @@ def backtest() -> pl.DataFrame:
         ("challenger_ai_cum", "Announced AI-cited job cuts since 2023 (Challenger)", "2025Q4", 71825.0, "cuts", "ai_layoffs_cum", "Challenger 2025 total 54,836 plus prior", "real (transcribed; report)", 1),
         ("challenger_ai_cum", "Announced AI-cited job cuts since 2023 (Challenger)", "2026Q2", 173568.0, "cuts", "ai_layoffs_cum", "Challenger cumulative since 2023 through June 2026", "real (transcribed; report)", 1),
         # AI producers' revenue, world
+        # U.S. robotaxi fleet (Waymo, the only fleet at scale): vehicle counts from company statements as reported in the press; V? transcribed from
+        # recollection, to be checked against Waymo's announcements. The model's counterpart is the deployed driving-class units in the U.S.
+        ("robotaxi_fleet_us", "U.S. robotaxi fleet (Waymo vehicles)", "2024Q3", 700.0, "vehicles", "driving_fleet_units_us", "Waymo statements, Aug 2024 (about 700 vehicles)", "V? (transcribed from recollection)", 0),
+        ("robotaxi_fleet_us", "U.S. robotaxi fleet (Waymo vehicles)", "2025Q2", 1500.0, "vehicles", "driving_fleet_units_us", "Waymo statements, mid-2025 (about 1,500 vehicles)", "V? (transcribed from recollection)", 0),
+        ("robotaxi_fleet_us", "U.S. robotaxi fleet (Waymo vehicles)", "2025Q4", 2500.0, "vehicles", "driving_fleet_units_us", "Waymo statements, late 2025 (about 2,500 vehicles; 2026 plans above 3,500)", "V? (transcribed from recollection)", 0),
         ("ai_revenue", "AI industry revenue (world, $bn/yr)", "2025Q4", 60.0, "$bn/yr", "ai_producer_revenue_bn", "OpenAI $13.1bn (FT-verified), Anthropic ~$5bn, Microsoft and Google AI lines, Menlo Ventures enterprise estimate; range 45-80", "press summaries (V: secondary)", 1),
         ("ai_revenue", "AI industry revenue (world, $bn/yr)", "2026Q4", 140.0, "$bn/yr", "ai_producer_revenue_bn", "run rates mid-2026 (OpenAI ~$40bn, Anthropic ~$47bn gross) and market estimates; range 90-200", "press summaries (V: secondary; run rates)", 1),
         # Hyperscaler capex (input path)

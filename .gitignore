@@ -30,3 +30,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# AIOE (Felten, Raj, Seamans) carries no license: the derived exposure table is built locally and never committed
+data/processed/exposure_aioe.csv
+data/provenance/exposure_aioe.json

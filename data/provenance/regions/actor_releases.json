@@ -13,7 +13,7 @@
   ],
   "status": "real (transcribed; verify at ingest)",
   "notes": "Only releases whose dates the author is confident of; fewer, correct rows over coverage. Replaced by ingest/epoch_models.py (Epoch Notable AI Models, with ECI).",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/regions/actor_releases.csv",
   "extra": {
     "n_with_capability_index": 3

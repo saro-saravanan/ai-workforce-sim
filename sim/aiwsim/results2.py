@@ -508,6 +508,8 @@ def backtest_section(inp: Inputs, o: BatchOutput, regional: Any) -> dict[str, An
                 model = float(rev[t])
             elif m == "hyperscaler_capex_bn" and cap is not None:
                 model = float(cap[t]); note = "input path, not a prediction"
+            elif m == "driving_fleet_units_us" and getattr(us, "fleet", None) and "driving" in us.fleet:
+                model = float(us.fleet["driving"][0, t]); note = "model quantity: deployed driving-class units in the U.S. (robotaxis and autonomous trucks; the class stock starts at 500 in 2024)"
         elif m != "none":
             note = "before the model horizon"
         obs = float(r["value"])

@@ -12,7 +12,7 @@
   ],
   "status": "FIXTURE",
   "notes": "Rest of the world is not a source region, so the import share is fully attributed to the nine modelled partners. Replaced by ingest/oecd_tiva.py.",
-  "built_at": "2026-09-03T17:18:03+00:00",
+  "built_at": "2026-09-03T19:52:27+00:00",
   "output": "data/processed/regions/trade_weights.csv",
   "extra": {}
 }

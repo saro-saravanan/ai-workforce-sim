@@ -20,10 +20,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import polars as pl
 
 from aiwsim.data import actors as ac
-from aiwsim.data import classify, series
+from aiwsim.data import classify, external, series
 from aiwsim.data import clusters as cl
 from aiwsim.data import cohorts as co
 from aiwsim.data import fixtures as fx
@@ -252,10 +253,23 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
 
     raw = load_raw(root)
     occ, tasks, notes = build_occupations_and_tasks(raw, cluster_params)
+    ext = external.oews_external(root)          # BLS OEWS tables fetched by the external-data workflow (None on a clone without them)
+    bea = external.bea_use_table(root)          # BEA summary use table, when fetched
+    if ext is not None:
+        occ, n_miss = external.refresh_occupations_frame(occ, ext["national"], ext["vintage"])
+        # clusters are built on employment (anchors are the occupations above 300k); rebuild them on the refreshed employment
+        cdf = cl.build_clusters(occ.select("occ_code", "title", "emp_national", "wage_median_annual", pl.col("eloundou_beta").alias("beta")), cluster_params or cl.ClusterParams())
+        occ = occ.drop(["cluster_id", "cluster_title", "cluster_size", "cluster_rule"]).join(cdf, on="occ_code", how="left").select(occ.columns)
+        notes["clusters"] = cl.summarize(cdf)
+        ext["occ_sector"] = external.complete_occ_sector(ext["occ_sector"], occ)
+        ext["occ_state"] = external.complete_occ_state(ext["occ_state"], ext["states"], occ)
+        tot = ext["occ_state"].group_by("fips").agg(pl.col("emp").cast(pl.Int64).sum().alias("emp_total"))     # states.emp_total = sum of the occupation rows (published total kept)
+        ext["states"] = ext["states"].rename({"emp_total": "emp_total_published"}).join(tot, on="fips", how="left").select("fips", "name", "abbrev", "emp_total", "source_tag", "emp_total_published").sort("fips")
+        log(f"external OEWS {ext['vintage']}: occupations refreshed ({n_miss} not published there keep May 2021 values); occ_sector {ext['info']}")
 
     # ---- occupations.csv ---------------------------------------------------------------------
     p = _write_csv(occ, out / "occupations.csv")
-    statuses["occupations"] = "partial"
+    statuses["occupations"] = f"real (OEWS {ext['vintage']} employment and wages)" if ext is not None else "partial"
     write_provenance(
         root, "occupations", p,
         source="OEWS May 2021 national cross-industry (national_May2021_dl.csv) + BLS EP 2020-30 "
@@ -320,64 +334,122 @@ def build_all(root: Path | str, verbose: bool = True, cluster_params: cl.Cluster
     if verbose:
         classify.print_distribution(tasks)
 
-    # ---- sectors.csv (+ fixtures/sectors_20.csv) --------------------------------------------
-    sec = pl.DataFrame([fx.SECTOR_ALL])
-    p = _write_csv(sec, out / "sectors.csv")
-    statuses["sectors"] = "FIXTURE"
-    write_provenance(
-        root, "sectors", p, source="contracts §1 Phase 1 sector fixture", source_url="docs/contracts.md",
-        license="n/a (fixture)", status="FIXTURE",
-        transformations=[("single sector ALL: labor_cost_share 0.58, demand_elasticity 0.8, tradable 0, friction 1.0, "
-                         "consumption_share 1.0")],
-        notes="Replaced by the OEWS occupation x industry matrix (ingest/oews.py) mapped to the 20 sectors of spec "
-              "§1.2 listed in data/fixtures/sectors_20.csv; labor_cost_share from BEA I-O, consumption_share from "
-              "CPI relative importance.",
-    )
-    _write_csv(fx.sectors_20_frame(), root / "data" / "fixtures" / "sectors_20.csv")
+    if ext is not None:
+        # ---- real sector tables (Phase 9b, review item 10): OEWS occupation x sector, 20 NAICS sectors, BEA columns when present ----
+        sec, sec_status = external.sectors_table(bea)
+        p = _write_csv(sec, out / "sectors.csv")
+        statuses["sectors"] = sec_status
+        write_provenance(root, "sectors", p, source=(f"BEA summary use table {bea.get('year', '')} (labor_cost_share, consumption_share) + authors' estimates" if bea else
+                                                    "authors' estimates by NAICS sector (aiwsim.data.external.SECTOR_E); BEA use table pending"),
+                         source_url="https://www.bea.gov/industry/input-output-accounts-data", license="public domain (U.S. government work)" if bea else "n/a (estimates)",
+                         status="real" if bea else "partial (E estimates; BEA pending)",
+                         transformations=["20 NAICS sectors of spec §1.2 (data/fixtures/sectors_20.csv)", "consumption_share normalized to 1",
+                                          "friction 1.0 in every sector (the calibrated single-sector adoption speed; BTOS sector cuts not yet used)"],
+                         notes="labor_cost_share = compensation / gross output; demand_elasticity and friction are E in every case.")
+        _write_csv(fx.sectors_20_frame(), root / "data" / "fixtures" / "sectors_20.csv")
+        p = _write_csv(ext["occ_sector"], out / "occ_sector.csv")
+        statuses["occ_sector"] = "real"
+        write_provenance(root, "occ_sector", p, source=f"OEWS {ext['vintage']} national occupation x industry ({ext['files']['sector']})", source_url=oews_src.url,
+                         license=oews_src.license, status="real",
+                         transformations=["I_GROUP == 'sector' rows (+ NAICS 999xxx government -> 92) mapped to the 20 sectors of spec §1.2",
+                                          "emp_share renormalized within occupation over published cells"],
+                         notes=f"Fetched by .github/workflows/external-data.yml. Sectors present: {ext['info']['sectors_present']}", extra={"ingested": True, "vintage": ext["vintage"]})
+        p1 = _write_csv(ext["occ_state"], out / "occ_state.csv"); p2 = _write_csv(ext["states"], out / "states.csv")
+        statuses["occ_state"] = "real"; statuses["states"] = "real"
+        for table, pth in (("occ_state", p1), ("states", p2)):
+            write_provenance(root, table, pth, source=f"OEWS {ext['vintage']} state file ({ext['files']['state']})", source_url=oews_src.url,
+                             license=oews_src.license, status="real",
+                             transformations=["AREA_TYPE == 2 (states + DC); fips = first two digits of AREA", "suppressed cells dropped (state sums < national)"],
+                             notes="Fetched by .github/workflows/external-data.yml", extra={"ingested": True, "vintage": ext["vintage"]})
+        io = external.io_direct_requirements(bea)
+        if io is not None:
+            p = _write_csv(io, out / "io_direct_requirements.csv")
+            statuses["io_direct_requirements"] = "real"
+            write_provenance(root, "io_direct_requirements", p, source=f"BEA summary use table {bea.get('year', '')}, producer values",
+                             source_url="https://www.bea.gov/industry/input-output-accounts-data", license="public domain (U.S. government work)", status="real",
+                             transformations=["intermediate use of commodity i by industry j / total industry output of j, commodities and industries mapped to the 20 NAICS sectors"],
+                             notes="a_ij used by the engine's input-output cost propagation (lever macro.io_propagation)")
+        log(f"sectors.csv: {sec.height} sectors ({sec_status}); occ_sector.csv: {ext['occ_sector'].height} rows; states.csv: {ext['states'].height}; occ_state.csv: {ext['occ_state'].height}")
+    else:
+        # ---- sectors.csv (+ fixtures/sectors_20.csv) --------------------------------------------
+        sec = pl.DataFrame([fx.SECTOR_ALL])
+        p = _write_csv(sec, out / "sectors.csv")
+        statuses["sectors"] = "FIXTURE"
+        write_provenance(
+            root, "sectors", p, source="contracts §1 Phase 1 sector fixture", source_url="docs/contracts.md",
+            license="n/a (fixture)", status="FIXTURE",
+            transformations=[("single sector ALL: labor_cost_share 0.58, demand_elasticity 0.8, tradable 0, friction 1.0, "
+                             "consumption_share 1.0")],
+            notes="Replaced by the OEWS occupation x industry matrix (ingest/oews.py) mapped to the 20 sectors of spec "
+                  "§1.2 listed in data/fixtures/sectors_20.csv; labor_cost_share from BEA I-O, consumption_share from "
+                  "CPI relative importance.",
+        )
+        _write_csv(fx.sectors_20_frame(), root / "data" / "fixtures" / "sectors_20.csv")
 
-    # ---- occ_sector.csv ----------------------------------------------------------------------
-    occ_sector = occ.select("occ_code").with_columns(pl.lit("ALL").alias("sector_code"), pl.lit(1.0).alias("emp_share"),
-                                                     pl.lit(fx.FIXTURE_TAG).alias("source_tag"))
-    p = _write_csv(occ_sector, out / "occ_sector.csv")
-    statuses["occ_sector"] = "FIXTURE"
-    write_provenance(root, "occ_sector", p, source="contracts §1 Phase 1 sector fixture", source_url="docs/contracts.md",
-                     license="n/a (fixture)", status="FIXTURE",
-                     transformations=["every occupation -> sector ALL with emp_share 1.0"],
-                     notes="Replaced by ingest/oews.py (OEWS national occupation x industry).")
+        # ---- occ_sector.csv ----------------------------------------------------------------------
+        occ_sector = occ.select("occ_code").with_columns(pl.lit("ALL").alias("sector_code"), pl.lit(1.0).alias("emp_share"),
+                                                         pl.lit(fx.FIXTURE_TAG).alias("source_tag"))
+        p = _write_csv(occ_sector, out / "occ_sector.csv")
+        statuses["occ_sector"] = "FIXTURE"
+        write_provenance(root, "occ_sector", p, source="contracts §1 Phase 1 sector fixture", source_url="docs/contracts.md",
+                         license="n/a (fixture)", status="FIXTURE",
+                         transformations=["every occupation -> sector ALL with emp_share 1.0"],
+                         notes="Replaced by ingest/oews.py (OEWS national occupation x industry).")
 
-    # ---- states.csv / occ_state.csv ----------------------------------------------------------
-    st = fx.state_shares()
-    shares = st["state_share"].to_list()
-    rows = []
-    for code, emp in zip(occ["occ_code"], occ["emp_national"]):
-        alloc = fx.allocate_integer(int(emp), shares)
-        rows.extend((code, f, e) for f, e in zip(st["fips"], alloc))
-    occ_state = pl.DataFrame(rows, schema=["occ_code", "fips", "emp"], orient="row").with_columns(
-        pl.lit(fx.FIXTURE_TAG).alias("source_tag"))
-    emp_tot = occ_state.group_by("fips").agg(pl.col("emp").sum().alias("emp_total"))
-    states = st.join(emp_tot, on="fips", how="left").with_columns(pl.lit(fx.FIXTURE_TAG).alias("source_tag")).select(
-        "fips", "name", "abbrev", "emp_total", "source_tag", "pop_2020", "state_share").sort("fips")
-    p = _write_csv(states, out / "states.csv")
-    statuses["states"] = "FIXTURE"
-    cap = SOURCES["census_apportionment_2020"]
-    state_notes = ("POPULATION SHARE PROXY FOR EMPLOYMENT SHARE; replace with OEWS state ingest (ingest/oews.py). "
-                   "state_share = 2020 Census apportionment resident population / 331,449,281 (50 states + DC). "
-                   "Populations were transcribed from memory, not fetched: the total matches the published U.S. "
-                   "resident population exactly and each state is believed accurate to well within 5%, but the "
-                   "table has not been checked against the Census page in this sandbox. Same occupational mix "
-                   "in every state.")
-    write_provenance(root, "states", p, source=cap.name, source_url=cap.url, license=cap.license, status="FIXTURE",
-                     transformations=["state_share = pop_2020 / total", "emp_total = sum of occ_state.emp per state"],
-                     notes=state_notes)
-    p = _write_csv(occ_state, out / "occ_state.csv")
-    statuses["occ_state"] = "FIXTURE"
-    write_provenance(root, "occ_state", p, source=cap.name + " x OEWS May 2021 national employment", source_url=cap.url,
-                     license=cap.license, status="FIXTURE",
-                     transformations=[("emp = largest-remainder integer allocation of emp_national by state_share "
-                                      "(sums exactly to emp_national)")],
-                     notes=state_notes)
-    log(f"states.csv: {states.height} states; occ_state.csv: {occ_state.height} rows")
+        # ---- states.csv / occ_state.csv ----------------------------------------------------------
+        st = fx.state_shares()
+        shares = st["state_share"].to_list()
+        rows = []
+        for code, emp in zip(occ["occ_code"], occ["emp_national"]):
+            alloc = fx.allocate_integer(int(emp), shares)
+            rows.extend((code, f, e) for f, e in zip(st["fips"], alloc))
+        occ_state = pl.DataFrame(rows, schema=["occ_code", "fips", "emp"], orient="row").with_columns(
+            pl.lit(fx.FIXTURE_TAG).alias("source_tag"))
+        emp_tot = occ_state.group_by("fips").agg(pl.col("emp").sum().alias("emp_total"))
+        states = st.join(emp_tot, on="fips", how="left").with_columns(pl.lit(fx.FIXTURE_TAG).alias("source_tag")).select(
+            "fips", "name", "abbrev", "emp_total", "source_tag", "pop_2020", "state_share").sort("fips")
+        p = _write_csv(states, out / "states.csv")
+        statuses["states"] = "FIXTURE"
+        cap = SOURCES["census_apportionment_2020"]
+        state_notes = ("POPULATION SHARE PROXY FOR EMPLOYMENT SHARE; replace with OEWS state ingest (ingest/oews.py). "
+                       "state_share = 2020 Census apportionment resident population / 331,449,281 (50 states + DC). "
+                       "Populations were transcribed from memory, not fetched: the total matches the published U.S. "
+                       "resident population exactly and each state is believed accurate to well within 5%, but the "
+                       "table has not been checked against the Census page in this sandbox. Same occupational mix "
+                       "in every state.")
+        write_provenance(root, "states", p, source=cap.name, source_url=cap.url, license=cap.license, status="FIXTURE",
+                         transformations=["state_share = pop_2020 / total", "emp_total = sum of occ_state.emp per state"],
+                         notes=state_notes)
+        p = _write_csv(occ_state, out / "occ_state.csv")
+        statuses["occ_state"] = "FIXTURE"
+        write_provenance(root, "occ_state", p, source=cap.name + " x OEWS May 2021 national employment", source_url=cap.url,
+                         license=cap.license, status="FIXTURE",
+                         transformations=[("emp = largest-remainder integer allocation of emp_national by state_share "
+                                          "(sums exactly to emp_national)")],
+                         notes=state_notes)
+        log(f"states.csv: {states.height} states; occ_state.csv: {occ_state.height} rows")
 
+    # ---- exposure_aioe.csv (Phase 9b, review §2.4 exposure-source swap): AIOE occupation scores rank-mapped onto the GPTs-are-GPTs beta scale ----
+    aioe_path = root / "data" / "raw" / "aioe" / "AIOE_DataAppendix.xlsx"
+    if aioe_path.exists():
+        from aiwsim.data.ingest._common import read_excel_bytes
+        ap = read_excel_bytes(aioe_path.read_bytes(), sheet_name="Appendix A")
+        ap = ap.rename({ap.columns[0]: "occ_code", ap.columns[2]: "aioe"}).select("occ_code", pl.col("aioe").cast(pl.Float64, strict=False))
+        tb = tasks.with_columns(pl.col("weight").cast(pl.Float64), pl.col("beta").cast(pl.Float64)).group_by("occ_code").agg(
+            (pl.col("weight") * pl.col("beta")).sum().alias("beta_gpts"))
+        j = tb.join(ap, on="occ_code", how="inner").filter(pl.col("aioe").is_not_null()).sort("aioe")
+        n = j.height
+        if n:
+            sorted_beta = np.sort(j["beta_gpts"].to_numpy())
+            mapped = sorted_beta[np.arange(n)]                    # the k-th lowest AIOE score takes the k-th lowest GPTs beta: only the ranking changes
+            j = j.with_columns(pl.Series("beta_rank_mapped", mapped)).select("occ_code", "aioe", "beta_gpts", "beta_rank_mapped").sort("occ_code")
+            p = _write_csv(j, out / "exposure_aioe.csv")
+            statuses["exposure_aioe"] = "real (derived; not committed)"
+            aioe_src = SOURCES["aioe"]
+            write_provenance(root, "exposure_aioe", p, source=aioe_src.name + " (AIOE_DataAppendix.xlsx, Appendix A)", source_url=aioe_src.url, license=aioe_src.license,
+                             status="real", transformations=["SOC 6-digit codes matched to OEWS occupation codes", "AIOE rank-mapped onto the task-weighted GPTs-are-GPTs beta of the matched occupations (only the ordering is used)"],
+                             notes="Cross-check only: the repository carries no license, so this table and its provenance record are gitignored and rebuilt from the fetched appendix.")
+            log(f"exposure_aioe.csv: {n} occupations matched (AIOE rank-mapped onto the GPTs beta scale; gitignored, cross-check only)")
     # ---- series ------------------------------------------------------------------------------
     series_specs = [
         ("series/btos", series.btos(), SOURCES["btos"], "Census BTOS AI question, inventory §3 table",
