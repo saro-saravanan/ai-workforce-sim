@@ -84,10 +84,11 @@ describe('StoryView', () => {
     const { w } = await mountStory()
     const filled = (id: string) => w.find(`[data-beat="${id}"]`).findAll('.dot.on').length
     expect(filled('jobs')).toBe(2)
-    expect(filled('hiring')).toBe(story.beats[1].sureness.dots)
+    const hiring = story.beats[1]!
+    expect(filled('hiring')).toBe(hiring.sureness.dots)
     expect(filled('futures')).toBe(1)
     expect(w.find('[data-beat="jobs"]').text()).toContain('leaning this way')
-    expect(w.find('[data-beat="hiring"]').text()).toContain(story.beats[1].sureness.label)
+    expect(w.find('[data-beat="hiring"]').text()).toContain(hiring.sureness.label)
     expect(w.find('[data-beat="jobs"]').findAll('.dot')).toHaveLength(3)
   })
 
