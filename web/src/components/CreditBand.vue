@@ -4,7 +4,7 @@ import { REPO_URL } from '@/api/client'
 import { useTourStore } from '@/stores/tour'
 
 const AUTHOR = 'Saro Saravanan'
-const AUTHOR_URL = 'https://github.com/saro-saravanan'
+const AUTHOR_URL = 'https://saro-saravanan.github.io'
 const tour = useTourStore()
 </script>
 

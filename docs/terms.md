@@ -1,6 +1,6 @@
 # Terms of use
 
-AI Workforce Sim is an open-source scenario model built by Saro Saravanan. By using the public page, the code, the data tables or any output of the model you accept the terms below. They are written in plain language on purpose; where they use a legal term it carries its ordinary legal meaning.
+AI Workforce Sim is an open-source scenario model built by [Saro Saravanan](https://saro-saravanan.github.io). By using the public page, the code, the data tables or any output of the model you accept the terms below. They are written in plain language on purpose; where they use a legal term it carries its ordinary legal meaning.
 
 ## 1. What this is, and what it is not
 

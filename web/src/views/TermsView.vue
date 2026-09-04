@@ -2,6 +2,7 @@
 import { RouterLink } from 'vue-router'
 import { REPO_URL } from '@/api/client'
 
+const AUTHOR_URL = 'https://saro-saravanan.github.io'
 const TERMS_MD = `${REPO_URL}/blob/main/docs/terms.md`
 const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`
 const INVENTORY_URL = `${REPO_URL}/blob/main/docs/data-inventory.md`
@@ -12,7 +13,8 @@ const INVENTORY_URL = `${REPO_URL}/blob/main/docs/data-inventory.md`
     <header>
       <h2>Terms of use</h2>
       <p class="lede">
-        AI Workforce Sim is an open-source scenario model built by Saro Saravanan. By using the
+        AI Workforce Sim is an open-source scenario model built by
+        <a :href="AUTHOR_URL" target="_blank" rel="noopener author">Saro Saravanan</a>. By using the
         public page, the code, the data tables or any output of the model you accept the terms
         below. They are written in plain language on purpose; where they use a legal term it
         carries its ordinary legal meaning. The canonical text is
