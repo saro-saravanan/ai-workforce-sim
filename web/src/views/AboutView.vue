@@ -231,6 +231,92 @@ const LINKS = [
       </p>
     </header>
 
+    <section class="card why" id="why">
+      <h3>Why I built this</h3>
+      <p class="text-p">
+        Like most people, I have spent a good deal of the last few years fretting about what
+        accelerating AI means for my children, my grandchildren, and the society they will live
+        in. I have spent my career building software, and I know what it looks like when a
+        technology stops being a demo and starts changing who gets hired. This time the
+        technology is aimed at the kind of work I do, and the kind of work I hoped they would do.
+      </p>
+      <p class="text-p">
+        The public conversation did not help. One week the headline said half of all jobs would
+        vanish; the next said AI would make everyone richer. Every number came from somewhere I
+        could not see, with assumptions I could not change, and none of them agreed with each
+        other. I found I could not answer the simple questions my family asked me at dinner.
+      </p>
+      <p class="text-p">
+        So I built a model. Not to predict the future, which nobody can, but to make the
+        assumptions visible, so that when we disagree we disagree about the right things. Every
+        number it produces is a difference between a world where AI keeps improving and a world
+        where it stopped in 2023. Every parameter has a source, a range and a lever. When the
+        model is wrong, and it will be, you can see where.
+      </p>
+      <p class="text-p">
+        It does not make one prediction. It produces projections under different
+        <strong>scenarios</strong> and <strong>presets</strong>, and shows the range between them.
+        A scenario changes the world the model runs in: the baseline with every assumption at its
+        central value; a what-if in which the EU AI Act is delayed two years and an open-weights
+        frontier model arrives from China in 2027; policy runs that add a retraining subsidy, a
+        $500-a-month basic income paid for by an income-tax surcharge, wage insurance, or a
+        36-hour week; variants in which employers cut through layoffs rather than attrition, or
+        wages fall to clear the market. A preset rebuilds someone else's published estimate with
+        the same engine, so you can see how much of the disagreement between reports is the data
+        and how much is the assumptions: Acemoglu's 2024 paper, Goldman Sachs 2023, the IMF's 2024
+        study, and Tony Seba's RethinkX disruption thesis, which the model carries as a named
+        future rather than a forecast. Pick any of them from the scenario menu at the top; the
+        catalogue below describes each one. These are the questions I have been trying to answer.
+      </p>
+      <ol class="questions">
+        <li v-for="(x, i) in QUESTIONS" :key="i">
+          <p class="q">{{ x.q }}</p>
+          <p class="a">
+            {{ x.a }}
+            <RouterLink class="where" :to="{ path: x.path, query: $route.query }">{{ x.label }}</RouterLink>
+          </p>
+        </li>
+      </ol>
+      <p class="text-p">
+        I do not have the answers. I have a set of mechanisms, stated in the open, that anyone can
+        inspect, argue with and improve. If this helps one family have a calmer and
+        better-informed conversation about the future, or one policymaker ask a sharper question,
+        it has done its job. If you can make it better, the
+        <a :href="REPO_URL" target="_blank" rel="noopener">repository</a> is open and I would be
+        glad of the help. <span class="muted">Saro Saravanan, September 2026.</span>
+      </p>
+    </section>
+
+    <section class="card author" id="author">
+      <h3>About the author</h3>
+      <p class="text-p">
+        <a :href="AUTHOR.profile" target="_blank" rel="noopener author"><strong>{{ AUTHOR.name }}</strong></a>
+        is a CTO, builder and AI-native engineering leader with decades of experience building,
+        scaling and operating software: founder-CTO of Emplanet, a 401(k) SaaS platform that raised
+        $36M and exited at a $100M valuation; Chief Architect at Fidelity Investments for
+        NetBenefits (10M+ users), Plan Sponsor WebStation and twenty other flagship products;
+        engineering leader and inventor behind TSA PreCheck and TSA CAT at IDEMIA; holder of seven
+        U.S. patents in identity, biometrics and web application architecture; co-author of two
+        books on operating system internals. Today he practises technology due diligence at
+        Crosslake Technologies, increasingly on AI disruption risk and AI readiness, and runs
+        Verby, LLC, an AI product studio that has shipped five products since 2024. This
+        simulation is one of those builds.
+      </p>
+      <p class="text-p">
+        <strong>Fractional CTO and advisory.</strong> Saro is open to fractional CTO engagements,
+        board and technical advisory roles, and technology due diligence: AI-readiness reviews
+        across infrastructure, architecture, organisation and operations, disruption-risk
+        assessment for software businesses, and hands-on help building real AI capability rather
+        than an AI veneer. If the questions this model raises are ones your company is facing, that
+        is the conversation to have.
+      </p>
+      <ul class="plain links">
+        <li><a :href="AUTHOR.profile" target="_blank" rel="noopener">Profile page</a><span class="muted"> · experience, builds, patents and publications</span></li>
+        <li><a :href="AUTHOR.linkedin" target="_blank" rel="noopener">LinkedIn</a><span class="muted"> · connect or send a message</span></li>
+        <li><a :href="AUTHOR.github" target="_blank" rel="noopener">GitHub</a><span class="muted"> · code, including this repository</span></li>
+      </ul>
+    </section>
+
     <section class="card">
       <h3>How the model works</h3>
       <ol class="layers">
@@ -281,78 +367,6 @@ const LINKS = [
         quantity, the row says so, and claims that were used to set a parameter are marked as
         calibration targets and counted separately.
       </p>
-    </section>
-
-    <section class="card why" id="why">
-      <h3>Why I built this</h3>
-      <p class="text-p">
-        Like most people, I have spent a good deal of the last few years fretting about what
-        accelerating AI means for my children, my grandchildren, and the society they will live
-        in. I have spent my career building software, and I know what it looks like when a
-        technology stops being a demo and starts changing who gets hired. This time the
-        technology is aimed at the kind of work I do, and the kind of work I hoped they would do.
-      </p>
-      <p class="text-p">
-        The public conversation did not help. One week the headline said half of all jobs would
-        vanish; the next said AI would make everyone richer. Every number came from somewhere I
-        could not see, with assumptions I could not change, and none of them agreed with each
-        other. I found I could not answer the simple questions my family asked me at dinner.
-      </p>
-      <p class="text-p">
-        So I built a model. Not to predict the future, which nobody can, but to make the
-        assumptions visible, so that when we disagree we disagree about the right things. Every
-        number it produces is a difference between a world where AI keeps improving and a world
-        where it stopped in 2023. Every parameter has a source, a range and a lever. When the
-        model is wrong, and it will be, you can see where. These are the questions I have been
-        trying to answer.
-      </p>
-      <ol class="questions">
-        <li v-for="(x, i) in QUESTIONS" :key="i">
-          <p class="q">{{ x.q }}</p>
-          <p class="a">
-            {{ x.a }}
-            <RouterLink class="where" :to="{ path: x.path, query: $route.query }">{{ x.label }}</RouterLink>
-          </p>
-        </li>
-      </ol>
-      <p class="text-p">
-        I do not have the answers. I have a set of mechanisms, stated in the open, that anyone can
-        inspect, argue with and improve. If this helps one family have a calmer and
-        better-informed conversation about the future, or one policymaker ask a sharper question,
-        it has done its job. If you can make it better, the
-        <a :href="REPO_URL" target="_blank" rel="noopener">repository</a> is open and I would be
-        glad of the help. <span class="muted">Saro Saravanan, September 2026.</span>
-      </p>
-    </section>
-
-    <section class="card author" id="author">
-      <h3>About the author</h3>
-      <p class="text-p">
-        <a :href="AUTHOR.profile" target="_blank" rel="noopener author"><strong>{{ AUTHOR.name }}</strong></a>
-        is a CTO, builder and AI-native engineering leader with decades of experience building,
-        scaling and operating software: founder-CTO of Emplanet, a 401(k) SaaS platform that raised
-        $36M and exited at a $100M valuation; Chief Architect at Fidelity Investments for
-        NetBenefits (10M+ users), Plan Sponsor WebStation and twenty other flagship products;
-        engineering leader and inventor behind TSA PreCheck and TSA CAT at IDEMIA; holder of seven
-        U.S. patents in identity, biometrics and web application architecture; co-author of two
-        books on operating system internals. Today he practises technology due diligence at
-        Crosslake Technologies, increasingly on AI disruption risk and AI readiness, and runs
-        Verby, LLC, an AI product studio that has shipped five products since 2024. This
-        simulation is one of those builds.
-      </p>
-      <p class="text-p">
-        <strong>Fractional CTO and advisory.</strong> Saro is open to fractional CTO engagements,
-        board and technical advisory roles, and technology due diligence: AI-readiness reviews
-        across infrastructure, architecture, organisation and operations, disruption-risk
-        assessment for software businesses, and hands-on help building real AI capability rather
-        than an AI veneer. If the questions this model raises are ones your company is facing, that
-        is the conversation to have.
-      </p>
-      <ul class="plain links">
-        <li><a :href="AUTHOR.profile" target="_blank" rel="noopener">Profile page</a><span class="muted"> · experience, builds, patents and publications</span></li>
-        <li><a :href="AUTHOR.linkedin" target="_blank" rel="noopener">LinkedIn</a><span class="muted"> · connect or send a message</span></li>
-        <li><a :href="AUTHOR.github" target="_blank" rel="noopener">GitHub</a><span class="muted"> · code, including this repository</span></li>
-      </ul>
     </section>
 
     <section class="card" id="scenarios">

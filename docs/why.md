@@ -8,6 +8,8 @@ The public conversation did not help. One week the headline said half of all job
 
 So I built a model. Not to predict the future, which nobody can, but to make the assumptions visible, so that when we disagree we disagree about the right things. Every number it produces is a difference between a world where AI keeps improving and a world where it stopped in 2023. Every parameter has a source, a range and a lever. When the model is wrong, and it will be, you can see where.
 
+It does not make one prediction. It produces projections under different **scenarios** and **presets**, and shows the range between them. A scenario changes the world the model runs in: the baseline with every assumption at its central value; a what-if in which the EU AI Act is delayed two years and an open-weights frontier model arrives from China in 2027; policy runs that add a retraining subsidy, a $500-a-month basic income paid for by an income-tax surcharge, wage insurance, or a 36-hour week; variants in which employers cut through layoffs rather than attrition, or wages fall to clear the market. A preset rebuilds someone else's published estimate with the same engine, so you can see how much of the disagreement between reports is the data and how much is the assumptions: Acemoglu's 2024 paper, Goldman Sachs 2023, the IMF's 2024 study, and Tony Seba's RethinkX disruption thesis, which the model carries as a named future rather than a forecast. Every one of them is a JSON file in `scenarios/`, and the app's About page describes each.
+
 These are the questions I have been trying to answer.
 
 ## The questions
