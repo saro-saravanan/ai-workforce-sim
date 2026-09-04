@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { BarsChart, StoryBeat as Beat } from '@/types/story'
 import { useResultsStore } from '@/stores/results'
+import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { useStory } from '@/composables/useStory'
 import { useBriefs } from '@/composables/useBriefs'
@@ -22,18 +23,22 @@ import StoryInvestment from '@/components/story/StoryInvestment.vue'
 const results = useResultsStore()
 const theme = useThemeStore()
 const { story, loading, error, region } = useStory()
+const regionStore = useRegionStore()
 const briefs = useBriefs()
 
 const horizon = computed(() => {
   const h = story.value?.horizon
   return h ? `${quarterYear(h[0])}–${quarterYear(h[1])}` : ''
 })
-/** the static export stories the U.S.; say so when another region is selected */
-const regionNote = computed(() =>
-  story.value && story.value.region !== region.value
-    ? `This story is for ${regionName(story.value.region)}; the ${regionName(region.value)} totals are on the other views.`
-    : '',
-)
+/** World has no single ledger, so its story is the U.S. one; an export without the region's file falls back to the U.S. story too */
+const regionNote = computed(() => {
+  if (!story.value) return ''
+  if (story.value.region !== region.value)
+    return `This story is for ${regionName(story.value.region)}; this run carries no ${regionName(region.value)} story, and its totals are on the other views.`
+  if (regionStore.isWorld)
+    return 'World has no single jobs ledger, so this story reads the United States. Pick a region in the top bar for its own story.'
+  return ''
+})
 /** bar values: counts of people (no unit) in compact form, everything else one decimal */
 function barsFormat(chart: BarsChart) {
   return chart.unit ? (v: number) => pyFixed(v, 1) : (v: number) => fmtCompact(v)

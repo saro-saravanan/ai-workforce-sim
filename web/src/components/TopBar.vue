@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { VIEWS } from '@/router'
 import { useResultsStore } from '@/stores/results'
 import { REGION_OPTIONS, useRegionStore } from '@/stores/region'
+import { REGION_NAMES, isRegionId } from '@/types/results'
 import { useToastStore } from '@/stores/toast'
 import * as api from '@/api/client'
 import { briefHtml } from '@/lib/insights'
@@ -20,6 +21,9 @@ const briefHash = computed(() => results.doc?.meta.scenario_hash ?? null)
 const compareHash = computed(() => results.docB?.meta.scenario_hash ?? null)
 /** the brief is per series block; World aggregates client-side only, so it reports the U.S. */
 const briefRegion = computed(() => (regionStore.isWorld ? 'US' : regionStore.region))
+const briefRegionName = computed(() =>
+  isRegionId(briefRegion.value) ? REGION_NAMES[briefRegion.value] : briefRegion.value,
+)
 function briefTitle() {
   return `${results.scenarioName} — brief`
 }
@@ -160,20 +164,32 @@ function onRegion(e: Event) {
           :disabled="!briefHash || briefBusy"
           :title="
             briefHash
-              ? `Brief for ${results.scenarioName}${compareHash ? ' with the compare run' : ''}`
+              ? `Export the technical brief for ${results.scenarioName}${compareHash ? ' with the compare run' : ''}`
               : 'No run to brief yet'
           "
           @click="briefOpen = !briefOpen"
         >
-          {{ briefBusy ? 'Exporting…' : 'Export brief' }} <span aria-hidden="true">▾</span>
+          {{ briefBusy ? 'Exporting…' : 'Export' }} <span aria-hidden="true">▾</span>
         </button>
         <div v-if="briefOpen" class="menu-scrim" @click="briefOpen = false"></div>
-        <div v-if="briefOpen" class="menu card" role="menu" aria-label="Export brief">
-          <button class="item" role="menuitem" @click="exportMarkdown">Markdown (.md)</button>
-          <button class="item" role="menuitem" @click="openHtml">HTML (open in new tab)</button>
+        <div v-if="briefOpen" class="menu card" role="menu" aria-label="Export">
+          <p class="muted hint top">
+            Technical brief: the headline table with its bands, what changed against the parent,
+            the three top findings, the model notes, the sensitivities, the regions and the
+            scenario as JSON.
+          </p>
+          <button class="item" role="menuitem" @click="openHtml">Technical brief · open as a page</button>
+          <button class="item" role="menuitem" @click="exportMarkdown">Technical brief · download Markdown</button>
+          <RouterLink
+            class="item"
+            role="menuitem"
+            :to="{ path: '/story', query: $route.query }"
+            @click="briefOpen = false"
+            >Executive brief · on the Story view</RouterLink
+          >
           <p class="muted hint">
-            {{ briefRegion }} · {{ results.scenarioName
-            }}{{ compareHash ? ` vs ${results.compareName}` : '' }}
+            {{ briefRegionName }}{{ regionStore.isWorld ? ' (World reads the U.S. ledger)' : '' }} ·
+            {{ results.scenarioName }}{{ compareHash ? ` vs ${results.compareName}` : '' }}
           </p>
         </div>
       </div>
@@ -181,14 +197,12 @@ function onRegion(e: Event) {
       <span v-if="results.isMock" class="badge fixture" title="VITE_USE_MOCK=1: synthetic data"
         >mock data</span
       >
-      <a
+      <RouterLink
         v-else-if="results.isStatic"
         class="badge static"
-        :href="api.REPO_URL"
-        target="_blank"
-        rel="noopener"
-        title="VITE_STATIC=1: precomputed runs from the static export, no server. Opens the repository."
-        >static demo · precomputed runs</a
+        :to="{ path: '/about', query: $route.query, hash: '#static-demo' }"
+        title="Precomputed runs from the static export, no server: scenarios, regions, quarters and briefs work; new lever values, saving and Ask need the local API. About explains."
+        >static demo · precomputed runs</RouterLink
       >
       <div class="spacer"></div>
       <ThemeToggle />
@@ -289,7 +303,8 @@ function onRegion(e: Event) {
   top: calc(100% + 4px);
   left: 0;
   z-index: 25;
-  min-width: 220px;
+  width: 330px;
+  max-width: calc(100vw - 24px);
   padding: 4px;
   box-shadow: var(--shadow);
   display: flex;
@@ -306,6 +321,16 @@ function onRegion(e: Event) {
 }
 .menu .item:hover {
   background: var(--surface-2);
+}
+.menu .item.router-link-active,
+.menu a.item {
+  text-decoration: none;
+  display: block;
+}
+.menu .hint.top {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
 }
 .menu .hint {
   margin: 4px 10px 4px;

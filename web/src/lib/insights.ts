@@ -136,7 +136,9 @@ export function candidateInsights(doc: ResultsDocument, region = 'US'): Insight[
       `${top.name} dominates the employment uncertainty`,
       `Across its literature range (${top.low}–${top.high}), ${top.name} (${top.param}) moves ${qEnd} employment from ${sgn(top.effect_at_low)} to ${sgn(top.effect_at_high)}, a swing ${ratio.toFixed(1)}× the next parameter (${second.name}, ${tornadoSwing(second).toFixed(1)} pp).` +
         (tornadoFlips(top)
-          ? ` It is one of ${flips.length} parameter(s) that can flip the sign of the effect.`
+          ? flips.length === 1
+            ? ' It is the only parameter that can flip the sign of the effect.'
+            : ` It is one of ${flips.length} parameters that can flip the sign of the effect.`
           : ''),
       'One-at-a-time sensitivity at the central draw (spec §9.3); the demand feedback (spec §6.2) enters through the multiplier m (P.87) and elasticity η_s (P.60).',
       ratio > 2 ? 'high' : 'medium',

@@ -98,7 +98,7 @@ def test_executive_brief_formats_and_endpoints(run):
     h, doc = run
     st = story.story(doc, "US")
     md = story.executive_brief_md(st); page = story.executive_brief_html(st)
-    assert md.startswith("# What AI does to work in US") and "## What could be done" in md and "| Who | Claim |" in md
+    assert md.startswith("# What AI does to work in United States") and "## What could be done" in md and "| Who | Claim |" in md
     assert "P." not in md.replace("P.", "P.") or "P.87" not in md, "executive brief must not carry parameter codes"
     assert page.count("<svg") >= 4 and "Gains spent back" in page
     c = TestClient(app)

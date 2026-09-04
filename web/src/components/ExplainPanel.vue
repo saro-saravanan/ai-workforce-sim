@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useChatStore } from '@/stores/chat'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
 import { HEADLINE_METRICS, type ScenarioDocument, type TraceKey } from '@/types/results'
@@ -12,6 +13,7 @@ import ChatPanel from '@/components/ChatPanel.vue'
 
 const results = useResultsStore()
 const scrubber = useScrubberStore()
+const chat = useChatStore()
 defineProps<{ open: boolean }>()
 defineEmits<{ toggle: []; edit: [doc: ScenarioDocument] }>()
 
@@ -35,6 +37,18 @@ function setTab(t: PanelTab) {
     /* ignore */
   }
 }
+/** Ask exists only when the API server reports a model (ANTHROPIC_API_KEY set); until the status is known the tab stays hidden */
+const askAvailable = computed(() => chat.status?.available === true)
+onMounted(() => {
+  if (!chat.status) void chat.loadStatus()
+})
+watch(
+  () => chat.status,
+  (s) => {
+    if (s && !s.available && tab.value === 'ask') tab.value = 'explain'
+  },
+  { immediate: true },
+)
 
 const refQ = computed(() => referenceQuarter(results.quarters, scrubber.q))
 const traceRows = computed(() => {
@@ -45,15 +59,19 @@ const traceRows = computed(() => {
 </script>
 
 <template>
-  <aside class="explain" :class="{ open, ask: tab === 'ask' }" aria-label="Explain and Ask">
+  <aside
+    class="explain"
+    :class="{ open, ask: tab === 'ask' }"
+    :aria-label="askAvailable ? 'Explain and Ask' : 'Explain'"
+  >
     <button
       v-if="!open"
       class="rail"
-      title="Open the Explain · Ask panel"
-      aria-label="Open the Explain and Ask panel"
+      :title="askAvailable ? 'Open the Explain · Ask panel' : 'Open the Explain panel'"
+      :aria-label="askAvailable ? 'Open the Explain and Ask panel' : 'Open the Explain panel'"
       @click="$emit('toggle')"
     >
-      <span class="rail-label">Explain · Ask</span>
+      <span class="rail-label">{{ askAvailable ? 'Explain · Ask' : 'Explain' }}</span>
     </button>
     <template v-else>
       <div class="head">
@@ -68,6 +86,7 @@ const traceRows = computed(() => {
             Explain
           </button>
           <button
+            v-if="askAvailable"
             class="btn"
             role="tab"
             :aria-selected="tab === 'ask'"
@@ -79,7 +98,7 @@ const traceRows = computed(() => {
         </div>
         <button class="btn" aria-label="Collapse panel" @click="$emit('toggle')">›</button>
       </div>
-      <ChatPanel v-if="tab === 'ask'" @edit="$emit('edit', $event)" />
+      <ChatPanel v-if="tab === 'ask' && askAvailable" @edit="$emit('edit', $event)" />
       <template v-else>
       <p class="muted small">Notes generated from the mechanism trace, no free text from an LLM.</p>
       <ol v-if="results.notes.length" class="notes">

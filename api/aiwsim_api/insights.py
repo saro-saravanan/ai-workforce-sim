@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from aiwsim.data.regions import REGION_NAMES
+
 HEADLINE_LABELS = {"employment_pct_vs_baseline": "employment", "gdp_pct_vs_baseline": "GDP",
                    "real_wage_pct_vs_baseline": "real wages", "wage_share_pp_vs_baseline": "wage share"}
 AGE_LABELS = ["16–24", "25–44", "45–54", "55+"]
@@ -41,6 +43,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
     i30 = quarters.index("2030Q4") if "2030Q4" in quarters else t_end
     us = doc["series"].get("US", {})
     blk = doc["series"].get(region) or us
+    rn = REGION_NAMES.get(region, region)
     out: list[dict[str, Any]] = []
 
     def add(key: str, title: str, statement: str, mechanism: str, confidence: str, surprise: float,
@@ -54,7 +57,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         e50, g50 = _at(e, t_end), _at(g, t_end)
         if g50 > 0 and e50 < 0:
             add("gdp_vs_employment", "Output rises while employment falls",
-                f"In {region}, GDP is {_band(g, t_end)} above the no-AI baseline by {q_end} while employment is {_band(e, t_end)}; real wages are {_band(rw, t_end) if rw else 'n/a'}.",
+                f"In {rn}, GDP is {_band(g, t_end)} above the no-AI baseline by {q_end} while employment is {_band(e, t_end)}; real wages are {_band(rw, t_end) if rw else 'n/a'}.",
                 "Task automation lowers unit costs (spec §5.2); demand responds with elasticity η_s and the demand multiplier m (P.87), "
                 "but below unit elasticity the output gain does not refill the displaced task-hours (spec §5.2–5.3).",
                 _conf(doc, "employment_pct_vs_baseline", q_end), 0.35 + min(0.4, abs(e50) / 10) + min(0.25, g50 / 20),
@@ -69,7 +72,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         if tot > 0:
             share = u50 / tot
             add("hiring_channel", "Displacement runs through hiring, not layoffs",
-                f"Of {tot/1e6:.1f}M jobs below baseline in {region} by {q_end}, {100*share:.0f}% are positions not refilled after normal attrition and {100*(1-share):.0f}% are layoffs.",
+                f"Of {tot/1e6:.1f}M jobs below baseline in {rn} by {q_end}, {100*share:.0f}% are positions not refilled after normal attrition and {100*(1-share):.0f}% are layoffs.",
                 "Employers first absorb the fall in labor demand through net occupational attrition (P.63, 2.5%/quarter); layoffs occur only when the required "
                 "contraction outruns attrition and layoff friction (P.64) (spec §5.3).",
                 _conf(doc, "employment_pct_vs_baseline", q_end), 0.3 + 0.6 * abs(share - 0.5) * 2 * (0.5 if share < 0.5 else 1.0),
@@ -84,7 +87,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         add("dominant_parameter", f"{top['name']} dominates the employment uncertainty",
             f"Across its literature range ({top['low']}–{top['high']}), {top['name']} ({top['param']}) moves {q_end} employment from {top['effect_at_low']:+.1f}% to {top['effect_at_high']:+.1f}%, "
             f"a swing {ratio:.1f}× the next parameter ({second['name']}, {second['swing']:.1f} pp)."
-            + (f" It is one of {len(flips)} parameter(s) that can flip the sign of the effect." if top.get("flips_sign") else ""),
+            + ((" It is the only parameter that can flip the sign of the effect." if len(flips) == 1 else f" It is one of {len(flips)} parameters that can flip the sign of the effect.") if top.get("flips_sign") else ""),
             "One-at-a-time sensitivity at the central draw (spec §9.3); the demand feedback (spec §6.2) enters through the multiplier m (P.87) and elasticity η_s (P.60).",
             "high" if ratio > 2 else "medium", 0.25 + min(0.5, (ratio - 1) / 4) + (0.2 if top.get("flips_sign") else 0.0),
             {"param": top["param"], "swing_pp": top["swing"], "next_param": second["param"], "next_swing_pp": second["swing"], "flip_params": [r["param"] for r in flips]},
@@ -131,7 +134,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         n50, r50, p50 = _at(nw, t_end), _at(rw, t_end), _at(pi, t_end)
         if abs(r50 - n50) > 0.5:
             add("price_channel", "Real wage gains come through prices",
-                f"Nominal wages in {region} are {n50:+.1f}% vs baseline by {q_end}, but the price index is {p50:+.1f}%, so real wages are {r50:+.1f}%.",
+                f"Nominal wages in {rn} are {n50:+.1f}% vs baseline by {q_end}, but the price index is {p50:+.1f}%, so real wages are {r50:+.1f}%.",
                 "Pass-through of cost savings to prices π_p (P.53) lowers the consumer price index; real wages rise even where the wage curve holds nominal wages down (spec §6.2).",
                 _conf(doc, "real_wage_pct_vs_baseline", q_end), 0.3 + min(0.5, abs(r50 - n50) / 6),
                 {"nominal_wage_pct": n50, "real_wage_pct": r50, "price_index_pct": p50}, "real_wage_pct_vs_baseline")
@@ -176,7 +179,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         fleets = {c: _at(v, t_end) for c, v in blk.get("fleet_stock", {}).items()}
         if e40 > 0.5:
             add("embodied_timing", "Embodied automation arrives late, then large",
-                f"Robots and autonomous vehicles displace {e30:.1f}% of {region} task-hours by {quarters[i30]} but {e40:.1f}% by {q_end}"
+                f"Robots and autonomous vehicles displace {e30:.1f}% of {rn} task-hours by {quarters[i30]} but {e40:.1f}% by {q_end}"
                 + (f"; deployed units by {q_end}: " + ", ".join(f"{c} {v/1e6:.1f}M" for c, v in fleets.items() if v > 0) if fleets else "") + ".",
                 "Embodied channels wait on hardware unit cost (Wright's law), the production ramp cap, and approval paths, not on the software clock; "
                 "coverage binds until fleets catch up with profitable-feasible hours (spec v0.3 §A.3.3–A.3.4).",
@@ -189,7 +192,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         top = max(shares.items(), key=lambda kv: kv[1])
         cs_bn = _at(blk.get("consumer_surplus_proxy_bn", {}), t_end) if blk.get("consumer_surplus_proxy_bn") else 0.0
         add("output_substitution", "AI-made content takes market share where authenticity matters least",
-            f"By {q_end}, AI-produced output holds {top[1]:.0f}% of {top[0]} spending in {region} (highest category); " + ", ".join(f"{c} {v:.0f}%" for c, v in shares.items() if c != top[0])
+            f"By {q_end}, AI-produced output holds {top[1]:.0f}% of {top[0]} spending in {rn} (highest category); " + ", ".join(f"{c} {v:.0f}%" for c, v in shares.items() if c != top[0])
             + f". Consumer-surplus proxy ${cs_bn:.0f}bn/yr (an accounting quantity at baseline prices, not welfare).",
             "A logit share in relative price and quality with an authenticity premium that persists or erodes (structural axis); human-produced output shrinks by the share, "
             "and creators' own AI tools cut hours per unit on top (spec v0.3 §A.4).",
@@ -197,7 +200,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
     ts = blk.get("traded_services_displacement_share")
     if ts and _at(ts, t_end) > 0.05:
         add("traded_services", "Automation abroad lands on exporters' workers",
-            f"Automation in importing regions displaces {_at(ts, t_end):.2f}% of {region} employment by {q_end} through exported business and IT services.",
+            f"Automation in importing regions displaces {_at(ts, t_end):.2f}% of {rn} employment by {q_end} through exported business and IT services.",
             "Export-serving workers face the importers' task displacement instead of the local one (spec v0.3 §A.5.3); the channel reaches low-wage exporters before robots do.",
             "medium", 0.4 + min(0.4, _at(ts, t_end) / 2), {"traded_share_pct": _at(ts, t_end)}, "employment_pct_vs_baseline")
 
@@ -217,7 +220,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
         a30, e30 = _at(ad, i30), _at(e, i30)
         if a30 > 30:
             add("adoption_vs_effect", "Adoption is broad before the labor effect is",
-                f"By {quarters[i30]}, {a30:.0f}% of {region} employment sits in adopting firms, yet employment is only {e30:+.1f}% vs baseline.",
+                f"By {quarters[i30]}, {a30:.0f}% of {rn} employment sits in adopting firms, yet employment is only {e30:+.1f}% vs baseline.",
                 "The adoption S-curve (spec §4.2) counts firms using AI at any intensity; the realized task share is capped by the intensity ceiling (P.50) and the feasibility clock (spec §2.3).",
                 "medium", 0.25 + min(0.5, (a30 / 100) - abs(e30) / 10), {"adoption_share": a30, "employment_pct_vs_baseline": e30}, "employment_pct_vs_baseline", quarters[i30])
 
@@ -227,6 +230,7 @@ def candidate_insights(doc: dict[str, Any], region: str = "US") -> list[dict[str
 
 def compare_insights(cmp: dict[str, Any], quarters: list[str], region: str = "US") -> list[dict[str, Any]]:
     """Candidates about what a scenario changed vs a reference run (paired draws, contracts §10)."""
+    rn = REGION_NAMES.get(region, region)
     t_end = len(quarters) - 1; q_end = quarters[t_end]
     a_name = cmp["a"].get("name") or cmp["a"]["hash"]; b_name = cmp["b"].get("name") or cmp["b"]["hash"]
     lever_diff = [d for d in cmp.get("diff", []) if d["path"].split(".")[0] in ("levers", "shocks", "overrides")]
@@ -259,8 +263,8 @@ def compare_insights(cmp: dict[str, Any], quarters: list[str], region: str = "US
                         "confidence": "medium", "surprise": 0.85, "evidence": {"gdp": g["evidence"], "employment": e["evidence"]},
                         "metric": "employment_pct_vs_baseline", "quarter": q_end, "region": region})
     if out and all(abs(c["evidence"]["delta_p50"]) < 0.3 for c in out if c["key"] != "delta_divergence"):
-        out.append({"key": "delta_null", "title": f"'{b_name}' barely moves {region} headline outcomes",
-                    "statement": f"Relative to '{a_name}', every {q_end} headline delta in {region} is within ±0.3 pp: "
+        out.append({"key": "delta_null", "title": f"'{b_name}' barely moves {rn} headline outcomes",
+                    "statement": f"Relative to '{a_name}', every {q_end} headline delta in {rn} is within ±0.3 pp: "
                                  + "; ".join(f"{HEADLINE_LABELS[c['metric']]} {c['evidence']['delta_p50']:+.1f} pp" for c in out if c["key"] != "delta_divergence")
                                  + f". Levers changed: {levers}.",
                     "mechanism": "Levers acting on another region's availability or regulation reach this region only through spillover and trade (spec §4.2, §6.3), "

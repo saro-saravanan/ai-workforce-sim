@@ -80,6 +80,8 @@ export interface StaticManifest {
   data_version?: string
   draws?: number
   runs: StaticRun[]
+  /** scenario id → region id → the region's own story file (contracts §26); `story` is the U.S. one */
+  story_regions?: Record<string, Record<string, string>>
   /** `a` and `b` are scenario ids; the exporter's compares are for the U.S. series */
   compares?: Array<{ a: string; b: string; file: string; region?: string }>
   levers?: string
@@ -618,8 +620,9 @@ async function mockStory(doc: ResultsDocument): Promise<StoryDocument> {
 
 /**
  * GET /api/story/{hash}?region= — the story document. Static mode reads the exporter's
- * `story/<id>.json` (the U.S. story; other regions get it too, marked by its `region`); mock
- * mode reads `src/mock/story.json` for every run.
+ * `story/<id>.<region>.json` (`story/<id>.json` for the U.S.), falling back to the U.S. story
+ * for exports without per-region files (marked by its `region`); mock mode reads
+ * `src/mock/story.json` for every run.
  */
 export async function fetchStory(doc: ResultsDocument, region = 'US'): Promise<StoryDocument> {
   const r = storyRegion(region)
@@ -627,7 +630,8 @@ export async function fetchStory(doc: ResultsDocument, region = 'US'): Promise<S
   if (USE_STATIC) {
     const m = await staticManifest()
     const id = staticRunOf(m, doc.meta.scenario_hash)?.id ?? doc.meta.scenario_id
-    const file = m.story?.[id]
+    // the region's own story when the export carries it, else the U.S. one (marked by its `region`)
+    const file = m.story_regions?.[id]?.[r] ?? m.story?.[id]
     if (!file)
       throw new Error(`Static demo: no story for "${id}". Pick a precomputed scenario instead.`)
     return getJson<StoryDocument>(staticUrl(file))

@@ -108,6 +108,9 @@ export interface StoryPolicy {
 }
 
 export interface StoryNumbers {
+  /** employment today and in the horizon year without AI (levels; absent in older documents) */
+  jobs_today?: number
+  jobs_2040_no_ai?: number
   jobs_base: number
   jobs_gap: number
   jobs_gap_low: number
@@ -176,6 +179,8 @@ export interface StoryDocument {
   scenario_id: string | null
   scenario_name: string | null
   region: string
+  /** the region's full name (older documents: absent, see `regionName`) */
+  region_name?: string
   horizon: [string, string]
   numbers: StoryNumbers
   beats: StoryBeat[]

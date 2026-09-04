@@ -75,7 +75,7 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
         (out / "briefs" / f"{sid}.html").write_text(build_brief_html(md, f"{doc['meta'].get('scenario_name') or sid} — brief"))
         briefs[sid] = {"md": f"briefs/{sid}.md", "html": f"briefs/{sid}.html"}
     # story layer (contracts §26–28): policy runs are read against the baseline; the Seba/RethinkX preset is a named future
-    stories: dict[str, str] = {}; exec_briefs: dict[str, dict[str, str]] = {}
+    stories: dict[str, str] = {}; story_regions: dict[str, dict[str, str]] = {}; exec_briefs: dict[str, dict[str, str]] = {}
     pol = {sid: docs[sid] for sid in service.POLICY_SCENARIOS if sid in docs}
     base_doc = docs.get("baseline") or docs[ref]
     for sid in scenario_ids:
@@ -84,6 +84,14 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
         var = {v: docs[v] for v in service.VARIANT_SCENARIOS if v in docs and v != sid}
         st = story(doc, "US", pol, fut, base_doc, var)
         _dump(out / "story" / f"{sid}.json", st); stories[sid] = f"story/{sid}.json"
+        # every region's own story (the executive brief of the other regions is built client-side from it)
+        story_regions[sid] = {}
+        for r in doc["meta"].get("regions", []):
+            if r not in doc["series"]:
+                continue
+            if r == "US":
+                story_regions[sid][r] = stories[sid]; continue
+            _dump(out / "story" / f"{sid}.{r}.json", story(doc, r, pol, fut, base_doc, var)); story_regions[sid][r] = f"story/{sid}.{r}.json"
         (out / "briefs" / f"{sid}.exec.md").write_text(executive_brief_md(st))
         (out / "briefs" / f"{sid}.exec.html").write_text(executive_brief_html(st))
         exec_briefs[sid] = {"md": f"briefs/{sid}.exec.md", "html": f"briefs/{sid}.exec.html"}
@@ -99,7 +107,7 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
     c = service.ctx()
     manifest = {"generated_at": dt.datetime.now(dt.UTC).isoformat(timespec="seconds"), "spec_version": SPEC_VERSION, "data_version": c.inputs.data_version,
                 "draws": draws, "runs": runs, "compares": compares, "levers": "levers.json", "scenarios": "scenarios.json", "regions": "regions.json",
-                "actors": "actors.json", "geo": geo, "insights": insights, "briefs": briefs, "story": stories, "exec_briefs": exec_briefs,
+                "actors": "actors.json", "geo": geo, "insights": insights, "briefs": briefs, "story": stories, "story_regions": story_regions, "exec_briefs": exec_briefs,
                 "policy_scenarios": [x for x in service.POLICY_SCENARIOS if x in docs], "future_scenarios": [x for x in service.FUTURE_SCENARIOS if x in docs],
                 "variant_scenarios": [x for x in service.VARIANT_SCENARIOS if x in docs]}
     _dump(out / "manifest.json", manifest)

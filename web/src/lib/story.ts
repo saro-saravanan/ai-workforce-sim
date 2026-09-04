@@ -27,14 +27,14 @@ export function execBriefMarkdown(st: StoryDocument): string {
   const n = st.numbers
   const yr = st.horizon[1].slice(0, 4)
   const L: string[] = [
-    `# What AI does to work in ${st.region}, in seven findings`,
+    `# What AI does to work in ${st.region_name ?? regionName(st.region)}, in seven findings`,
     '',
     `Scenario: ${st.scenario_name ?? st.scenario_id ?? ''}. Everything below is a difference from a world in which AI stopped improving in 2023. Run \`${st.scenario_hash}\`.`,
     '',
     '## In five sentences',
     '',
-    `By ${yr} there are about ${millions(n.jobs_gap)} fewer jobs than there would have been, out of about ${millions(n.jobs_base)}; most of them are jobs never created rather than jobs destroyed. ` +
-      `Almost none of that is layoffs: it is positions not refilled, so the young pay first. Real pay rises about ${pyFixed(n.real_wage_pct.p50)}% and the economy is about ${pyFixed(n.gdp_pct)}% larger, ` +
+    `By ${yr} there are about ${millions(n.jobs_gap)} fewer jobs than there would have been, out of the ${millions(n.jobs_2040_no_ai ?? n.jobs_base)} there would have been in ${yr}; most of them are jobs never created rather than jobs destroyed. ` +
+      `Most of that is hiring that never happens rather than layoffs, so ${st.region === 'US' ? 'the young' : 'new entrants'} pay first. Real pay rises about ${pyFixed(n.real_wage_pct.p50)}% and the economy is about ${pyFixed(n.gdp_pct)}% larger, ` +
       `but workers' share of income falls ${pyFixed(Math.abs(n.wage_share_pp), 1)} points. Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. ` +
       `Whether jobs end up down ${pyFixed(Math.abs(n.employment_pct.p10))}% or flat depends mostly on whether the gains are spent back into the economy.`,
     '',

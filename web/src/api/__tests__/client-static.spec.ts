@@ -50,6 +50,7 @@ const manifest = {
     'eu-delay-deepseek-2027': { md: 'briefs/eu-delay-deepseek-2027.md', html: 'briefs/eu-delay-deepseek-2027.html' },
   },
   story: { baseline: 'story/baseline.json' },
+  story_regions: { baseline: { US: 'story/baseline.json', EU: 'story/baseline.EU.json' } },
   exec_briefs: { baseline: { md: 'briefs/baseline.exec.md', html: 'briefs/baseline.exec.html' } },
   policy_scenarios: ['policy-retraining'],
   future_scenarios: ['preset-seba-rethinkx'],
@@ -108,6 +109,7 @@ beforeEach(async () => {
     'briefs/baseline.md': '# baseline brief (file)',
     'briefs/eu-delay-deepseek-2027.md': '# B brief with compare (file)',
     'story/baseline.json': { ...storyJson, scenario_hash: HASH_A },
+    'story/baseline.EU.json': { ...storyJson, scenario_hash: HASH_A, region: 'EU', region_name: 'European Union (EU-27)' },
   }
   calls = []
   vi.stubGlobal(
@@ -315,6 +317,16 @@ describe('story, outlook and executive brief (contracts §26–28)', () => {
     // World reads the U.S. story
     const world = await api.fetchStory(docA, 'world')
     expect(world.region).toBe('US')
+  })
+
+  it("reads a region's own story file and falls back to the U.S. one without it", async () => {
+    const eu = await api.fetchStory(docA, 'EU')
+    expect(eu.region).toBe('EU')
+    expect(eu.region_name).toBe('European Union (EU-27)')
+    expect(calls).toContain('/ai-workforce-sim/static/story/baseline.EU.json')
+    const jp = await api.fetchStory(docA, 'JP')
+    expect(jp.region).toBe('US')
+    expect(calls.filter((u) => u.endsWith('/story/baseline.JP.json'))).toHaveLength(0)
   })
 
   it('rejects a run without an exported story', async () => {

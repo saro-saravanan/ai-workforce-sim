@@ -13,6 +13,8 @@ from typing import Any
 
 import numpy as np
 
+from aiwsim.data.regions import REGION_NAMES
+
 HEAD = "employment_pct_vs_baseline"
 AGE_LABELS = {"16-24": "under 25", "25-44": "25 to 44", "45-54": "45 to 54", "55+": "55 and over"}
 SURENESS = {"high": ("we would bet on it", 3), "medium": ("leaning this way", 2), "low": ("a coin flip", 1)}
@@ -94,14 +96,19 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     # ---- reconciled numbers (one convention: medians; jobs in heads) ----
     e10, e50, e90 = _band(blk[HEAD], t40)
     jobs_gap = -e50 / 100 * base; jobs_lo = -e10 / 100 * base; jobs_hi = -e90 / 100 * base
-    flows = doc.get("flows", {}).get("destinations", {})
-    displaced = _p(blk["displaced_workers_cum"], t40); reemp = _p(flows.get("reemployed", {}), t40) if flows else 0.0
-    unemployed = _p(blk["unemployed_stock"], t40); exited = _p(flows.get("exited", {}), t40) if flows else 0.0
-    unfilled = _p(flows.get("unfilled_entry", {}), t40) if flows else 0.0; laid = _p(flows.get("laid_off", {}), t40) if flows else 0.0
+    us_detail = region == "US"
+    region_name = REGION_NAMES.get(region, region)
+    # the people ledger: the U.S. reads the flows section (destinations of the displaced); every other region reads its own series
+    flows = doc.get("flows", {}).get("destinations", {}) if us_detail else {}
+    def _people(flow_key: str, series_key: str) -> float:
+        return _p(flows[flow_key], t40) if flow_key in flows else _p(blk.get(series_key, {}), t40)
+    displaced = _p(blk["displaced_workers_cum"], t40); reemp = _people("reemployed", "reemployed_cum")
+    unemployed = _p(blk["unemployed_stock"], t40); exited = _people("exited", "exited_cum")
+    unfilled = _people("unfilled_entry", "unhired_entrants_cum"); laid = _people("laid_off", "laid_off_cum")
     peak_t = int(max(range(len(q)), key=lambda i: _p(blk["unemployed_stock"], i))); peak_unemp = _p(blk["unemployed_stock"], peak_t)
     g50 = _p(blk["gdp_pct_vs_baseline"], t40); rw10, rw50, rw90 = _band(blk["real_wage_pct_vs_baseline"], t40)
     price = _p(blk["price_index_pct_vs_baseline"], t40); wshare = _p(blk["wage_share_pp_vs_baseline"], t40)
-    hours_cut = _p(flows.get("self_employed_margin_cum", {}), t40) if flows else 0.0
+    hours_cut = _people("self_employed_margin_cum", "hours_cut_self_cum")
     removed, added = _channel_split(doc, region, t40, base)
     recon = _reconciliation(yr, base, jobs_gap, displaced, reemp, unemployed, exited, unfilled, laid, hours_cut, removed, added)
     numbers = {"jobs_base": round(base), "jobs_gap": round(jobs_gap), "jobs_gap_low": round(jobs_lo), "jobs_gap_high": round(jobs_hi),
@@ -141,8 +148,8 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                                             [f"{yr} with AI, low", round(with10 / 1e6, 1)], [f"{yr} with AI, high", round(with90 / 1e6, 1)]], "unit": "M jobs"},
                   "levels": {"today": round(today), "without_ai": round(without), "with_ai": {"p10": round(with10), "p50": round(with50), "p90": round(with90)}}})
     # 2. Most of the gap is hiring that never happens; and a reality check against announced AI layoffs
-    tot_lost = max(unfilled + laid + _p(flows.get("self_employed_margin_cum", {}), t40) if flows else 1.0, 1.0)
-    obs = [f for f in doc.get("forecasts", []) if str(f.get("short", "")).startswith("Challenger") and f.get("model_central") is not None]
+    tot_lost = max(unfilled + laid + hours_cut, 1.0)
+    obs = [f for f in doc.get("forecasts", []) if str(f.get("short", "")).startswith("Challenger") and f.get("model_central") is not None] if us_detail else []
     reality = ""
     if obs:
         parts = []
@@ -181,8 +188,8 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
         young = share.get("16-24", 0.0); young_own = own.get("16-24", 0.0); mid_own = own.get("25-44", 0.0); old_own = own.get("55+", 0.0)
         e_lo = _p(edu[0]["employment_pct_vs_baseline"], t40) if edu else 0.0; e_hi = _p(edu[-1]["employment_pct_vs_baseline"], t40) if edu else 0.0
         d_lo = sum(_p(x["employment_pct_vs_baseline"], t40) for x in dec[:5]) / 5 if dec else 0.0; d_hi = _p(dec[-1]["employment_pct_vs_baseline"], t40) if dec else 0.0
-        beats.append({"id": "young", "title": "The young pay first",
-                      "sentence": f"Workers under 25 carry {100*young:.0f}% of the shortfall, about {abs(young_own):.0f}% of their group's jobs, against {abs(mid_own):.0f}% for 25 to 44 and "
+        beats.append({"id": "young", "title": "The young pay first" + ("" if us_detail else " (U.S. detail)"),
+                      "sentence": ("" if us_detail else "Age, education and income splits are modelled for the United States only; there, w") + f"{'W' if us_detail else ''}orkers under 25 carry {100*young:.0f}% of the shortfall, about {abs(young_own):.0f}% of their group's jobs, against {abs(mid_own):.0f}% for 25 to 44 and "
                                   f"{'almost nothing' if abs(old_own) < 0.5 else f'{abs(old_own):.0f}%'} for those over 55. Workers without a degree lose "
                                   f"{_ratio_words(e_lo, e_hi, 'graduates')}, and the bottom half of earners lose {_ratio_words(d_lo, d_hi, 'the top tenth')}.",
                       "range": "Incumbents are mostly safe; entrants are not. That is the practical advice hidden in the numbers.",
@@ -222,21 +229,36 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
                       "share_2030": br["displacement_share"][t30], "share_2040": br["displacement_share"][t40], "target_jobs": br["target_employment_2024"]})
     occs = doc.get("occupations", [])
     big = [o for o in occs if o["emp0"] >= 200_000]
-    worst30 = sorted(big, key=lambda o: _p(o["employment_pct_vs_baseline"], t30))[:4]
-    worst40 = sorted(big, key=lambda o: _p(o["employment_pct_vs_baseline"], t40))[:4]
-    best40 = sorted(big, key=lambda o: -_p(o["employment_pct_vs_baseline"], t40))[:4]
     emb = blk.get("embodied_displacement_share", {}); content = blk.get("ai_content_share", {})
     content_sorted = sorted(((k, _p(v, t40)) for k, v in content.items()), key=lambda kv: -kv[1])
+    if us_detail:
+        worst30 = sorted(big, key=lambda o: _p(o["employment_pct_vs_baseline"], t30))[:4]
+        worst40 = sorted(big, key=lambda o: _p(o["employment_pct_vs_baseline"], t40))[:4]
+        best40 = sorted(big, key=lambda o: -_p(o["employment_pct_vs_baseline"], t40))[:4]
+        first_words = "Office and analytical work is being reshaped now: " + ", ".join(f"{o['title'].lower()} ({_p(o['employment_pct_vs_baseline'], t30):+.0f}%)" for o in worst30) + " by 2030. "
+        growing_words = "Growing: " + ", ".join(f"{o['title'].lower()} ({_p(o['employment_pct_vs_baseline'], t40):+.0f}%)" for o in best40) + "."
+        occ_lists: dict[str, Any] | None = {"hit_first": [[o["title"], _p(o["employment_pct_vs_baseline"], t30)] for o in worst30], "hit_most": [[o["title"], _p(o["employment_pct_vs_baseline"], t40)] for o in worst40],
+                                            "growing": [[o["title"], _p(o["employment_pct_vs_baseline"], t40)] for o in best40]}
+    else:
+        # employment by occupation is U.S. detail; the region has its own automated task share per occupation (the U.S. task mix tilted by income)
+        def _auto(o: dict[str, Any], t: int) -> float:
+            return 100 * _p((o.get("by_region") or {}).get(region, {}).get("displacement", {}), t, "central")
+        ranked = [o for o in big if _auto(o, t30) > 0]
+        first = sorted(ranked, key=lambda o: -_auto(o, t30))[:4]
+        first_words = ((f"Office and analytical work is being reshaped now; the occupations whose work is most automated in {region_name} by 2030: "
+                        + ", ".join(f"{o['title'].lower()} ({_auto(o, t30):.0f}% of task-hours)" for o in first) + ". ")
+                       if first else "Office and analytical work is being reshaped now. ")
+        growing_words = "Job counts by occupation are U.S. detail (the Occupations view); the region's totals are in the first finding."
+        occ_lists = None
     beats.append({"id": "waves", "title": "Three waves, not one",
-                  "sentence": ("Office and analytical work is being reshaped now: " + ", ".join(f"{o['title'].lower()} ({_p(o['employment_pct_vs_baseline'], t30):+.0f}%)" for o in worst30) + f" by 2030. "
-                               f"Robots and vehicles arrive later: {_p(emb, t30):.1f}% of task-hours in 2030, {_p(emb, t40):.1f}% by {yr}. "
+                  "sentence": (first_words
+                               + f"Robots and vehicles arrive later: {_p(emb, t30):.1f}% of task-hours in 2030, {_p(emb, t40):.1f}% by {yr}. "
                                + (f"AI-made content takes {content_sorted[0][0].replace('_', ' and ')} first ({content_sorted[0][1]:.0f}% of spending by {yr}) and {content_sorted[-1][0]} last ({content_sorted[-1][1]:.0f}%). " if content_sorted else "")
-                               + "Growing: " + ", ".join(f"{o['title'].lower()} ({_p(o['employment_pct_vs_baseline'], t40):+.0f}%)" for o in best40) + "."),
+                               + growing_words),
                   "range": "Timing of the robot wave depends on how fast fleets can be built and approved, not on the software.",
                   "sureness": _sure("medium"), "what_changes_it": "Production ramps, permits, and hardware costs for the robot wave; how much people keep paying for human-made work for the content wave.",
                   "chart": {"type": "timeline", "items": [w for w in waves if w["first_year"]], "start": int(q[0][:4]), "end": int(q[-1][:4])},
-                  "occupations": {"hit_first": [[o["title"], _p(o["employment_pct_vs_baseline"], t30)] for o in worst30], "hit_most": [[o["title"], _p(o["employment_pct_vs_baseline"], t40)] for o in worst40],
-                                  "growing": [[o["title"], _p(o["employment_pct_vs_baseline"], t40)] for o in best40]}})
+                  **({"occupations": occ_lists} if occ_lists else {})})
     # 6. Where the money goes
     regions = [x for x in doc["meta"].get("regions", []) if x in doc["series"]]
     rents = {x: _p(doc["series"][x]["ai_rents_received_bn"]["total"], t40) for x in regions}
@@ -266,9 +288,9 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     investment = investment_story(doc)
     caveats = _caveats(doc)
     return {"scenario_hash": doc["meta"]["scenario_hash"], "scenario_id": doc["meta"].get("scenario_id"), "scenario_name": doc["meta"].get("scenario_name"),
-            "region": region, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
+            "region": region, "region_name": region_name, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
             "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "investment": investment, "backtest": backtest_story(doc), "structural_spread": sp, "caveats": caveats,
-            "forecasts": doc.get("forecasts", []), "glossary": GLOSSARY}
+            "forecasts": doc.get("forecasts", []), "glossary": glossary(numbers, region_name)}
 
 
 def _ratio_words(lo: float, hi: float, other: str) -> str:
@@ -530,9 +552,18 @@ GLOSSARY = {
     "range of the model's assumptions": "the middle 80% of the model's runs across its parameter draws and mechanism cells; one run in ten falls above it and one in ten below. It is not a forecast interval: it excludes model error, data error and events outside the model",
     "we would bet on it / leaning / a coin flip": "how sure the model is of the direction: sure across all its versions, mostly, or split",
     "AI income (AI producers' revenue)": "what the makers of models, the cloud and data-centre operators, the chip makers and the integrators receive; in the model this equals what employers and consumers spend on AI, split by stage and allocated to the regions whose companies hold the market share; gross revenue, not profit and not economic rent in the textbook sense",
-    "jobs today": "employment in the 831 modelled occupations plus self-employed and platform workers, in full-time equivalents; about 152 million in 2024 against the 158 million BLS total",
+    "jobs today": "employment in the modelled occupations plus self-employed and platform workers, in full-time equivalents, not the official headline count",
     "jobs ledger / people ledger": "positions that exist versus people whose job was affected; a person who finds other work takes a position someone else would have had, so the two do not add up to each other",
 }
+
+
+def glossary(numbers: dict[str, Any], region_name: str) -> dict[str, str]:
+    """The glossary with the region's own 2024 count in the 'jobs today' entry."""
+    g = dict(GLOSSARY)
+    today = numbers.get("jobs_today") or numbers.get("jobs_base")
+    if today:
+        g["jobs today"] = f"{GLOSSARY['jobs today']}; about {_millions(float(today))} in 2024 in {region_name}"
+    return g
 
 
 # ---------------------------------------------------------------- personal outlook
@@ -541,7 +572,7 @@ def outlook(doc: dict[str, Any], occ_code: str | None, age_band: str | None, reg
     st = story(doc, region)
     occs = doc.get("occupations", [])
     o = next((x for x in occs if x["occ_code"] == occ_code), None) if occ_code else None
-    out: dict[str, Any] = {"region": region, "beats": [b for b in st["beats"] if b["id"] in ("jobs", "hiring", "pay")], "sureness_legend": SURENESS,
+    out: dict[str, Any] = {"region": region, "region_name": st["region_name"], "beats": [b for b in st["beats"] if b["id"] in ("jobs", "hiring", "pay")], "sureness_legend": SURENESS,
                            "note": "" if region == "US" else "Occupation and age figures are U.S. detail; the region's totals are in the beats above."}
     if o:
         e30 = _p(o["employment_pct_vs_baseline"], t30); e40 = _p(o["employment_pct_vs_baseline"], t40); lo = _p(o["employment_pct_vs_baseline"], t40, "p10"); hi = _p(o["employment_pct_vs_baseline"], t40, "p90")
@@ -571,15 +602,25 @@ def outlook(doc: dict[str, Any], occ_code: str | None, age_band: str | None, reg
 
 
 # ---------------------------------------------------------------- executive brief (markdown + html with inline SVG)
-def executive_brief_md(st: dict[str, Any]) -> str:
+def _lede(st: dict[str, Any]) -> str:
+    """The five-sentence summary at the top of the executive brief."""
     n = st["numbers"]; yr = st["horizon"][1][:4]
-    L = [f"# What AI does to work in {st['region']}, in seven findings", "",
+    without = n.get("jobs_2040_no_ai") or n["jobs_base"]
+    who = "the young pay first" if st.get("region", "US") == "US" else "new entrants pay first"
+    return (f"By {yr} there are about {_millions(n['jobs_gap'])} fewer jobs than there would have been, out of the {_millions(without)} there would have been in {yr}; most of them are jobs never created rather than jobs destroyed. "
+            f"Most of that is hiring that never happens rather than layoffs (about one position in {max(round((n['unfilled'] + n['laid_off']) / max(n['laid_off'], 1)), 2)} removed is a layoff), so {who}. "
+            f"Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, but workers' share of income falls {abs(n['wage_share_pp']):.1f} points. "
+            f"Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. "
+            f"Whether jobs end up down {abs(n['employment_pct']['p10']):.0f}% or flat depends mostly on whether the gains are spent back into the economy.")
+
+
+def executive_brief_md(st: dict[str, Any]) -> str:
+    yr = st["horizon"][1][:4]
+    L = [f"# What AI does to work in {st.get('region_name') or st['region']}, in seven findings", "",
          f"Scenario: {st['scenario_name']}. Everything below is a difference from a world in which AI stopped improving in 2023. Run `{st['scenario_hash']}`.", ""]
     L.append("## In five sentences"); L.append("")
-    L.append(f"By {yr} there are about {_millions(n['jobs_gap'])} fewer jobs than there would have been, out of about {_millions(n['jobs_base'])}; most of them are jobs never created rather than jobs destroyed. "
-             f"Most of that is hiring that never happens rather than layoffs (about one position in {max(round((n['unfilled'] + n['laid_off']) / max(n['laid_off'], 1)), 2)} removed is a layoff), so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
-             f"but workers' share of income falls {abs(n['wage_share_pp']):.1f} points. Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. "
-             f"Whether jobs end up down {abs(n['employment_pct']['p10']):.0f}% or flat depends mostly on whether the gains are spent back into the economy.")
+    L.append(_lede(st))
+    L.append("")
     L.append("")
     for i, b in enumerate(st["beats"], 1):
         L.append(f"## {i}. {b['title']}"); L.append(""); L.append(b["sentence"]); L.append("")
@@ -742,12 +783,8 @@ def executive_brief_html(st: dict[str, Any]) -> str:
     n = st["numbers"]; yr = st["horizon"][1][:4]
     e = html.escape
     parts = [f"<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{e(st['scenario_name'] or 'Scenario')} — what AI does to work</title><style>{_CSS}</style></head><body>"]
-    parts.append(f"<h1>What AI does to work in {e(st['region'])}, in seven findings</h1><p style='color:#666;font-size:14px'>Scenario: {e(st['scenario_name'] or '')}. Everything below is a difference from a world in which AI stopped improving in 2023.</p>")
-    parts.append("<div class='lede'>" + e(
-        f"By {yr} there are about {_millions(n['jobs_gap'])} fewer jobs than there would have been, out of about {_millions(n['jobs_base'])}; most of them are jobs never created rather than jobs destroyed. "
-        f"Most of that is hiring that never happens rather than layoffs (about one position in {max(round((n['unfilled'] + n['laid_off']) / max(n['laid_off'], 1)), 2)} removed is a layoff), so the young pay first. Real pay rises about {n['real_wage_pct']['p50']:.0f}% and the economy is about {n['gdp_pct']:.0f}% larger, "
-        f"but workers' share of income falls {abs(n['wage_share_pp']):.1f} points. Office work is reshaped now, robots come in the mid-2030s, AI-made content spreads category by category. "
-        f"Whether jobs end up down {abs(n['employment_pct']['p10']):.0f}% or flat depends mostly on whether the gains are spent back into the economy.") + "</div>")
+    parts.append(f"<h1>What AI does to work in {e(st.get('region_name') or st['region'])}, in seven findings</h1><p style='color:#666;font-size:14px'>Scenario: {e(st['scenario_name'] or '')}. Everything below is a difference from a world in which AI stopped improving in 2023.</p>")
+    parts.append("<div class='lede'>" + e(_lede(st)) + "</div>")
     for i, b in enumerate(st["beats"], 1):
         parts.append(f"<div class='beat'><h2>{i}. {e(b['title'])}</h2><p>{e(b['sentence'])}</p>")
         if b["id"] == "futures":

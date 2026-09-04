@@ -11,6 +11,8 @@ import html
 import json
 from typing import Any
 
+from aiwsim.data.regions import REGION_NAMES
+
 from .insights import HEADLINE_LABELS, top_insights
 
 ORDER = ["employment_pct_vs_baseline", "gdp_pct_vs_baseline", "real_wage_pct_vs_baseline", "wage_share_pp_vs_baseline"]
@@ -23,6 +25,17 @@ def _cell(series: dict[str, list[float]], t: int, unit: str) -> str:
     return f"{p50:+.1f}{unit}"
 
 
+def _count(v: float, unit: str, nd: int) -> str:
+    """People in millions or thousands (a seven-digit count reads as false precision); other quantities as they are."""
+    if unit or nd:
+        return f"{v:,.{nd}f}{unit}"
+    if abs(v) >= 1e6:
+        return f"{v/1e6:.2f} million"
+    if abs(v) >= 1e3:
+        return f"{v/1e3:.0f} thousand"
+    return f"{v:,.0f}"
+
+
 def build_brief_md(doc: dict[str, Any], scenario: dict[str, Any] | None = None, region: str = "US",
                    narrative: str | None = None, compare: dict[str, Any] | None = None) -> str:
     m = doc["meta"]; q = m["quarters"]; t_end = len(q) - 1
@@ -31,7 +44,7 @@ def build_brief_md(doc: dict[str, Any], scenario: dict[str, Any] | None = None, 
     L: list[str] = []
     L.append(f"# {m.get('scenario_name') or m.get('scenario_id') or 'Scenario'} — AI workforce brief")
     L.append("")
-    L.append(f"Region: **{region}** · Horizon: {q[0]}–{q[-1]} · Run: `{m['scenario_hash']}` · Spec {m['spec_version']} · Data {m['data_version']} · "
+    L.append(f"Region: **{region}**, {REGION_NAMES.get(region, region)} · Horizon: {q[0]}–{q[-1]} · Run: `{m['scenario_hash']}` · Spec {m['spec_version']} · Data {m['data_version']} · "
              f"{m['draws']} Monte Carlo draws, ensemble `{m['ensemble']}` · Generated {m['run_at']}")
     L.append("")
     L.append("All effects are relative to a frozen-AI counterfactual (no frontier AI after 2023). Brackets are the 10th–90th percentile across draws; "
@@ -53,7 +66,7 @@ def build_brief_md(doc: dict[str, Any], scenario: dict[str, Any] | None = None, 
         s = blk.get(k)
         if s:
             v30 = (s.get("p50") or s["central"])[i30]; v40 = (s.get("p50") or s["central"])[t_end]
-            L.append(f"| {label} | {v30:,.{nd}f}{unit} | {v40:,.{nd}f}{unit} | |")
+            L.append(f"| {label} | {_count(v30, unit, nd)} | {_count(v40, unit, nd)} | |")
     L.append("")
     diff = doc.get("explain", {}).get("diff", [])
     L.append("## What changed vs the parent scenario")
@@ -88,6 +101,8 @@ def build_brief_md(doc: dict[str, Any], scenario: dict[str, Any] | None = None, 
         L.append(f"*Mechanism:* {c['mechanism']} *Confidence:* {c['confidence']}.")
         L.append("")
     L.append("## Model notes for this run")
+    L.append("")
+    L.append("The notes quote the central run (every parameter at its central value); the table above quotes the median draw, so the two differ by the skew of the parameter draws.")
     L.append("")
     for n in doc.get("explain", {}).get("notes", []):
         L.append(f"- {n}")
@@ -196,4 +211,13 @@ def md_to_html(md: str) -> str:
 
 def build_brief_html(md: str, title: str) -> str:
     return (f"<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
-            f"<title>{html.escape(title)}</title><style>{_CSS}</style></head><body>{md_to_html(md)}</body></html>")
+            f"<title>{html.escape(title)}</title><style>{_CSS}</style></head><body>{_collapse_appendix(md_to_html(md))}</body></html>")
+
+
+def _collapse_appendix(body: str) -> str:
+    """The scenario JSON appendix folds behind a summary line so the page ends with the findings, not a wall of JSON."""
+    marker = "<h2>Appendix: scenario (canonical JSON)</h2>"
+    i = body.find(marker)
+    if i < 0:
+        return body
+    return body[:i] + "<details><summary>Appendix: scenario (canonical JSON)</summary>" + body[i + len(marker):] + "</details>"

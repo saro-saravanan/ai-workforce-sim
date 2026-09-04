@@ -2,17 +2,60 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useResultsStore } from '@/stores/results'
-import { REPO_URL } from '@/api/client'
+import { REPO_URL, USE_MOCK, USE_STATIC } from '@/api/client'
+import type { ScenarioSummary } from '@/types/results'
 import { CONFIDENCE_GLYPH } from '@/lib/confidence'
 
 const results = useResultsStore()
 
-const BRANCH = 'spec/model-v0.1'
+const BRANCH = 'main'
 const docUrl = (path: string) => `${REPO_URL}/blob/${BRANCH}/${path}`
-/** the one-page current-model statement (Phase 9) lives on main */
-const CURRENT_MODEL_URL = `${REPO_URL}/blob/main/docs/current-model.md`
+/** the one-page current-model statement (Phase 9) */
+const CURRENT_MODEL_URL = docUrl('docs/current-model.md')
 
 const meta = computed(() => results.meta)
+
+/** The scenario catalogue, grouped by what each scenario is for (ids follow `scenarios/*.json`). */
+interface ScenarioGroup {
+  label: string
+  note: string
+  items: ScenarioSummary[]
+}
+function groupOf(s: ScenarioSummary): string {
+  if (s.user) return 'user'
+  if (s.id === 'baseline') return 'baseline'
+  if (s.id.startsWith('preset-seba')) return 'future'
+  if (s.id.startsWith('preset-')) return 'preset'
+  if (s.id.startsWith('policy-')) return 'policy'
+  if (s.id.startsWith('variant-')) return 'variant'
+  if (s.id.startsWith('config-')) return 'config'
+  return 'whatif'
+}
+const GROUPS: Array<{ key: string; label: string; note: string }> = [
+  { key: 'baseline', label: 'Baseline', note: 'Every lever at its central value, the structural ensemble on, no shocks. Everything else is read against it.' },
+  {
+    key: 'preset',
+    label: 'Report replications',
+    note: 'Published estimates rebuilt as lever settings (spec §8.4): the same engine with that report’s assumptions, so its headline can be compared with the baseline’s.',
+  },
+  {
+    key: 'future',
+    label: 'Named futures',
+    note: 'Whole worldviews as scenarios; the Story view shows them beside the model’s own extremes, and each can be opened as a run.',
+  },
+  { key: 'policy', label: 'Policy runs', note: 'One policy each on top of the baseline; the Story view reads them as differences from it.' },
+  { key: 'variant', label: 'Behavioural variants', note: 'The same AI with employers or wages behaving differently, at the edge of the fitted ranges.' },
+  { key: 'config', label: 'Configurations', note: 'The same scenario with a layer switched off, for the regional decomposition.' },
+  { key: 'whatif', label: 'What-ifs', note: 'Example children of the baseline: a few levers moved, sometimes a shock.' },
+  { key: 'user', label: 'Saved by you', note: 'Scenarios saved through the levers panel (local API only).' },
+]
+const scenarioGroups = computed<ScenarioGroup[]>(() =>
+  GROUPS.map((g) => ({ ...g, items: results.scenarios.filter((s) => groupOf(s) === g.key) })).filter((g) => g.items.length > 0),
+)
+function openScenario(id: string) {
+  if (id !== results.scenarioId) results.scenarioId = id
+}
+const mode = computed(() => (USE_MOCK ? 'mock' : USE_STATIC ? 'static' : 'api'))
 const flags = computed(() => Object.entries(meta.value?.data_flags ?? {}))
 const runTime = computed(() => {
   const t = meta.value?.run_at
@@ -60,32 +103,35 @@ const READING = [
 ]
 
 const REAL_DATA = [
-  'O*NET task statements with the Eloundou et al. “GPTs are GPTs” exposure labels (openai/GPTs-are-GPTs replication data, MIT).',
-  'OEWS May 2021 national employment and wages (831 detailed occupations) and BLS Employment Projections 2020–30, mirrored in the same repository; the underlying BLS data are public domain.',
+  'O*NET task statements with the Eloundou et al. “GPTs are GPTs” exposure labels (openai/GPTs-are-GPTs replication data, MIT), classified into software, robot, vehicle and fixed-machine channels by task wording (rules v3, audited on a 120-statement sample).',
+  'BLS OEWS May 2025: national employment and wages for 831 detailed occupations, the occupation × industry matrix (20 NAICS sectors) and the occupation × state file; BLS Employment Projections for the no-AI growth path.',
+  'BEA 2024 summary input-output use table (through the BEA API): labour’s share of each sector’s gross output and value added, consumption shares, and the 20 × 20 direct-requirements matrix that propagates cost savings between sectors.',
   'METR time horizons, as the trend of the capability clock; the series is software-specific, so non-software work carries a domain-transfer discount.',
-  'Census BTOS AI-use shares, hyperscaler capex from SEC filings and the regulatory timeline, transcribed from the data inventory with secondary confirmation.',
+  'Census BTOS AI-use shares, Challenger, Gray & Christmas AI-cited job cuts, AI industry revenue and hyperscaler capex, as the backtest rows; two of them set a parameter and are marked as calibration targets.',
   'Natural Earth admin-0 and admin-1 (public domain) for the maps, regional membership, population and GDP.',
 ]
 
 const FIXTURES = [
-  { name: 'State splits', text: 'population share proxy for employment share: every state has the national occupational mix scaled by its 2020 Census population, so the state map shows size, not geography.' },
-  { name: 'Sector split', text: 'a single sector ALL; demand elasticity, labor cost share and friction are one number each until the OEWS occupation × industry matrix is ingested.' },
-  { name: 'Non-U.S. occupation structure', text: 'the U.S. task mix tilted by income, with wages = U.S. wage × regional wage level; regional results are composition effects plus access lag, wage level, regulation and rent flows, not regional data.' },
-  { name: 'Trade weights', text: 'import shares split by partner GDP; the trade linkage is inert until the sector fixture is replaced.' },
-  { name: 'Cohort shares', text: 'U.S. age, education and income-decile shares applied to every region; the age marginals are approximate (CPS 2024, E).' },
+  { name: 'Non-U.S. occupation structure', text: 'the U.S. task mix tilted by income, with wages = U.S. wage × regional wage level; regional results are composition effects plus access lag, wage level, regulation and rent flows, not regional data. This is why the Story outside the U.S. marks its cohort finding as U.S. detail.' },
+  { name: 'Trade weights', text: 'import shares split by partner GDP.' },
+  { name: 'Cohort shares', text: 'U.S. age, education and income-decile shares (CPS 2024, approximate), modelled for the United States only.' },
+  { name: 'Robot, content and trade parameters', text: 'the authors’ estimates (tagged E in the registry), exposed as levers.' },
 ]
 
 const LIMITATIONS = [
   'No general equilibrium: prices fall with costs and wages adjust partially, but nothing clears; tail scenarios (more than 15% displacement in a decade) carry a validity warning.',
   'Regional occupation fixtures: everything outside the U.S. is the U.S. task mix tilted by income, so cross-region differences should be read as the model’s mechanism speaking.',
   'Single-country presets: the report-replication presets (Acemoglu 2024, Goldman Sachs 2023, IMF 2024) target U.S. headline numbers; their regional results inherit the fixtures above.',
-  'Chat not exercised live: the Ask layer has been run only against a scripted fake client, never a live model; in the static demo it is switched off.',
+  'The Ask tab exists only when the API server has a model key (ANTHROPIC_API_KEY); the static demo and the mock have none, so the panel shows Explain alone. The chat layer has been exercised against a scripted client, not a live model.',
+  'The 2026 hold-out: refitting the two fitted parameters to 2025 alone under-predicts the 2026 rows (AI revenue, announced cuts), so the model’s 2025-to-2026 growth is slower than the data’s.',
 ]
 
 const LINKS = [
   { label: 'Repository', href: REPO_URL, note: 'source, data provenance, scenarios' },
   { label: 'Methodology', href: docUrl('docs/methodology.md'), note: 'how the model is built and calibrated' },
-  { label: 'Model specification', href: docUrl('docs/model-spec.md'), note: 'v0.2, with §16 implementation notes' },
+  { label: 'Model specification', href: docUrl('docs/model-spec.md'), note: 'v0.3, with §16 implementation notes' },
+  { label: 'Scenario files', href: `${REPO_URL}/tree/${BRANCH}/scenarios`, note: 'every scenario and preset as JSON, with its description and levers' },
+  { label: 'Findings', href: docUrl('docs/findings-phase9b.md'), note: 'what the latest phase changed and why the headline moved' },
   { label: 'Contracts', href: docUrl('docs/contracts.md'), note: 'results document, API and static export' },
   { label: 'Current model', href: CURRENT_MODEL_URL, note: 'one page: fitted parameters and their targets (main branch)' },
 ]
@@ -97,7 +143,8 @@ const LINKS = [
       <h2>About this tool</h2>
       <p class="lede">
         AI Workforce Sim is a structured scenario model of how AI reshapes work and the economy
-        between 2024 and 2040, not a forecast: it is interactive and multi-region. Ten regions run jointly through a shared capability clock,
+        between 2024 and 2040, not a forecast: it is interactive and multi-region (model
+        specification v0.3). Ten regions run jointly through a shared capability clock,
         and every number the views show is the difference between a scenario and a frozen-AI
         counterfactual in which no frontier AI arrives after 2023. The levers change the scenario;
         a deterministic model produces the results, and the Ask layer only reads them.
@@ -156,6 +203,38 @@ const LINKS = [
       </p>
     </section>
 
+    <section class="card" id="scenarios">
+      <h3>Scenarios and presets</h3>
+      <p class="text-p">
+        The scenario picker in the top bar lists these runs. A scenario is a JSON file of lever
+        values and shocks on top of a parent; the baseline is the parent of nearly all of them, so
+        every other run reads as “the baseline with these things changed”. The What if panel opens
+        any of them as a starting point.
+      </p>
+      <p v-if="!scenarioGroups.length" class="muted small">No scenarios loaded yet.</p>
+      <div v-for="g in scenarioGroups" :key="g.label" class="group">
+        <h4 class="sub">{{ g.label }}</h4>
+        <p class="muted small note">{{ g.note }}</p>
+        <ul class="plain scen">
+          <li v-for="s in g.items" :key="s.id">
+            <div class="scen-name">
+              <button
+                class="linkish"
+                :class="{ current: s.id === results.scenarioId }"
+                :title="s.id === results.scenarioId ? 'The current run' : `Open ${s.name}`"
+                @click="openScenario(s.id)"
+              >
+                {{ s.name }}
+              </button>
+              <span v-if="s.id === results.scenarioId" class="muted small">current run</span>
+              <span v-if="s.parent && s.parent !== 'baseline'" class="muted small">on {{ s.parent }}</span>
+            </div>
+            <div v-if="s.description" class="text small">{{ s.description }}</div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
     <section class="card">
       <h3>How to read the numbers</h3>
       <ul class="plain">
@@ -178,6 +257,31 @@ const LINKS = [
           <span class="term">{{ f.name }}</span> <span class="text">{{ f.text }}</span>
         </li>
       </ul>
+    </section>
+
+    <section class="card" id="static-demo">
+      <h3>Static demo, mock and the local API</h3>
+      <p class="text-p">
+        <template v-if="mode === 'static'">
+          This page is the <strong>static demo</strong>: the runs were computed once by a GitHub
+          Actions workflow and exported as files, and the app reads them with no server behind it.
+          Switching scenario, region and quarter, the compare view, the story and both briefs all
+          work from those files. Three things need the local API and are switched off here: running
+          new lever values from the What if panel, saving a scenario, and the Ask tab.
+        </template>
+        <template v-else-if="mode === 'mock'">
+          This page runs on <strong>mock data</strong>: synthetic S-curves from the web build, not
+          a model run. It exists to develop the views without the engine.
+        </template>
+        <template v-else>
+          This page is served by the <strong>local API</strong>: scenarios run on demand (cached by
+          their hash), lever changes and saved scenarios work, and the Ask tab appears when the
+          server has a model key.
+        </template>
+        To run the model yourself, clone the repository and run
+        <code>make demo</code>; the README explains the data build, the API and the web app. The
+        public page is rebuilt from <code>main</code> on every push.
+      </p>
     </section>
 
     <section class="card">
@@ -337,6 +441,43 @@ table.flags {
 table.flags th {
   cursor: default;
   position: static;
+}
+.group + .group {
+  margin-top: 8px;
+}
+.note {
+  margin: 0 0 4px;
+}
+ul.scen li {
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.scen-name {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+ul.scen .text.small {
+  font-size: 14px;
+  color: var(--ink-2);
+  margin: 0;
+}
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-ink);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.linkish.current {
+  color: var(--ink);
+  text-decoration: none;
+  cursor: default;
 }
 .links a,
 .text-p a {
