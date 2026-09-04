@@ -96,6 +96,18 @@ const QUESTIONS: Array<{ q: string; a: string; path: string; label: string }> = 
     label: 'The sixth finding, and the Map',
   },
   {
+    q: 'Will the trillion dollars a year going into data centres ever pay back, and for whom?',
+    a: 'The four largest cloud companies spent about $400 billion on data centres, chips and power in 2025 and have guided to over $700 billion for 2026; the model carries that path past a trillion a year. On its central assumptions the producers’ revenue never catches up with the capital by 2040, while the productivity gain to the economy repays it by the early 2030s and lands with the firms that adopt AI and, through lower prices, their customers, not with the builders. That is the railway, electricity and fibre pattern: society earns the return and the builders earn a normal or poor one. Faster adoption, or prices held well above token cost, changes the answer, and both are levers.',
+    path: '/story',
+    label: 'Investment versus returns, on the Story view',
+  },
+  {
+    q: 'For an investor or an operator: which businesses get cheaper to run, and which get competed away?',
+    a: 'A company whose cost base is exposed office work gets cheaper to run. A company whose product is that work gets competed on price, and the input-output table says how the savings travel from one sector to the next. The same distinction applies to the AI-native entrant that arrives without integration cost, and to the offshore version of the work that stops being exported. This is the question I am asked most in diligence, and the model’s sector and occupation layers are where I go to answer it.',
+    path: '/economy',
+    label: 'The Economy and Occupations views, and the sector levers in What if',
+  },
+  {
     q: 'How much of this is a choice, and how much is coming regardless?',
     a: 'The single biggest swing in the model is whether the productivity gains are spent back into the economy or pocketed. That is partly policy, partly corporate behaviour, and partly what each of us decides to pay for.',
     path: '/story',
@@ -244,7 +256,10 @@ const LINKS = [
         The public conversation did not help. One week the headline said half of all jobs would
         vanish; the next said AI would make everyone richer. Every number came from somewhere I
         could not see, with assumptions I could not change, and none of them agreed with each
-        other. I found I could not answer the simple questions my family asked me at dinner.
+        other. I found I could not answer the simple questions my family asked me at dinner. And in
+        my day job, technology due diligence for private-equity and venture investors, the same
+        questions arrived in a suit: will the capital pouring into AI earn a return, and which of
+        the companies we are looking at will be on the right side of it?
       </p>
       <p class="text-p">
         So I built a model. Not to predict the future, which nobody can, but to make the

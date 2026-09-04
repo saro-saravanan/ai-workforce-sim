@@ -4,7 +4,7 @@
 
 Like most people, I have spent a good deal of the last few years fretting about what accelerating AI means for my children, my grandchildren, and the society they will live in. I have spent my career building software, and I know what it looks like when a technology stops being a demo and starts changing who gets hired. This time the technology is aimed at the kind of work I do, and the kind of work I hoped they would do.
 
-The public conversation did not help. One week the headline said half of all jobs would vanish; the next it said AI would make everyone richer. Every number came from somewhere I could not see, with assumptions I could not change, and none of them agreed with each other. I found I could not answer the simple questions my family asked me at dinner.
+The public conversation did not help. One week the headline said half of all jobs would vanish; the next it said AI would make everyone richer. Every number came from somewhere I could not see, with assumptions I could not change, and none of them agreed with each other. I found I could not answer the simple questions my family asked me at dinner. And in my day job, technology due diligence for private-equity and venture investors, the same questions arrived in a suit: will the capital pouring into AI earn a return, and which of the companies we are looking at will be on the right side of it?
 
 So I built a model. Not to predict the future, which nobody can, but to make the assumptions visible, so that when we disagree we disagree about the right things. Every number it produces is a difference between a world where AI keeps improving and a world where it stopped in 2023. Every parameter has a source, a range and a lever. When the model is wrong, and it will be, you can see where.
 
@@ -32,19 +32,25 @@ Office and analytical work is being reshaped now. Robots and self-driving vehicl
 **6. Where does the money go, and which countries come out ahead?**
 Someone collects the revenue from all of this: the model makers, the data centres, the chip makers. The regions are not affected equally, and the map shows who gains and who loses. *The sixth finding, and the Map.*
 
-**7. How much of this is a choice, and how much is coming regardless?**
+**7. Will the trillion dollars a year going into data centres ever pay back, and for whom?**
+The four largest cloud companies spent about $400 billion on data centres, chips and power in 2025 and have guided to over $700 billion for 2026; the model carries that path past a trillion a year. On its central assumptions, the producers' revenue never catches up with the capital by 2040, while the productivity gain to the economy repays it by the early 2030s and lands with the firms that adopt AI and, through lower prices, their customers, not with the builders. That is the railway, electricity and fibre pattern: society earns the return and the builders earn a normal or poor one. Faster adoption, or prices held well above token cost, changes the answer, and both are levers. *Investment versus returns, on the Story view.*
+
+**8. For an investor or an operator: which businesses get cheaper to run, and which get competed away?**
+A company whose cost base is exposed office work gets cheaper to run. A company whose product is that work gets competed on price, and the input-output table says how the savings travel from one sector to the next. The same distinction applies to the AI-native entrant that arrives without integration cost, and to the offshore version of the work that stops being exported. This is the question I am asked most in diligence, and the model's sector and occupation layers are where I go to answer it. *The Economy and Occupations views, and the sector levers in What if.*
+
+**9. How much of this is a choice, and how much is coming regardless?**
 The single biggest swing in the model is whether the productivity gains are spent back into the economy or pocketed. That is partly policy, partly corporate behaviour, and partly what each of us decides to pay for. *The seventh finding, and the named futures.*
 
-**8. What could a government actually do that helps, and what would it cost?**
+**10. What could a government actually do that helps, and what would it cost?**
 Retraining subsidies, wage insurance, a basic income, a shorter working week: each is a scenario you can run against the baseline, with its price tag and its financing. *The policy runs on the Story view, and the What if panel.*
 
-**9. What should I tell a seventeen-year-old choosing what to study?**
+**11. What should I tell a seventeen-year-old choosing what to study?**
 The honest answer is that the deciles are stable and the individual ranks are not: which broad kinds of work are exposed is fairly robust across data sources, which exact occupation ranks where is not. *Your outlook, one occupation and one age at a time.*
 
-**10. Can any of this be trusted, and how would we know when it is wrong?**
+**12. Can any of this be trusted, and how would we know when it is wrong?**
 A model that cannot be wrong is worthless. This one is scored every quarter against what has already happened: firm adoption, announced AI-cited job cuts, AI industry revenue, data-centre spending. Where it misses, the page says so. *The Backtest view, and the ranges and confidence marks on every finding.*
 
-**11. What would change my mind?**
+**13. What would change my mind?**
 Every finding lists what would move it. If you think the model is wrong, the levers are there: change the assumption and see what follows. That is the whole point.
 
 ## What I hope happens
