@@ -68,7 +68,7 @@ function openScenario(id: string) {
 const mode = computed(() => (USE_MOCK ? 'mock' : USE_STATIC ? 'static' : 'api'))
 
 /** Why this exists: the questions the model is trying to answer, each with the view that speaks to it (docs/why.md). */
-const QUESTIONS: Array<{ q: string; a: string; path: string; label: string }> = [
+const QUESTIONS: Array<{ q: string; a: string | string[]; path: string; label: string }> = [
   {
     q: 'Will there be work for my children and grandchildren, and what kind?',
     a: 'Not "will jobs exist", which is too easy to answer with yes, but how many fewer than there would have been, in which occupations, and whether the work that remains is the kind a person can build a life on.',
@@ -113,7 +113,7 @@ const QUESTIONS: Array<{ q: string; a: string; path: string; label: string }> = 
   },
   {
     q: 'For an investor or an operator: which businesses get cheaper to run, and which get competed away?',
-    a: 'It depends on which side of the work a company sits. A company that buys exposed work (a manufacturer with a large back office, a bank with floors of analysts, a hospital with claims and billing staff) sees its costs fall and its margins widen, at least until competitors catch up and prices follow. A company that sells exposed work (a call-centre outsourcer, a translation agency, a law firm billing hours for document review, an offshore IT-services firm) sees the price of its product fall faster than its costs. A third group, AI-native entrants with no legacy cost base, takes share from both. The model puts a number on each side: how much of each sector’s labour cost is exposed, how far its prices fall, and how much of the saving flows on to the sectors that buy from it. In diligence, the first question I now ask of any target is which of the three it is.',
+    a: ['It depends on three things about the company: what it buys, what it sells, and how fast prices in its market move. AI lowers the cost of a particular kind of work, mostly office and analytical work now and physical work later. Every company sits somewhere on two axes: how much of its cost base is that work, and how much of its revenue is that work.', 'Cost-exposed, revenue-protected companies are the winners, for a while. A manufacturer with a large back office, a bank with floors of analysts, a hospital with claims and billing staff, an insurer, a logistics operator: their product is not the exposed work, but a lot of their cost is. Their costs fall and their margins widen. How long they keep the margin depends on how fast competitors adopt and how much of the saving the market forces through to prices; the model carries both as levers (adoption friction by sector and firm size, and pass-through). In slow-adopting, regulated or fragmented sectors the margin lasts years; in fast, transparent ones it is competed away in a few.', 'Revenue-exposed companies are the losers, and the more of their revenue is billable exposed work, the harder they fall. A call-centre outsourcer, a translation agency, a law firm billing hours for document review, an accounting practice built on preparation work, an offshore IT-services firm: their product is the work AI now does. Their price falls faster than their cost, because their customers can also buy the AI directly. Two things decide how bad it gets. If demand for the output is elastic (more gets bought when it is cheaper: software, design, analysis), volume can offset part of the price fall; if it is not (a document reviewed once is reviewed once), revenue simply shrinks. And if customers accept AI-made output as a substitute for human-made output, which the model tracks category by category, the pricing power is gone, not merely reduced.', 'The third group takes share from both: AI-native entrants that arrive without a legacy cost base or an integration bill, and are built to sell the cheaper output at the lower price from day one. The model lets them in as a parameter, and they matter most in exactly the markets where incumbents are revenue-exposed.', 'What the model contributes is a number for each side, by sector: the share of labour cost that is exposed, when it becomes feasible and profitable to automate at that sector\'s wages, how far the sector\'s prices fall, how demand responds, and how much of the saving flows on to the sectors that buy from it through the input-output table. It is a sector-level prior, not a company valuation; the diligence still has to be done. But it changes the questions I ask. What fraction of the cost base is exposed work, and what fraction of revenue? Is demand for the product elastic? Would the customer accept AI-made output? How fast does this sector adopt, and how much of the saving does its market pass through? Who is the AI-native entrant, and is the offshore delivery model an asset or a liability? A company that answers those well is on the right side of this; one that cannot is not, however good its last three years look.'],
     path: '/economy',
     label: 'The Economy and Occupations views, and the sector levers in What if',
   },
@@ -296,9 +296,14 @@ const LINKS = [
       <ol class="questions">
         <li v-for="(x, i) in QUESTIONS" :key="i">
           <p class="q">{{ x.q }}</p>
-          <p class="a">
-            {{ x.a }}
-            <RouterLink class="where" :to="{ path: x.path, query: $route.query }">{{ x.label }}</RouterLink>
+          <p v-for="(para, j) in (Array.isArray(x.a) ? x.a : [x.a])" :key="j" class="a">
+            {{ para }}
+            <RouterLink
+              v-if="j === (Array.isArray(x.a) ? x.a.length : 1) - 1"
+              class="where"
+              :to="{ path: x.path, query: $route.query }"
+              >{{ x.label }}</RouterLink
+            >
           </p>
         </li>
       </ol>
@@ -650,6 +655,9 @@ ol.questions .q {
 ol.questions .a {
   margin: 0;
   color: var(--ink-2);
+}
+ol.questions .a + .a {
+  margin-top: 6px;
 }
 ol.questions .where {
   color: var(--accent-ink);
