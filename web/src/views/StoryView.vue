@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { BarsChart, StoryBeat as Beat } from '@/types/story'
 import { useResultsStore } from '@/stores/results'
-import { useRegionStore } from '@/stores/region'
 import { useThemeStore } from '@/stores/theme'
 import { useStory } from '@/composables/useStory'
 import { useBriefs } from '@/composables/useBriefs'
@@ -23,21 +22,16 @@ import StoryInvestment from '@/components/story/StoryInvestment.vue'
 const results = useResultsStore()
 const theme = useThemeStore()
 const { story, loading, error, region } = useStory()
-const regionStore = useRegionStore()
 const briefs = useBriefs()
 
 const horizon = computed(() => {
   const h = story.value?.horizon
   return h ? `${quarterYear(h[0])}–${quarterYear(h[1])}` : ''
 })
-/** World has no single ledger, so its story is the U.S. one; an export without the region's file falls back to the U.S. story too */
+/** an export without the region's file (World included) falls back to the U.S. story; say so */
 const regionNote = computed(() => {
-  if (!story.value) return ''
-  if (story.value.region !== region.value)
-    return `This story is for ${regionName(story.value.region)}; this run carries no ${regionName(region.value)} story, and its totals are on the other views.`
-  if (regionStore.isWorld)
-    return 'World has no single jobs ledger, so this story reads the United States. Pick a region in the top bar for its own story.'
-  return ''
+  if (!story.value || story.value.region === region.value) return ''
+  return `This story is for ${regionName(story.value.region)}; this run carries no story for ${regionName(region.value)}, whose totals are on the other views.`
 })
 /** bar values: counts of people (no unit) in compact form, everything else one decimal */
 function barsFormat(chart: BarsChart) {
@@ -69,7 +63,8 @@ function openScenario(id: string) {
       <header class="head">
         <div class="titles">
           <h2>
-            {{ results.scenarioName }}: what AI does to work in {{ regionName(story.region) }}
+            {{ results.scenarioName }}: what AI does to work in
+            {{ story.region_name ?? regionName(story.region) }}
           </h2>
           <p class="lede">
             {{ horizon }} · every number is a difference from a world in which AI stopped improving

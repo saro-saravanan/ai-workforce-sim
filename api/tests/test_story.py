@@ -111,3 +111,17 @@ def test_executive_brief_formats_and_endpoints(run):
     assert r.status_code == 200 and "<svg" in r.text
     r = c.get(f"/api/brief/{h}?format=exec")
     assert r.status_code == 200 and r.text.startswith("# What AI does to work")
+
+
+def test_world_story_aggregates_the_regions(run):
+    from aiwsim_api import story as story_mod
+    from aiwsim_api.app import app
+    from fastapi.testclient import TestClient
+    h, doc = run
+    us = story_mod.story(doc, "US"); w = story_mod.story(doc, "WORLD")
+    assert w["region"] == "WORLD" and "world" in w["region_name"]
+    assert w["numbers"]["jobs_today"] > us["numbers"]["jobs_today"]
+    assert abs(w["numbers"]["displaced_cum"]) >= abs(us["numbers"]["displaced_cum"])
+    assert story_mod.executive_brief_md(w).startswith("# What AI does to work in the world")
+    st = TestClient(app).get(f"/api/story/{h}?region=WORLD&companions=false").json()
+    assert st["region"] == "WORLD" and len(st["beats"]) >= 6

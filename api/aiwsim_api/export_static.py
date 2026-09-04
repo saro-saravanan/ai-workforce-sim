@@ -86,8 +86,8 @@ def export(out: Path, scenario_ids: list[str], draws: int | None, log=print) -> 
         _dump(out / "story" / f"{sid}.json", st); stories[sid] = f"story/{sid}.json"
         # every region's own story (the executive brief of the other regions is built client-side from it)
         story_regions[sid] = {}
-        for r in doc["meta"].get("regions", []):
-            if r not in doc["series"]:
+        for r in [*doc["meta"].get("regions", []), "WORLD"]:
+            if r != "WORLD" and r not in doc["series"]:
                 continue
             if r == "US":
                 story_regions[sid][r] = stories[sid]; continue

@@ -70,6 +70,7 @@ export function pyGrouped(v: number): string {
 /** "8.6 million", "176,000", "42" (always unsigned, like story.py `_millions`) */
 export function millions(x: number): string {
   x = Math.abs(x)
+  if (x >= 1e9) return `${pyFixed(x / 1e9, 2)} billion`
   if (x >= 1e6) return `${pyFixed(x / 1e6, 1)} million`
   if (x >= 1e3) return `${pyFixed(x / 1e3, 0)},000`
   return pyFixed(x, 0)

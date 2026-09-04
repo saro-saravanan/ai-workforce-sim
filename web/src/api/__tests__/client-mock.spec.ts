@@ -44,16 +44,19 @@ describe('mock story and outlook', () => {
 
   it('computes the outlook client-side with the story beats', async () => {
     const res = await api.fetchOutlook(docFor('baseline'), '53-3054', '16-24', 'world')
-    expect(res.region).toBe('US')
+    expect(res.region).toBe('WORLD')
     expect(res.beats.map((b) => b.id)).toEqual(['jobs', 'hiring', 'pay'])
     expect(res.occupation?.title).toBe('Taxi drivers and chauffeurs')
     expect(res.age?.band).toBe('16-24')
-    expect(res.note).toBe('')
+    expect(res.note).toContain('U.S. detail')
+    const us = await api.fetchOutlook(docFor('baseline'), '53-3054', '16-24', 'US')
+    expect(us.region).toBe('US')
+    expect(us.note).toBe('')
   })
 
   it('has no executive brief page (the view builds it client-side)', () => {
     expect(api.execBriefUrl(docFor('baseline'))).toBeNull()
-    expect(api.storyRegion('world')).toBe('US')
+    expect(api.storyRegion('world')).toBe('WORLD')
     expect(api.storyRegion('EU')).toBe('EU')
   })
 })

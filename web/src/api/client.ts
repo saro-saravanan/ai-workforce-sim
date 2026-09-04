@@ -601,11 +601,12 @@ export async function fetchBriefMarkdown(
 // ---------- Phase 8 endpoints (contracts §26–27) ----------
 
 /**
- * The region the story endpoints take: a series block. World is aggregated client-side only, so
- * the story and the outlook read the U.S. for it.
+ * The region the story endpoints take: a series block, or `WORLD` for the server-side aggregate
+ * of the ten regions (the same employment-weighted rules as lib/world.ts); the outlook's
+ * occupation and age detail stays U.S. either way.
  */
 export function storyRegion(region: string): string {
-  return region === 'world' ? 'US' : region
+  return region === 'world' ? 'WORLD' : region
 }
 
 /** The mock story (a real baseline story, U.S.) relabelled for the current mock run. */

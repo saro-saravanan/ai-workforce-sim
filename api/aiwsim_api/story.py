@@ -15,6 +15,8 @@ import numpy as np
 from aiwsim.data.regions import REGION_NAMES
 
 HEAD = "employment_pct_vs_baseline"
+WORLD = "WORLD"
+WORLD_NAME = "the world (ten modelled regions)"
 AGE_LABELS = {"16-24": "under 25", "25-44": "25 to 44", "45-54": "45 to 54", "55+": "55 and over"}
 SURENESS = {"high": ("we would bet on it", 3), "medium": ("leaning this way", 2), "low": ("a coin flip", 1)}
 FAMILY_WORDS = {"embodied": "robots and vehicles", "output": "AI-made content", "software": "software doing office tasks", "traded": "automation abroad"}
@@ -30,6 +32,73 @@ CHANNEL_WORDS = {"automation": "software doing tasks", "augmentation": "faster w
 
 
 # ---------------------------------------------------------------- helpers
+def region_name(region: str) -> str:
+    return WORLD_NAME if region == WORLD else REGION_NAMES.get(region, region)
+
+
+_MAX_KEYS = ("capability_index", "capability_horizon_hours", "regional_capability_index")
+_WEIGHTED_TOKENS = ("_pct", "_pp_", "share", "ratio", "index", "multiplier", "coverage", "approval")
+_PCTL = ("p10", "p25", "p50", "p75", "p90", "central")
+
+
+def _world_rule(key: str) -> str:
+    """How a series aggregates over regions: the capability clock is the frontier (max), rates and shares are
+    employment-weighted means of each percentile, counts and dollars are sums (the same rules as the web app's World)."""
+    if key in _MAX_KEYS:
+        return "max"
+    if any(t in key for t in _WEIGHTED_TOKENS):
+        return "weighted"
+    return "sum"
+
+
+def _aggregate(parts: list[tuple[float, dict[str, list[float]] | None]], rule: str) -> dict[str, list[float]]:
+    usable = [(w, s) for w, s in parts if isinstance(s, dict) and (s.get("p50") or s.get("central"))]
+    out: dict[str, list[float]] = {}
+    if not usable:
+        return out
+    for k in _PCTL:
+        if not all(s.get(k) for _, s in usable):
+            continue
+        arrs = [np.asarray(s[k], dtype=float) for _, s in usable]; n = max(len(a) for a in arrs)
+        stack = np.vstack([np.pad(a, (0, n - len(a)), constant_values=np.nan) for a in arrs])
+        ws = np.asarray([w for w, _ in usable], dtype=float); ok = np.isfinite(stack)
+        if rule == "max":
+            v = np.max(np.where(ok, stack, -np.inf), axis=0)
+        elif rule == "weighted":
+            wsum = (ok * ws[:, None]).sum(axis=0)
+            v = np.where(wsum > 0, (np.where(ok, stack, 0.0) * ws[:, None]).sum(axis=0) / np.where(wsum > 0, wsum, 1.0), 0.0)
+        else:
+            v = np.where(ok, stack, 0.0).sum(axis=0)
+        out[k] = [float(x) if np.isfinite(x) else 0.0 for x in v]
+    return out
+
+
+def world_doc(doc: dict[str, Any]) -> dict[str, Any]:
+    """The document with a `WORLD` series block: every regional series combined under `_world_rule`, the self-employed
+    stock summed and a regions row for the aggregate, so the story reads World like any other region."""
+    series = doc.get("series") or {}
+    ids = [r for r in doc["meta"].get("regions", []) if r in series] or list(series)
+    if WORLD in series or len(ids) < 2:
+        return doc
+    weights = {r["region_id"]: float(r.get("employment_total") or 0.0) for r in doc.get("regions", [])}
+    blk: dict[str, Any] = {}
+    for key, val in series[ids[0]].items():
+        rule = _world_rule(key)
+        if isinstance(val, dict) and (val.get("p50") or val.get("central")):
+            blk[key] = _aggregate([(weights.get(r, 0.0), series[r].get(key)) for r in ids], rule)
+        elif isinstance(val, dict):
+            blk[key] = {sub: _aggregate([(weights.get(r, 0.0), (series[r].get(key) or {}).get(sub)) for r in ids], rule) for sub in val}
+    out = dict(doc); out["series"] = dict(series); out["series"][WORLD] = blk
+    meta = dict(doc["meta"]); se = dict(meta.get("self_employed_fte") or {}); se[WORLD] = float(sum(se.get(r, 0.0) for r in ids)); meta["self_employed_fte"] = se
+    out["meta"] = meta
+    out["regions"] = [*doc.get("regions", []), {"region_id": WORLD, "name": WORLD_NAME, "employment_total": sum(weights.get(r, 0.0) for r in ids)}]
+    return out
+
+
+def _worldify(docs: dict[str, dict[str, Any]] | None) -> dict[str, dict[str, Any]] | None:
+    return {k: world_doc(v) for k, v in docs.items()} if docs else docs
+
+
 def _p(s: dict[str, list[float]], t: int, k: str = "p50") -> float:
     arr = s.get(k) or s.get("p50") or s.get("central")
     return float(arr[t]) if arr else 0.0
@@ -41,6 +110,8 @@ def _band(s: dict[str, list[float]], t: int) -> tuple[float, float, float]:
 
 def _millions(x: float) -> str:
     x = abs(x)
+    if x >= 1e9:
+        return f"{x/1e9:.2f} billion"
     if x >= 1e6:
         return f"{x/1e6:.1f} million"
     if x >= 1e3:
@@ -86,6 +157,9 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     """The whole story for one run. `policy_docs` are the policy scenarios, read as differences from `policy_base`
     (the baseline they modify; defaults to `doc`); `futures_docs` are scenario runs shown as named futures;
     `variant_docs` are behavioural variants (the layoffs-first run feeds the hiring beat)."""
+    if region == WORLD:
+        doc = world_doc(doc); policy_docs = _worldify(policy_docs); futures_docs = _worldify(futures_docs); variant_docs = _worldify(variant_docs)
+        policy_base = world_doc(policy_base) if policy_base else policy_base
     q = doc["meta"]["quarters"]; t40 = len(q) - 1; t30 = q.index("2030Q4") if "2030Q4" in q else t40
     blk = doc["series"].get(region) or doc["series"]["US"]
     yr = q[t40][:4]
@@ -96,7 +170,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     e10, e50, e90 = _band(blk[HEAD], t40)
     jobs_gap = -e50 / 100 * base; jobs_lo = -e10 / 100 * base; jobs_hi = -e90 / 100 * base
     us_detail = region == "US"
-    region_name = REGION_NAMES.get(region, region)
+    rname = region_name(region)
     # the people ledger: the U.S. reads the flows section (destinations of the displaced); every other region reads its own series
     flows = doc.get("flows", {}).get("destinations", {}) if us_detail else {}
     def _people(flow_key: str, series_key: str) -> float:
@@ -244,7 +318,7 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
             return 100 * _p((o.get("by_region") or {}).get(region, {}).get("displacement", {}), t, "central")
         ranked = [o for o in big if _auto(o, t30) > 0]
         first = sorted(ranked, key=lambda o: -_auto(o, t30))[:4]
-        first_words = ((f"Office and analytical work is being reshaped now; the occupations whose work is most automated in {region_name} by 2030: "
+        first_words = ((f"Office and analytical work is being reshaped now; the occupations whose work is most automated in {rname} by 2030: "
                         + ", ".join(f"{o['title'].lower()} ({_auto(o, t30):.0f}% of task-hours)" for o in first) + ". ")
                        if first else "Office and analytical work is being reshaped now. ")
         growing_words = "Job counts by occupation are U.S. detail (the Occupations view); the region's totals are in the first finding."
@@ -287,9 +361,9 @@ def story(doc: dict[str, Any], region: str = "US", policy_docs: dict[str, dict[s
     investment = investment_story(doc)
     caveats = _caveats(doc)
     return {"scenario_hash": doc["meta"]["scenario_hash"], "scenario_id": doc["meta"].get("scenario_id"), "scenario_name": doc["meta"].get("scenario_name"),
-            "region": region, "region_name": region_name, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
+            "region": region, "region_name": rname, "horizon": [q[0], q[-1]], "numbers": numbers, "beats": beats, "futures": futures, "policies": policies,
             "policies_against": (policy_base or doc)["meta"].get("scenario_name"), "investment": investment, "backtest": backtest_story(doc), "structural_spread": sp, "caveats": caveats,
-            "forecasts": doc.get("forecasts", []), "glossary": glossary(numbers, region_name)}
+            "forecasts": doc.get("forecasts", []), "glossary": glossary(numbers, rname)}
 
 
 def _ratio_words(lo: float, hi: float, other: str) -> str:
@@ -445,6 +519,11 @@ def named_futures(doc: dict[str, Any], region: str, futures_docs: dict[str, dict
     out = []
     m = torn.get("P.87")
     closure = _closure_medians(doc, region)
+    if region != "US":
+        # the cell medians are the U.S. headline's; scale them by the region's own median so the future's jobs count fits its ledger
+        us50 = _p(doc["series"]["US"][HEAD], t40); r50 = _p(blk[HEAD], t40)
+        if us50:
+            closure = {c: {**v, "employment_pct": v["employment_pct"] * r50 / us50} for c, v in closure.items()}
     for key, name, words in (("demand", "Gains spent back (demand closure)", "households spend the productivity gains and firms hire against that demand; the model's default closure"),
                              ("no_demand_feedback", "Gains not spent back (no demand feedback)", "the spending feedback is switched off, so only cheaper output and new tasks offset the displacement")):
         c = closure.get(key)
@@ -556,12 +635,12 @@ GLOSSARY = {
 }
 
 
-def glossary(numbers: dict[str, Any], region_name: str) -> dict[str, str]:
+def glossary(numbers: dict[str, Any], rname: str) -> dict[str, str]:
     """The glossary with the region's own 2024 count in the 'jobs today' entry."""
     g = dict(GLOSSARY)
     today = numbers.get("jobs_today") or numbers.get("jobs_base")
     if today:
-        g["jobs today"] = f"{GLOSSARY['jobs today']}; about {_millions(float(today))} in 2024 in {region_name}"
+        g["jobs today"] = f"{GLOSSARY['jobs today']}; about {_millions(float(today))} in 2024 in {rname}"
     return g
 
 

@@ -19,6 +19,7 @@ export function structuralSpreadLine(sp: StoryDocument['structural_spread']): st
 }
 
 export function regionName(id: string): string {
+  if (id === 'WORLD' || id === 'world') return 'the world (ten modelled regions)'
   return isRegionId(id) ? REGION_NAMES[id] : id
 }
 
