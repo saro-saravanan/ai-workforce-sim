@@ -56,6 +56,14 @@ function openScenario(id: string) {
   if (id !== results.scenarioId) results.scenarioId = id
 }
 const mode = computed(() => (USE_MOCK ? 'mock' : USE_STATIC ? 'static' : 'api'))
+
+/** the author (the profile page is the canonical source of this text) */
+const AUTHOR = {
+  name: 'Saro Saravanan',
+  profile: 'https://saro-saravanan.github.io',
+  linkedin: 'https://www.linkedin.com/in/saro-saravanan-a0978/',
+  github: 'https://github.com/saro-saravanan',
+}
 const flags = computed(() => Object.entries(meta.value?.data_flags ?? {}))
 const runTime = computed(() => {
   const t = meta.value?.run_at
@@ -202,6 +210,36 @@ const LINKS = [
         quantity, the row says so, and claims that were used to set a parameter are marked as
         calibration targets and counted separately.
       </p>
+    </section>
+
+    <section class="card author" id="author">
+      <h3>About the author</h3>
+      <p class="text-p">
+        <a :href="AUTHOR.profile" target="_blank" rel="noopener author"><strong>{{ AUTHOR.name }}</strong></a>
+        is a CTO, builder and AI-native engineering leader with decades of experience building,
+        scaling and operating software: founder-CTO of Emplanet, a 401(k) SaaS platform that raised
+        $36M and exited at a $100M valuation; Chief Architect at Fidelity Investments for
+        NetBenefits (10M+ users), Plan Sponsor WebStation and twenty other flagship products;
+        engineering leader and inventor behind TSA PreCheck and TSA CAT at IDEMIA; holder of seven
+        U.S. patents in identity, biometrics and web application architecture; co-author of two
+        books on operating system internals. Today he practises technology due diligence at
+        Crosslake Technologies, increasingly on AI disruption risk and AI readiness, and runs
+        Verby, LLC, an AI product studio that has shipped five products since 2024. This
+        simulation is one of those builds.
+      </p>
+      <p class="text-p">
+        <strong>Fractional CTO and advisory.</strong> Saro is open to fractional CTO engagements,
+        board and technical advisory roles, and technology due diligence: AI-readiness reviews
+        across infrastructure, architecture, organisation and operations, disruption-risk
+        assessment for software businesses, and hands-on help building real AI capability rather
+        than an AI veneer. If the questions this model raises are ones your company is facing, that
+        is the conversation to have.
+      </p>
+      <ul class="plain links">
+        <li><a :href="AUTHOR.profile" target="_blank" rel="noopener">Profile page</a><span class="muted"> · experience, builds, patents and publications</span></li>
+        <li><a :href="AUTHOR.linkedin" target="_blank" rel="noopener">LinkedIn</a><span class="muted"> · connect or send a message</span></li>
+        <li><a :href="AUTHOR.github" target="_blank" rel="noopener">GitHub</a><span class="muted"> · code, including this repository</span></li>
+      </ul>
     </section>
 
     <section class="card" id="scenarios">
