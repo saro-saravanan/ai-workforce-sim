@@ -45,7 +45,7 @@ function onInput(e: Event) {
 </script>
 
 <template>
-  <footer class="scrubber" aria-label="Time scrubber">
+  <footer class="scrubber" data-tour="scrubber" aria-label="Time scrubber">
     <div class="track-row">
       <div class="track">
         <input

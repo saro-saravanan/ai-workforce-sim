@@ -7,6 +7,8 @@ import ExplainPanel from '@/components/ExplainPanel.vue'
 import TimeScrubber from '@/components/TimeScrubber.vue'
 import LeversDrawer from '@/components/LeversDrawer.vue'
 import ToastStack from '@/components/ToastStack.vue'
+import CreditBand from '@/components/CreditBand.vue'
+import GuidedTour from '@/components/GuidedTour.vue'
 import { useResultsStore } from '@/stores/results'
 import { useScrubberStore } from '@/stores/scrubber'
 import { useThemeStore } from '@/stores/theme'
@@ -93,6 +95,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <template>
   <div class="shell">
+    <CreditBand />
     <TopBar
       :explain-open="explainOpen"
       :levers-open="leversOpen"
@@ -110,13 +113,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     <TimeScrubber />
     <LeversDrawer :open="leversOpen" :preset="leversPreset" @close="closeLevers" />
     <ToastStack />
+    <GuidedTour />
   </div>
 </template>
 
 <style scoped>
 .shell {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   grid-template-columns: minmax(0, 1fr);
   height: 100%;
   min-height: 0;

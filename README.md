@@ -84,3 +84,9 @@ The build sandbox could reach only GitHub, so occupation tasks, exposure, employ
 8. Story layer: one reconciled set of numbers, seven findings in plain language, named futures (including two Seba/RethinkX presets: the 2017 transport claims and the 2024–2026 humanoid and TaaS claims), policy runs, a personal outlook, an executive brief, and a scoreboard of named forecasts
 
 Each phase ended with a "findings so far" note.
+
+## Credits, licence, terms and contributing
+
+AI Workforce Sim is built and maintained by [Saro Saravanan](https://github.com/saro-saravanan). The code, the scenario files and the documents are released under the [MIT License](LICENSE). The model produces scenarios, not forecasts, and nothing in it is advice; the [terms of use](docs/terms.md) (also at `/terms` in the app) carry the no-warranty and no-liability terms. Every source dataset keeps its own licence, listed in the [data inventory](docs/data-inventory.md).
+
+Collaborators are welcome: open an issue for a bug, a data question or an idea, or a pull request for a change. Useful starting points are the [risks and open questions](docs/risks.md), the [classifier audit labels](docs/classifier-audit-labels.csv) (a human pass is wanted), the fixtures listed on the About page, and any published estimate the [forecast scoreboard](docs/model-spec.md) does not yet carry. Run `make test` before a pull request; the web app has a "Take the tour" button in its top band for a first walk through the views.

@@ -96,7 +96,7 @@ function openScenario(id: string) {
         </div>
       </header>
 
-      <section class="callout card" aria-labelledby="one-set">
+      <section class="callout card" data-tour="story" aria-labelledby="one-set">
         <h3 id="one-set">One set of numbers</h3>
         <p>{{ story.numbers.reconciliation }}</p>
       </section>

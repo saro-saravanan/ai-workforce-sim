@@ -33,6 +33,7 @@ const router = createRouter({
     { path: '/compare', name: 'compare', component: () => import('@/views/CompareView.vue') },
     { path: '/supply', name: 'supply', component: () => import('@/views/SupplyView.vue') },
     { path: '/about', name: 'about', component: () => import('@/views/AboutView.vue') },
+    { path: '/terms', name: 'terms', component: () => import('@/views/TermsView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/story' },
   ],
 })

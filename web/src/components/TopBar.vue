@@ -117,7 +117,7 @@ function onRegion(e: Event) {
         <h1>AI Workforce Sim</h1>
         <span class="muted sub">10 regions · 2024–2040 · vs no-AI baseline</span>
       </div>
-      <label class="scenario">
+      <label class="scenario" data-tour="scenario">
         <span class="muted">Scenario</span>
         <select
           class="select"
@@ -138,7 +138,7 @@ function onRegion(e: Event) {
           </option>
         </select>
       </label>
-      <label class="scenario region">
+      <label class="scenario region" data-tour="region">
         <span class="muted">Region</span>
         <select
           class="select"
@@ -152,11 +152,11 @@ function onRegion(e: Event) {
           </option>
         </select>
       </label>
-      <button class="btn" :aria-pressed="leversOpen" @click="$emit('toggleLevers')">
+      <button class="btn" data-tour="whatif" :aria-pressed="leversOpen" @click="$emit('toggleLevers')">
         What if
       </button>
-      <RouterLink class="btn link compare-link" :to="{ path: '/compare', query: $route.query }">Compare</RouterLink>
-      <div class="menu-wrap" @keydown="onMenuKey">
+      <RouterLink class="btn link compare-link" data-tour="compare" :to="{ path: '/compare', query: $route.query }">Compare</RouterLink>
+      <div class="menu-wrap" data-tour="export" @keydown="onMenuKey">
         <button
           class="btn"
           aria-haspopup="menu"
@@ -206,11 +206,11 @@ function onRegion(e: Event) {
       >
       <div class="spacer"></div>
       <ThemeToggle />
-      <button class="btn" :aria-pressed="explainOpen" @click="$emit('toggleExplain')">
+      <button class="btn" data-tour="explain" :aria-pressed="explainOpen" @click="$emit('toggleExplain')">
         Explain
       </button>
     </div>
-    <nav class="row tabs" aria-label="Views">
+    <nav class="row tabs" data-tour="tabs" aria-label="Views">
       <RouterLink
         v-for="v in VIEWS"
         :key="v.name"

@@ -127,7 +127,8 @@ const LIMITATIONS = [
 ]
 
 const LINKS = [
-  { label: 'Repository', href: REPO_URL, note: 'source, data provenance, scenarios' },
+  { label: 'Repository', href: REPO_URL, note: 'source, data provenance, scenarios; collaborators welcome (MIT License)' },
+  { label: 'Terms of use', href: docUrl('docs/terms.md'), note: 'no warranty, no liability, no advice; also on the /terms page' },
   { label: 'Methodology', href: docUrl('docs/methodology.md'), note: 'how the model is built and calibrated' },
   { label: 'Model specification', href: docUrl('docs/model-spec.md'), note: 'v0.3, with §16 implementation notes' },
   { label: 'Scenario files', href: `${REPO_URL}/tree/${BRANCH}/scenarios`, note: 'every scenario and preset as JSON, with its description and levers' },
