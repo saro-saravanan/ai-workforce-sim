@@ -1,12 +1,22 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, nextTick, onMounted, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import { useResultsStore } from '@/stores/results'
 import { REPO_URL, USE_MOCK, USE_STATIC } from '@/api/client'
 import type { ScenarioSummary } from '@/types/results'
 import { CONFIDENCE_GLYPH } from '@/lib/confidence'
 
 const results = useResultsStore()
+const route = useRoute()
+
+/** `#why`, `#author`, `#scenarios`, `#static-demo`: the main pane scrolls, not the window, so scroll the target into view here */
+function scrollToHash() {
+  const id = route.hash.replace(/^#/, '')
+  if (!id) return
+  void nextTick(() => document.getElementById(id)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+}
+onMounted(scrollToHash)
+watch(() => route.hash, scrollToHash)
 
 const BRANCH = 'main'
 const docUrl = (path: string) => `${REPO_URL}/blob/${BRANCH}/${path}`
@@ -103,7 +113,7 @@ const QUESTIONS: Array<{ q: string; a: string; path: string; label: string }> = 
   },
   {
     q: 'For an investor or an operator: which businesses get cheaper to run, and which get competed away?',
-    a: 'A company whose cost base is exposed office work gets cheaper to run. A company whose product is that work gets competed on price, and the input-output table says how the savings travel from one sector to the next. The same distinction applies to the AI-native entrant that arrives without integration cost, and to the offshore version of the work that stops being exported. This is the question I am asked most in diligence, and the model’s sector and occupation layers are where I go to answer it.',
+    a: 'It depends on which side of the work a company sits. A company that buys exposed work (a manufacturer with a large back office, a bank with floors of analysts, a hospital with claims and billing staff) sees its costs fall and its margins widen, at least until competitors catch up and prices follow. A company that sells exposed work (a call-centre outsourcer, a translation agency, a law firm billing hours for document review, an offshore IT-services firm) sees the price of its product fall faster than its costs. A third group, AI-native entrants with no legacy cost base, takes share from both. The model puts a number on each side: how much of each sector’s labour cost is exposed, how far its prices fall, and how much of the saving flows on to the sectors that buy from it. In diligence, the first question I now ask of any target is which of the three it is.',
     path: '/economy',
     label: 'The Economy and Occupations views, and the sector levers in What if',
   },

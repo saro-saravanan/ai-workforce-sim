@@ -17,6 +17,8 @@ const tour = useTourStore()
       <a :href="AUTHOR_URL" target="_blank" rel="noopener author">{{ AUTHOR }}</a>
     </span>
     <span class="sep" aria-hidden="true">·</span>
+    <RouterLink class="why" :to="{ path: '/about', query: $route.query, hash: '#why' }" title="Why this was built, and the questions it tries to answer">Why</RouterLink>
+    <span class="sep" aria-hidden="true">·</span>
     <span class="terms">
       <span class="long">Scenarios, not forecasts or advice: </span>
       <RouterLink :to="{ path: '/terms', query: $route.query }" title="Terms of use: no warranty, no liability, no advice">Terms</RouterLink>
@@ -86,6 +88,7 @@ const tour = useTourStore()
 }
 .terms,
 .repo,
+.why,
 .tour,
 .credit > .sep {
   flex-shrink: 0;
