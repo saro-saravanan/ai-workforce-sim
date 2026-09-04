@@ -12,7 +12,6 @@ import math
 from typing import Any
 
 import numpy as np
-
 from aiwsim.data.regions import REGION_NAMES
 
 HEAD = "employment_pct_vs_baseline"
@@ -615,7 +614,6 @@ def _lede(st: dict[str, Any]) -> str:
 
 
 def executive_brief_md(st: dict[str, Any]) -> str:
-    yr = st["horizon"][1][:4]
     L = [f"# What AI does to work in {st.get('region_name') or st['region']}, in seven findings", "",
          f"Scenario: {st['scenario_name']}. Everything below is a difference from a world in which AI stopped improving in 2023. Run `{st['scenario_hash']}`.", ""]
     L.append("## In five sentences"); L.append("")
@@ -780,7 +778,6 @@ svg text{font-family:inherit}@media (prefers-color-scheme: dark){body{background
 
 
 def executive_brief_html(st: dict[str, Any]) -> str:
-    n = st["numbers"]; yr = st["horizon"][1][:4]
     e = html.escape
     parts = [f"<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>{e(st['scenario_name'] or 'Scenario')} — what AI does to work</title><style>{_CSS}</style></head><body>"]
     parts.append(f"<h1>What AI does to work in {e(st.get('region_name') or st['region'])}, in seven findings</h1><p style='color:#666;font-size:14px'>Scenario: {e(st['scenario_name'] or '')}. Everything below is a difference from a world in which AI stopped improving in 2023.</p>")
