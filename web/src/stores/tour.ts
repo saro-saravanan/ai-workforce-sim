@@ -17,7 +17,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'What this is',
-    body: 'AI Workforce Sim is a scenario model of what AI does to jobs, pay and the economy from 2024 to 2040 across ten regions. Every number is a difference from a world in which AI stopped improving in 2023. It is not a forecast of how many jobs there will be, and it is not advice.',
+    body: 'AI Workforce Sim is a scenario model of what AI does to jobs, pay and the economy from 2024 to 2040 across ten regions. Every number is a difference from a world in which AI stopped improving in 2023. It is not a forecast of how many jobs there will be, and it is not advice. The About page says why it was built and which questions it tries to answer.',
   },
   {
     id: 'scenario',
